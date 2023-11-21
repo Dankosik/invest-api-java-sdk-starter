@@ -27,9 +27,6 @@ jobs:
         with:
           arguments: build
 
-      - name: Checkout the code
-        uses: actions/checkout@v3
-
       - name: Restore gradle.properties
         env:
           GRADLE_PROPERTIES: ${{ secrets.GRADLE_PROPERTIES }}
