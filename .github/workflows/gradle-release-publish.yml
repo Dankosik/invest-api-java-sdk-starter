@@ -27,7 +27,6 @@ jobs:
         with:
           arguments: build
 
-
       - name: Restore gradle.properties
         uses: actions/checkout@v3
         env:
