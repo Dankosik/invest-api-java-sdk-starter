@@ -27,16 +27,17 @@ jobs:
         with:
           arguments: build
 
-      - uses: actions/checkout@v3
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
       - name: Restore gradle.properties
         env:
           GRADLE_PROPERTIES: ${{ secrets.GRADLE_PROPERTIES }}
         shell: bash
         run: |
           mkdir -p ~/.gradle/
-          echo "::set-env name=GRADLE_USER_HOME::$HOME/.gradle"
-          echo ${GRADLE_PROPERTIES} > ~/.gradle/gradle.properties
-
+          echo "GRADLE_USER_HOME=${HOME}/.gradle" >> $GITHUB_ENV
+          echo "${GRADLE_PROPERTIES}" > ~/.gradle/gradle.properties
 
       - name: Publish to Maven Central
         uses: gradle/gradle-build-action@v2.9.0
