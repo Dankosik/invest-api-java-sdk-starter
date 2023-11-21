@@ -6,13 +6,13 @@ plugins {
     id("io.spring.dependency-management") version "1.1.3"
     id("maven-publish")
     signing
-    id("io.codearte.nexus-staging") version "0.30.0"
+    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
     kotlin("jvm") version "1.9.20-RC"
     kotlin("plugin.spring") version "1.9.20-RC"
 }
 
-group = "ru.dankos"
-version = "0.6.0-SNAPSHOT"
+group = "io.github.dankosik"
+version = "0.6.1-beta4"
 
 extra["tinkoffSdkVersion"] = "1.6"
 extra["kotlinLoggingVersion"] = "3.0.5"
@@ -63,43 +63,47 @@ tasks.withType<BootJar> {
     enabled = false
 }
 
-nexusStaging {
-    serverUrl = "https://s01.oss.sonatype.org/service/local/"
-    username = System.getenv("MAVEN_USERNAME")
-    password = System.getenv("MAVEN_PASSWORD")
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+            username.set(project.properties["ossrhUsername"].toString()) // defaults to project.properties["myNexusUsername"]
+            password.set(project.properties["ossrhPassword"].toString()) // defaults to project.properties["myNexusPassword"]
+        }
+    }
 }
+
 
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
-            groupId = "io.github.dankosik"
             artifactId = "invest-api-java-sdk-starter"
-            version = "0.0.1"
             from(components["java"])
+
             pom {
-                packaging = "jar"
                 name.set("Invest API java sdk starter")
                 url.set("https://github.com/Dankosik/invest-api-java-sdk-starter")
-
+                description.set("Starter for RussianInvestments/invest-api-java-sdk is a convenient tool that allows you to" +
+                        " quickly and easily integrate RussianInvestments/invest-api-java-sdk for accessing market data and trading into your Spring Boot applications." +
+                        " This starter provides easy configuration and automatic setup, allowing you to focus on developing functionality instead of spending time on setting up the integration with RussianInvestments/invest-api-java-sdk.")
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
                         url.set("https://opensource.org/license/mit/")
                     }
                 }
-
-                scm {
-                    connection.set("https://github.com/dankosik/invest-api-java-sdk-starter.git")
-                    developerConnection.set("scm:git@github.com:dankosik/invest-api-java-sdk-starter.git")
-                    url.set("https://github.com/dankosik/invest-api-java-sdk-starter")
-                }
-
                 developers {
                     developer {
                         id.set("Dankosik")
                         name.set("Daniil Koryto")
                         email.set("daniil.koryto@gmail.com")
                     }
+                }
+                scm {
+                    connection.set("https://github.com/dankosik/invest-api-java-sdk-starter.git")
+                    developerConnection.set("scm:git@github.com:dankosik/invest-api-java-sdk-starter.git")
+                    url.set("https://github.com/dankosik/invest-api-java-sdk-starter")
                 }
             }
         }
@@ -110,9 +114,17 @@ publishing {
             val snapshotsUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
             url = if (version.toString().endsWith("SNAPSHOT")) snapshotsUrl else releasesUrl
             credentials {
-                username = System.getenv("MAVEN_USERNAME")
-                password = System.getenv("MAVEN_PASSWORD")
+                username = project.properties["ossrhUsername"].toString()
+                password = project.properties["ossrhPassword"].toString()
             }
         }
+    }
+}
+
+
+signing {
+    if (!version.toString().endsWith("SNAPSHOT")) {
+        useGpgCmd()
+        sign(publishing.publications["mavenJava"])
     }
 }
