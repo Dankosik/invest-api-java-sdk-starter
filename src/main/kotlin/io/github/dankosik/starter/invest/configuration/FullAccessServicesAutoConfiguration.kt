@@ -1,17 +1,17 @@
 package io.github.dankosik.starter.invest.configuration
 
 import io.github.dankosik.starter.invest.configuration.properties.TinkoffApiProperties
+import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import ru.tinkoff.piapi.contract.v1.MarketDataResponse
 import ru.tinkoff.piapi.core.InvestApi
 import ru.tinkoff.piapi.core.stream.MarketDataStreamService
 import ru.tinkoff.piapi.core.stream.MarketDataSubscriptionService
 import ru.tinkoff.piapi.core.stream.StreamProcessor
 
-@Configuration
+@AutoConfiguration
 @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.fullAccess"])
 @EnableConfigurationProperties(TinkoffApiProperties::class)
 class FullAccessServicesAutoConfiguration(

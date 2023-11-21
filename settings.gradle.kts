@@ -4,4 +4,4 @@ pluginManagement {
 		gradlePluginPortal()
 	}
 }
-rootProject.name = "tinkoff-java-sdk-spring-boot-starter"
+rootProject.name = "invest-api-java-sdk-starter"

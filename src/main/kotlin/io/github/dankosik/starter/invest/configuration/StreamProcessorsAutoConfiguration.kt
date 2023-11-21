@@ -1,22 +1,6 @@
 package io.github.dankosik.starter.invest.configuration
 
-import io.github.dankosik.starter.invest.configuration.properties.TinkoffApiProperties
-import io.github.dankosik.starter.invest.contract.AsyncMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.AsyncOrdersStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.AsyncPortfolioStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.AsyncPositionsStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.BaseMarketDataStreamProcessor
-import io.github.dankosik.starter.invest.contract.BaseOrdersStreamProcessor
-import io.github.dankosik.starter.invest.contract.BasePortfolioStreamProcessor
-import io.github.dankosik.starter.invest.contract.BasePositionsStreamProcessor
-import io.github.dankosik.starter.invest.contract.BlockingMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.BlockingOrdersStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.BlockingPortfolioStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.BlockingPositionsStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.CoroutineMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.CoroutineOrdersStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.CoroutinePortfolioStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.CoroutinePositionsStreamProcessorAdapter
+import io.github.dankosik.starter.invest.contract.*
 import io.github.dankosik.starter.invest.contract.candle.AsyncCandleHandler
 import io.github.dankosik.starter.invest.contract.candle.BaseCandleHandler
 import io.github.dankosik.starter.invest.contract.candle.BlockingCandleHandler
@@ -49,11 +33,7 @@ import io.github.dankosik.starter.invest.contract.trade.AsyncTradesHandler
 import io.github.dankosik.starter.invest.contract.trade.BaseTradesHandler
 import io.github.dankosik.starter.invest.contract.trade.BlockingTradesHandler
 import io.github.dankosik.starter.invest.contract.trade.CoroutineTradesHandler
-import io.github.dankosik.starter.invest.registry.marketdata.CandleHandlerRegistry
-import io.github.dankosik.starter.invest.registry.marketdata.LastPriceHandlerRegistry
-import io.github.dankosik.starter.invest.registry.marketdata.OrderBookHandlerRegistry
-import io.github.dankosik.starter.invest.registry.marketdata.TradesHandlerRegistry
-import io.github.dankosik.starter.invest.registry.marketdata.TradingStatusHandlerRegistry
+import io.github.dankosik.starter.invest.registry.marketdata.*
 import io.github.dankosik.starter.invest.registry.operation.PortfolioHandlerRegistry
 import io.github.dankosik.starter.invest.registry.operation.PositionsHandlerRegistry
 import io.github.dankosik.starter.invest.registry.order.OrdersHandlerRegistry
@@ -63,31 +43,16 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
-import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.ComponentScan
-import org.springframework.context.annotation.Configuration
-import ru.tinkoff.piapi.contract.v1.Candle
-import ru.tinkoff.piapi.contract.v1.LastPrice
-import ru.tinkoff.piapi.contract.v1.MarketDataResponse
-import ru.tinkoff.piapi.contract.v1.OrderBook
-import ru.tinkoff.piapi.contract.v1.OrderTrades
-import ru.tinkoff.piapi.contract.v1.PortfolioResponse
-import ru.tinkoff.piapi.contract.v1.PortfolioStreamResponse
-import ru.tinkoff.piapi.contract.v1.PositionData
-import ru.tinkoff.piapi.contract.v1.PositionsStreamResponse
-import ru.tinkoff.piapi.contract.v1.Trade
-import ru.tinkoff.piapi.contract.v1.TradesStreamResponse
-import ru.tinkoff.piapi.contract.v1.TradingStatus
+import ru.tinkoff.piapi.contract.v1.*
 import ru.tinkoff.piapi.core.stream.StreamProcessor
 import java.util.concurrent.Executors
 
-@Configuration
-@ComponentScan("ru.dankos.starter.tinkoff.java.sdk")
-@EnableConfigurationProperties(TinkoffApiProperties::class)
-class StreamProcessorsAutoConfiguration(
-    private val tinkoffApiProperties: TinkoffApiProperties,
-) {
+@AutoConfiguration
+@AutoConfigureAfter(name = ["tickerToUidMap"])
+class StreamProcessorsAutoConfiguration {
 
     val orderBookHandlerFunctionMap = mutableMapOf<BaseOrderBookHandler, (OrderBook) -> Unit>()
     val tradesHandlerFunctionMap = mutableMapOf<BaseTradesHandler, (Trade) -> Unit>()
