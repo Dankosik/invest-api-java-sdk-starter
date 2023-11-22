@@ -3,6 +3,7 @@ package io.github.dankosik.starter.invest.configuration
 import io.github.dankosik.starter.invest.configuration.properties.TinkoffApiProperties
 import mu.KLogging
 import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
@@ -53,6 +54,7 @@ class SandboxServicesAutoConfiguration(
     fun operationsStreamServiceSandbox(investApiSandbox: InvestApi) = investApiSandbox.operationsStreamService!!
 
     @Bean
+    @ConditionalOnBean(name = ["commonMarketDataStreamProcessor"])
     fun commonDataSubscriptionServiceSandbox(
         marketDataStreamServiceSandbox: MarketDataStreamService,
         commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>

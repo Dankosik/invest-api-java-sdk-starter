@@ -2,6 +2,7 @@ package io.github.dankosik.starter.invest.configuration
 
 import io.github.dankosik.starter.invest.configuration.properties.TinkoffApiProperties
 import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -23,38 +24,39 @@ class ReadonlyServicesAutoConfiguration(
     fun investApiReadonly() = InvestApi.createReadonly(tinkoffApiProperties.apiToken.readonly!!)
 
     @Bean
-    fun marketDataServiceReadonly() = investApiReadonly().marketDataService
+    fun marketDataServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.marketDataService
 
     @Bean
-    fun instrumentsServiceReadonly() = investApiReadonly().instrumentsService
+    fun instrumentsServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.instrumentsService
 
     @Bean
-    fun ordersServiceReadonly() = investApiReadonly().ordersService
+    fun ordersServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.ordersService
 
     @Bean
-    fun sandboxServiceReadonly() = investApiReadonly().sandboxService
+    fun sandboxServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.sandboxService
 
     @Bean
-    fun userServiceReadonly() = investApiReadonly().userService
+    fun userServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.userService
 
     @Bean
-    fun operationsServiceReadonly() = investApiReadonly().operationsService
+    fun operationsServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.operationsService
 
     @Bean
-    fun stopOrdersServiceReadonly() = investApiReadonly().stopOrdersService
+    fun stopOrdersServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.stopOrdersService
 
     @Bean
-    fun ordersStreamServiceReadonly() = investApiReadonly().ordersStreamService
+    fun ordersStreamServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.ordersStreamService
 
     @Bean
-    fun marketDataStreamServiceReadonly() = investApiReadonly().marketDataStreamService
+    fun marketDataStreamServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.marketDataStreamService
 
     @Bean
-    fun operationsStreamServiceReadonly() = investApiReadonly().operationsStreamService!!
+    fun operationsStreamServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.operationsStreamService!!
 
 
     @Bean
     @ConditionalOnMissingBean(name = ["commonDataSubscription"])
+    @ConditionalOnBean(name = ["commonMarketDataStreamProcessor"])
     fun commonDataSubscription(
         marketDataStreamServiceReadonly: MarketDataStreamService,
         commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>
