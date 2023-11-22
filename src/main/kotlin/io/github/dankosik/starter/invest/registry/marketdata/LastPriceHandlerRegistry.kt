@@ -6,10 +6,12 @@ import io.github.dankosik.starter.invest.contract.lastprice.BaseLastPriceHandler
 import io.github.dankosik.starter.invest.contract.lastprice.BlockingLastPriceHandler
 import io.github.dankosik.starter.invest.contract.lastprice.CoroutineLastPriceHandler
 import mu.KLogging
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
 @Component
+@ConditionalOnBean(name = ["tickerToUidMap"])
 class LastPriceHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,

@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.dankosik"
-version = "0.6.1-beta4"
+version = "0.6.1-beta11"
 
 extra["tinkoffSdkVersion"] = "1.6"
 extra["kotlinLoggingVersion"] = "3.0.5"
@@ -37,13 +37,13 @@ dependencies {
 
     //kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:${property("kotlinCoroutinesVersion")}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${property("kotlinCoroutinesVersion")}")
     implementation("io.github.microutils:kotlin-logging:${property("kotlinLoggingVersion")}")
-    implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:${property("kotlinCoroutinesVersion")}")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:${property("kotlinCoroutinesVersion")}")
+    api("io.projectreactor.kotlin:reactor-kotlin-extensions")
 
     //tinkoff-sdk
-    implementation("ru.tinkoff.piapi:java-sdk-core:${property("tinkoffSdkVersion")}")
+    api("ru.tinkoff.piapi:java-sdk-core:${property("tinkoffSdkVersion")}")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
@@ -123,8 +123,8 @@ publishing {
 
 
 signing {
-    if (!version.toString().endsWith("SNAPSHOT")) {
-        useGpgCmd()
+        val signingKey: String = project.properties["signing.key"].toString()
+        val signingPassword: String = project.properties["signing.password"].toString()
+        useInMemoryPgpKeys(signingKey, signingPassword)
         sign(publishing.publications["mavenJava"])
-    }
 }

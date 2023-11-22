@@ -6,10 +6,12 @@ import io.github.dankosik.starter.invest.contract.positions.BasePositionsHandler
 import io.github.dankosik.starter.invest.contract.positions.BlockingPositionsHandler
 import io.github.dankosik.starter.invest.contract.positions.CoroutinePositionsHandler
 import mu.KLogging
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
 @Component
+@ConditionalOnBean(name = ["tickerToUidMap"])
 class PositionsHandlerRegistry(
     private val applicationContext: ApplicationContext,
 ) {

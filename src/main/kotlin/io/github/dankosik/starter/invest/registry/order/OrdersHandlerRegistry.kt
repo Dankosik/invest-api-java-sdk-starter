@@ -6,10 +6,12 @@ import io.github.dankosik.starter.invest.contract.orders.BaseOrdersHandler
 import io.github.dankosik.starter.invest.contract.orders.BlockingOrdersHandler
 import io.github.dankosik.starter.invest.contract.orders.CoroutineOrdersHandler
 import mu.KLogging
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
 @Component
+@ConditionalOnBean(name = ["tickerToUidMap"])
 class OrdersHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,

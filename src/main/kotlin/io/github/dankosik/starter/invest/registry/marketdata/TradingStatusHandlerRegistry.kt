@@ -6,10 +6,12 @@ import io.github.dankosik.starter.invest.contract.status.BaseTradingStatusHandle
 import io.github.dankosik.starter.invest.contract.status.BlockingTradingStatusHandler
 import io.github.dankosik.starter.invest.contract.status.CoroutineTradingStatusHandler
 import mu.KLogging
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
 @Component
+@ConditionalOnBean(name = ["tickerToUidMap"])
 class TradingStatusHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,

@@ -6,11 +6,13 @@ import io.github.dankosik.starter.invest.contract.candle.BaseCandleHandler
 import io.github.dankosik.starter.invest.contract.candle.BlockingCandleHandler
 import io.github.dankosik.starter.invest.contract.candle.CoroutineCandleHandler
 import mu.KLogging
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import ru.tinkoff.piapi.contract.v1.SubscriptionInterval
 
 @Component
+@ConditionalOnBean(name = ["tickerToUidMap"])
 class CandleHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,
