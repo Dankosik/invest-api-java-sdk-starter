@@ -81,7 +81,15 @@ import ru.tinkoff.piapi.core.stream.StreamProcessor
 import java.util.concurrent.Executors
 
 @AutoConfiguration
-@ConditionalOnBean(name = ["tickerToUidMap"])
+@ConditionalOnBean(name = [
+    "tradesHandlerRegistry",
+    "orderBookHandlerRegistry",
+    "lastPriceHandlerRegistry",
+    "tradingStatusHandlerRegistry",
+    "portfolioHandlerRegistry",
+    "positionsHandlerRegistry",
+    "ordersHandlerRegistry",
+])
 class StreamProcessorsAutoConfiguration {
 
     val orderBookHandlerFunctionMap = mutableMapOf<BaseOrderBookHandler, (OrderBook) -> Unit>()
