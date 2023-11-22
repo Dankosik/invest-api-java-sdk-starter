@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.dankosik"
-version = "0.6.1-beta5"
+version = "0.6.1-beta8"
 
 extra["tinkoffSdkVersion"] = "1.6"
 extra["kotlinLoggingVersion"] = "3.0.5"
@@ -123,11 +123,8 @@ publishing {
 
 
 signing {
-//    if (!version.toString().endsWith("SNAPSHOT")) {
-//        useGpgCmd()
         val signingKey: String = project.properties["signing.key"].toString()
         val signingPassword: String = project.properties["signing.password"].toString()
         useInMemoryPgpKeys(signingKey, signingPassword)
         sign(publishing.publications["mavenJava"])
-//    }
 }
