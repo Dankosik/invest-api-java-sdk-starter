@@ -22,15 +22,20 @@ jobs:
           server-id: github
           settings-path: ${{ github.workspace }}
 
+      - name: Restore gradle.properties
+        env:
+          GRADLE_PROPERTIES: ${{ secrets.GRADLE_PROPERTIES }}
+        shell: bash
+        run: |
+          mkdir -p ~/.gradle/
+          echo "GRADLE_USER_HOME=${HOME}/.gradle" >> $GITHUB_ENV
+          echo "${GRADLE_PROPERTIES}" > ~/.gradle/gradle.properties
+
+
       - name: Gradle Build Action
         uses: gradle/gradle-build-action@v2.9.0
         with:
           arguments: build
 
       - name: Publish to Maven Central
-        env:
-          ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
         run: ./gradlew publish closeAndReleaseStagingRepository
