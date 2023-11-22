@@ -27,6 +27,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import ru.tinkoff.piapi.contract.v1.InstrumentStatus
@@ -35,6 +36,7 @@ import ru.tinkoff.piapi.core.InstrumentsService
 
 @AutoConfiguration
 @AutoConfigureAfter(value = [InstrumentsService::class])
+@ConditionalOnBean(value = [InstrumentsService::class])
 class InstrumentsMapAutoConfiguration(
     private val applicationContext: ApplicationContext,
     private val instrumentsServices: List<InstrumentsService>,

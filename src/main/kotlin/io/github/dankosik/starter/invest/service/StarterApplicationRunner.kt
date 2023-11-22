@@ -1,6 +1,5 @@
 package io.github.dankosik.starter.invest.service
 
-import io.github.dankosik.starter.invest.configuration.properties.TinkoffApiProperties
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -18,7 +17,6 @@ import ru.tinkoff.piapi.core.stream.StreamProcessor
 
 @Component
 class StarterApplicationRunner(
-    private val tinkoffApiProperties: TinkoffApiProperties,
     private val positionsStreamProcessor: StreamProcessor<PositionsStreamResponse>,
     private val ordersStreamProcessor: StreamProcessor<TradesStreamResponse>,
     private val portfolioStreamProcessor: StreamProcessor<PortfolioStreamResponse>,
