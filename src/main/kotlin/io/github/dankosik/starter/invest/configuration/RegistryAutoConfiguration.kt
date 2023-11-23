@@ -8,12 +8,12 @@ import io.github.dankosik.starter.invest.registry.marketdata.TradingStatusHandle
 import io.github.dankosik.starter.invest.registry.operation.PortfolioHandlerRegistry
 import io.github.dankosik.starter.invest.registry.operation.PositionsHandlerRegistry
 import io.github.dankosik.starter.invest.registry.order.OrdersHandlerRegistry
-import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 
-@AutoConfiguration
+@Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(name = ["tickerToUidMap"])
 class RegistryAutoConfiguration(
     private val applicationContext: ApplicationContext,
