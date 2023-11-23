@@ -102,14 +102,14 @@ class StreamProcessorsAutoConfiguration {
         mutableMapOf<BaseOrdersStreamProcessor, (TradesStreamResponse) -> Unit>()
 
     @Bean
-    fun commonMarketDataStreamProcessor(
+    internal fun commonMarketDataStreamProcessor(
         streamProcessors: List<StreamProcessor<MarketDataResponse>>
     ): StreamProcessor<MarketDataResponse> = StreamProcessor<MarketDataResponse> { response ->
         streamProcessors.forEach { it.process(response) }
     }
 
     @Bean
-    fun tradesStreamProcessor(
+    internal fun tradesStreamProcessor(
         tradesHandlerRegistry: TradesHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
@@ -140,7 +140,7 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    fun orderBookStreamProcessor(
+    internal fun orderBookStreamProcessor(
         orderBookHandlerRegistry: OrderBookHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
@@ -172,7 +172,7 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    fun lastPriceStreamProcessor(
+    internal fun lastPriceStreamProcessor(
         lastPriceHandlerRegistry: LastPriceHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
@@ -205,7 +205,7 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    fun tradingStatusStreamProcessor(
+    internal fun tradingStatusStreamProcessor(
         tradingStatusHandlerRegistry: TradingStatusHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
@@ -238,7 +238,7 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    fun candleStreamProcessor(
+    internal fun candleStreamProcessor(
         lastPriceHandlerRegistry: CandleHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
@@ -280,7 +280,7 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    fun portfolioStreamProcessor(
+    internal fun portfolioStreamProcessor(
         portfolioHandlerRegistry: PortfolioHandlerRegistry,
         streamProcessors: List<BasePortfolioStreamProcessor>
     ): StreamProcessor<PortfolioStreamResponse> = when {
@@ -316,7 +316,7 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    fun positionsStreamProcessor(
+    internal fun positionsStreamProcessor(
         positionsHandlerRegistry: PositionsHandlerRegistry,
         streamProcessors: List<BasePositionsStreamProcessor>
     ): StreamProcessor<PositionsStreamResponse> = when {
@@ -352,7 +352,7 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    fun ordersStreamProcessor(
+    internal fun ordersStreamProcessor(
         ordersHandlerRegistry: OrdersHandlerRegistry,
         streamProcessors: List<BaseOrdersStreamProcessor>
     ): StreamProcessor<TradesStreamResponse> = when {
