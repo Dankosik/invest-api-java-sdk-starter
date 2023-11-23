@@ -19,9 +19,6 @@ class FullAccessServicesAutoConfiguration(
     private val tinkoffApiProperties: TinkoffApiProperties,
 ) {
 
-    @Volatile
-    private var id: Int = 0
-
     @Bean
     fun investApi() = InvestApi.create(tinkoffApiProperties.apiToken.fullAccess!!)
 

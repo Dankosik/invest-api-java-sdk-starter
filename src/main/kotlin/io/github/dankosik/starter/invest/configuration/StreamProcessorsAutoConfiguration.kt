@@ -63,6 +63,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.annotation.Bean
 import ru.tinkoff.piapi.contract.v1.Candle
@@ -81,7 +82,7 @@ import ru.tinkoff.piapi.core.stream.StreamProcessor
 import java.util.concurrent.Executors
 
 @AutoConfiguration
-@ConditionalOnBean(name = ["tickerToUidMap"])
+@AutoConfigureAfter(RegistryAutoConfiguration::class)
 class StreamProcessorsAutoConfiguration {
 
     val orderBookHandlerFunctionMap = mutableMapOf<BaseOrderBookHandler, (OrderBook) -> Unit>()
@@ -109,7 +110,6 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(name = ["tradesHandlerRegistry"])
     fun tradesStreamProcessor(
         tradesHandlerRegistry: TradesHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
@@ -141,7 +141,6 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(name = ["orderBookHandlerRegistry"])
     fun orderBookStreamProcessor(
         orderBookHandlerRegistry: OrderBookHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
@@ -174,7 +173,6 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(name = ["lastPriceHandlerRegistry"])
     fun lastPriceStreamProcessor(
         lastPriceHandlerRegistry: LastPriceHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
@@ -208,7 +206,6 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(name = ["tradingStatusHandlerRegistry"])
     fun tradingStatusStreamProcessor(
         tradingStatusHandlerRegistry: TradingStatusHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
@@ -242,7 +239,6 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(name = ["lastPriceHandlerRegistry"])
     fun candleStreamProcessor(
         lastPriceHandlerRegistry: CandleHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
@@ -285,7 +281,6 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(name = ["portfolioHandlerRegistry"])
     fun portfolioStreamProcessor(
         portfolioHandlerRegistry: PortfolioHandlerRegistry,
         streamProcessors: List<BasePortfolioStreamProcessor>
@@ -322,7 +317,6 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(name = ["positionsHandlerRegistry"])
     fun positionsStreamProcessor(
         positionsHandlerRegistry: PositionsHandlerRegistry,
         streamProcessors: List<BasePositionsStreamProcessor>
@@ -359,7 +353,6 @@ class StreamProcessorsAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(name = ["ordersHandlerRegistry"])
     fun ordersStreamProcessor(
         ordersHandlerRegistry: OrdersHandlerRegistry,
         streamProcessors: List<BaseOrdersStreamProcessor>
