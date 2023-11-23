@@ -4,3 +4,4 @@ io.github.dankosik.starter.invest.configuration.ReadonlyServicesAutoConfiguratio
 io.github.dankosik.starter.invest.configuration.SandboxServicesAutoConfiguration
 io.github.dankosik.starter.invest.configuration.InstrumentsAutoConfiguration
 io.github.dankosik.starter.invest.configuration.InstrumentsMapAutoConfiguration
+io.github.dankosik.starter.invest.configuration.RegistryAutoConfiguration
