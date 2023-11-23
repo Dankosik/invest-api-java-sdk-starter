@@ -68,6 +68,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import ru.tinkoff.piapi.contract.v1.Candle
 import ru.tinkoff.piapi.contract.v1.LastPrice
 import ru.tinkoff.piapi.contract.v1.MarketDataResponse
@@ -117,6 +118,7 @@ class StreamProcessorsAutoConfiguration {
     fun commonMarketDataSubscription(
         @Qualifier("marketDataStreamService")
         marketDataStreamService: MarketDataStreamService,
+        @Qualifier("commonMarketDataStreamProcessor")
         commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>
     ): MarketDataSubscriptionService? = marketDataStreamService.newStream(
         "commonMarketDataSubscription",
@@ -129,6 +131,7 @@ class StreamProcessorsAutoConfiguration {
     fun commonMarketDataSubscriptionReadonly(
         @Qualifier("marketDataStreamServiceReadonly")
         marketDataStreamServiceReadonly: MarketDataStreamService,
+        @Qualifier("commonMarketDataStreamProcessor")
         commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>
     ): MarketDataSubscriptionService? = marketDataStreamServiceReadonly.newStream(
         "commonDataSubscriptionReadonly",
@@ -141,6 +144,7 @@ class StreamProcessorsAutoConfiguration {
     fun commonDataSubscriptionServiceSandbox(
         @Qualifier("marketDataStreamServiceSandbox")
         marketDataStreamServiceSandbox: MarketDataStreamService,
+        @Qualifier("commonMarketDataStreamProcessor")
         commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>
     ): MarketDataSubscriptionService? = marketDataStreamServiceSandbox.newStream(
         "commonDataSubscriptionServiceSandbox",
