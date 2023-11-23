@@ -5,10 +5,8 @@ import io.github.dankosik.starter.invest.contract.orders.AsyncOrdersHandler
 import io.github.dankosik.starter.invest.contract.orders.BlockingOrdersHandler
 import io.github.dankosik.starter.invest.contract.orders.CoroutineOrdersHandler
 import org.springframework.beans.factory.config.BeanPostProcessor
-import org.springframework.stereotype.Component
 
-@Component
-class OrdersBeanPostProcessor : BeanPostProcessor {
+internal class OrdersBeanPostProcessor : BeanPostProcessor {
 
     private val uniquePairs = mutableSetOf<Pair<String, String>>()
 

@@ -5,10 +5,8 @@ import io.github.dankosik.starter.invest.contract.portfolio.AsyncPortfolioHandle
 import io.github.dankosik.starter.invest.contract.portfolio.BlockingPortfolioHandler
 import io.github.dankosik.starter.invest.contract.portfolio.CoroutinePortfolioHandler
 import org.springframework.beans.factory.config.BeanPostProcessor
-import org.springframework.stereotype.Component
 
-@Component
-class PortfolioBeanPostProcessor : BeanPostProcessor {
+internal class PortfolioBeanPostProcessor : BeanPostProcessor {
 
     private val uniqueAccounts = mutableSetOf<String>()
 

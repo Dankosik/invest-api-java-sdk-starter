@@ -10,9 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
-@Component
-@ConditionalOnBean(name = ["tickerToUidMap"])
-class OrdersHandlerRegistry(
+internal class OrdersHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,
 ) {
@@ -28,6 +26,7 @@ class OrdersHandlerRegistry(
         coroutineHandlers.forEach { it.addAccountIdToHandlerMap() }
         asyncHandlers.forEach { it.addAccountIdToHandlerMap() }
     }
+
 
     fun getHandlerByUidAndAccountId(uId: String?, accountId: String): BaseOrdersHandler? =
         handlersByInstrumentUid[accountId]?.get(uId)

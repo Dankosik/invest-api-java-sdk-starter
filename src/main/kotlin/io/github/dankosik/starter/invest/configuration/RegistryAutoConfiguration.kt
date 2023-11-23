@@ -21,26 +21,26 @@ class RegistryAutoConfiguration(
 ) {
 
     @Bean
-    fun candleHandlerRegistry() = CandleHandlerRegistry(applicationContext, tickerToUidMap)
+    internal fun candleHandlerRegistry() = CandleHandlerRegistry(applicationContext, tickerToUidMap)
 
     @Bean
-    fun lastPriceHandlerRegistry() = LastPriceHandlerRegistry(applicationContext, tickerToUidMap)
+    internal fun lastPriceHandlerRegistry() = LastPriceHandlerRegistry(applicationContext, tickerToUidMap)
 
     @Bean
-    fun orderBookHandlerRegistry() = OrderBookHandlerRegistry(applicationContext, tickerToUidMap)
+    internal fun orderBookHandlerRegistry() = OrderBookHandlerRegistry(applicationContext, tickerToUidMap)
 
     @Bean
-    fun tradesHandlerRegistry() = TradesHandlerRegistry(applicationContext, tickerToUidMap)
+    internal fun tradesHandlerRegistry() = TradesHandlerRegistry(applicationContext, tickerToUidMap)
 
     @Bean
-    fun tradingStatusHandlerRegistry() = TradingStatusHandlerRegistry(applicationContext, tickerToUidMap)
+    internal fun tradingStatusHandlerRegistry() = TradingStatusHandlerRegistry(applicationContext, tickerToUidMap)
 
     @Bean
-    fun portfolioHandlerRegistry() = PortfolioHandlerRegistry(applicationContext)
+    internal fun portfolioHandlerRegistry() = PortfolioHandlerRegistry(applicationContext)
 
     @Bean
-    fun positionsHandlerRegistry() = PositionsHandlerRegistry(applicationContext)
+    internal fun positionsHandlerRegistry() = PositionsHandlerRegistry(applicationContext)
 
     @Bean
-    fun ordersHandlerRegistry() = OrdersHandlerRegistry(applicationContext, tickerToUidMap)
+    internal fun ordersHandlerRegistry() = OrdersHandlerRegistry(applicationContext, tickerToUidMap)
 }

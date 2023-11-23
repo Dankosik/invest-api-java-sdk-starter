@@ -10,9 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
-@Component
-@ConditionalOnBean(name = ["tickerToUidMap"])
-class TradesHandlerRegistry(
+internal class TradesHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,
 ) {
