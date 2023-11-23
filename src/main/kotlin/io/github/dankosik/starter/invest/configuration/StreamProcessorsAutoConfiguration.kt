@@ -58,10 +58,9 @@ import io.github.dankosik.starter.invest.registry.operation.PositionsHandlerRegi
 import io.github.dankosik.starter.invest.registry.order.OrdersHandlerRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import mu.KLogging
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -69,6 +68,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.DependsOn
+import org.springframework.core.task.SimpleAsyncTaskExecutor
 import ru.tinkoff.piapi.contract.v1.Candle
 import ru.tinkoff.piapi.contract.v1.LastPrice
 import ru.tinkoff.piapi.contract.v1.MarketDataResponse
@@ -84,7 +84,6 @@ import ru.tinkoff.piapi.contract.v1.TradingStatus
 import ru.tinkoff.piapi.core.stream.MarketDataStreamService
 import ru.tinkoff.piapi.core.stream.MarketDataSubscriptionService
 import ru.tinkoff.piapi.core.stream.StreamProcessor
-import java.util.concurrent.Executors
 
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(RegistryAutoConfiguration::class)
@@ -106,6 +105,10 @@ class StreamProcessorsAutoConfiguration {
         mutableMapOf<BasePositionsStreamProcessor, (PositionsStreamResponse) -> Unit>()
     val baseOrdersStreamProcessorFunctionMap =
         mutableMapOf<BaseOrdersStreamProcessor, (TradesStreamResponse) -> Unit>()
+
+    @Autowired(required = false)
+    @Qualifier("executor")
+    private val executor: SimpleAsyncTaskExecutor? = null
 
     @Bean
     fun commonMarketDataStreamProcessor(
@@ -493,7 +496,10 @@ class StreamProcessorsAutoConfiguration {
 
     private fun BaseCandleHandler.createFunctionForHandler(): (Candle) -> Unit = { candle ->
         when (val baseCandleHandler = this) {
-            is BlockingCandleHandler -> VIRTUAL_THREAD_SCOPE.launch { baseCandleHandler.handleBlocking(candle) }
+            is BlockingCandleHandler -> executor?.submit {
+                baseCandleHandler.handleBlocking(candle)
+            } ?: baseCandleHandler.handleBlocking(candle)
+
             is CoroutineCandleHandler -> DEFAULT_SCOPE.launch { baseCandleHandler.handle(candle) }
             is AsyncCandleHandler -> baseCandleHandler.handleAsync(candle)
         }
@@ -501,7 +507,10 @@ class StreamProcessorsAutoConfiguration {
 
     private fun BaseLastPriceHandler.createFunctionForHandler(): (LastPrice) -> Unit = { lastPrice ->
         when (val baseLastPriceHandler = this) {
-            is BlockingLastPriceHandler -> VIRTUAL_THREAD_SCOPE.launch { baseLastPriceHandler.handleBlocking(lastPrice) }
+            is BlockingLastPriceHandler -> executor?.submit {
+                baseLastPriceHandler.handleBlocking(lastPrice)
+            } ?: baseLastPriceHandler.handleBlocking(lastPrice)
+
             is CoroutineLastPriceHandler -> DEFAULT_SCOPE.launch { baseLastPriceHandler.handle(lastPrice) }
             is AsyncLastPriceHandler -> baseLastPriceHandler.handleAsync(lastPrice)
         }
@@ -509,11 +518,9 @@ class StreamProcessorsAutoConfiguration {
 
     private fun BaseTradingStatusHandler.createFunctionForHandler(): (TradingStatus) -> Unit = { tradingStatus ->
         when (val baseLastPriceHandler = this) {
-            is BlockingTradingStatusHandler -> VIRTUAL_THREAD_SCOPE.launch {
-                baseLastPriceHandler.handleBlocking(
-                    tradingStatus
-                )
-            }
+            is BlockingTradingStatusHandler -> executor?.submit {
+                baseLastPriceHandler.handleBlocking(tradingStatus)
+            } ?: baseLastPriceHandler.handleBlocking(tradingStatus)
 
             is CoroutineTradingStatusHandler -> DEFAULT_SCOPE.launch { baseLastPriceHandler.handle(tradingStatus) }
             is AsyncTradingStatusHandler -> baseLastPriceHandler.handleAsync(tradingStatus)
@@ -523,7 +530,10 @@ class StreamProcessorsAutoConfiguration {
 
     private fun BaseTradesHandler.createFunctionForHandler(): (Trade) -> Unit = { trade ->
         when (val baseTradesHandler = this) {
-            is BlockingTradesHandler -> VIRTUAL_THREAD_SCOPE.launch { baseTradesHandler.handleBlocking(trade) }
+            is BlockingTradesHandler -> executor?.submit {
+                baseTradesHandler.handleBlocking(trade)
+            } ?: baseTradesHandler.handleBlocking(trade)
+
             is CoroutineTradesHandler -> DEFAULT_SCOPE.launch { baseTradesHandler.handle(trade) }
             is AsyncTradesHandler -> baseTradesHandler.handleAsync(trade)
         }
@@ -531,7 +541,10 @@ class StreamProcessorsAutoConfiguration {
 
     private fun BaseOrderBookHandler.createFunctionForHandler(): (OrderBook) -> Unit = { orderBook ->
         when (val baseOrderBookHandler = this) {
-            is BlockingOrderBookHandler -> runBlocking { baseOrderBookHandler.handleBlocking(orderBook) }
+            is BlockingOrderBookHandler -> executor?.submit {
+                baseOrderBookHandler.handleBlocking(orderBook)
+            } ?: baseOrderBookHandler.handleBlocking(orderBook)
+
             is CoroutineOrderBookHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(orderBook) }
             is AsyncOrderBookHandler -> baseOrderBookHandler.handleAsync(orderBook)
         }
@@ -539,7 +552,10 @@ class StreamProcessorsAutoConfiguration {
 
     private fun BasePortfolioHandler.createFunctionForHandler(): (PortfolioResponse) -> Unit = { portfolio ->
         when (val baseOrderBookHandler = this) {
-            is BlockingPortfolioHandler -> runBlocking { baseOrderBookHandler.handleBlocking(portfolio) }
+            is BlockingPortfolioHandler -> executor?.submit {
+                baseOrderBookHandler.handleBlocking(portfolio)
+            } ?: baseOrderBookHandler.handleBlocking(portfolio)
+
             is CoroutinePortfolioHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(portfolio) }
             is AsyncPortfolioHandler -> baseOrderBookHandler.handleAsync(portfolio)
         }
@@ -547,7 +563,10 @@ class StreamProcessorsAutoConfiguration {
 
     private fun BasePositionsHandler.createFunctionForHandler(): (PositionData) -> Unit = { positions ->
         when (val baseOrderBookHandler = this) {
-            is BlockingPositionsHandler -> runBlocking { baseOrderBookHandler.handleBlocking(positions) }
+            is BlockingPositionsHandler -> executor?.submit {
+                baseOrderBookHandler.handleBlocking(positions)
+            } ?: baseOrderBookHandler.handleBlocking(positions)
+
             is CoroutinePositionsHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(positions) }
             is AsyncPositionsHandler -> baseOrderBookHandler.handleAsync(positions)
         }
@@ -555,7 +574,10 @@ class StreamProcessorsAutoConfiguration {
 
     private fun BaseOrdersHandler.createFunctionForHandler(): (OrderTrades) -> Unit = { orders ->
         when (val baseOrderBookHandler = this) {
-            is BlockingOrdersHandler -> runBlocking { baseOrderBookHandler.handleBlocking(orders) }
+            is BlockingOrdersHandler -> executor?.submit {
+                baseOrderBookHandler.handleBlocking(orders)
+            } ?: baseOrderBookHandler.handleBlocking(orders)
+
             is CoroutineOrdersHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(orders) }
             is AsyncOrdersHandler -> baseOrderBookHandler.handleAsync(orders)
         }
@@ -564,9 +586,9 @@ class StreamProcessorsAutoConfiguration {
     private fun BaseMarketDataStreamProcessor.createFunctionForProcessor(): (MarketDataResponse) -> Unit =
         { marketDataResponse ->
             when (val marketDataStreamProcessor = this) {
-                is BlockingMarketDataStreamProcessorAdapter -> VIRTUAL_THREAD_SCOPE.launch {
+                is BlockingMarketDataStreamProcessorAdapter -> executor?.submit {
                     marketDataStreamProcessor.process(marketDataResponse)
-                }
+                } ?: marketDataStreamProcessor.process(marketDataResponse)
 
                 is CoroutineMarketDataStreamProcessorAdapter -> DEFAULT_SCOPE.launch {
                     marketDataStreamProcessor.process(marketDataResponse)
@@ -579,9 +601,9 @@ class StreamProcessorsAutoConfiguration {
     private fun BasePortfolioStreamProcessor.createFunctionForProcessor(): (PortfolioStreamResponse) -> Unit =
         { portfolioResponse ->
             when (val portfolioStreamProcessor = this) {
-                is BlockingPortfolioStreamProcessorAdapter -> VIRTUAL_THREAD_SCOPE.launch {
+                is BlockingPortfolioStreamProcessorAdapter -> executor?.submit {
                     portfolioStreamProcessor.process(portfolioResponse)
-                }
+                } ?: portfolioStreamProcessor.process(portfolioResponse)
 
                 is CoroutinePortfolioStreamProcessorAdapter -> DEFAULT_SCOPE.launch {
                     portfolioStreamProcessor.process(portfolioResponse)
@@ -594,9 +616,9 @@ class StreamProcessorsAutoConfiguration {
     private fun BasePositionsStreamProcessor.createFunctionForProcessor(): (PositionsStreamResponse) -> Unit =
         { positionsStreamResponse ->
             when (val customPositionsStreamProcessor = this) {
-                is BlockingPositionsStreamProcessorAdapter -> VIRTUAL_THREAD_SCOPE.launch {
+                is BlockingPositionsStreamProcessorAdapter -> executor?.submit {
                     customPositionsStreamProcessor.process(positionsStreamResponse)
-                }
+                } ?: customPositionsStreamProcessor.process(positionsStreamResponse)
 
                 is CoroutinePositionsStreamProcessorAdapter -> DEFAULT_SCOPE.launch {
                     customPositionsStreamProcessor.process(positionsStreamResponse)
@@ -611,9 +633,9 @@ class StreamProcessorsAutoConfiguration {
     private fun BaseOrdersStreamProcessor.createFunctionForProcessor(): (TradesStreamResponse) -> Unit =
         { tradesStreamResponse ->
             when (val customPositionsStreamProcessor = this) {
-                is BlockingOrdersStreamProcessorAdapter -> VIRTUAL_THREAD_SCOPE.launch {
+                is BlockingOrdersStreamProcessorAdapter -> executor?.submit {
                     customPositionsStreamProcessor.process(tradesStreamResponse)
-                }
+                } ?: customPositionsStreamProcessor.process(tradesStreamResponse)
 
                 is CoroutineOrdersStreamProcessorAdapter -> DEFAULT_SCOPE.launch {
                     customPositionsStreamProcessor.process(tradesStreamResponse)
@@ -663,7 +685,5 @@ class StreamProcessorsAutoConfiguration {
 
     private companion object : KLogging() {
         val DEFAULT_SCOPE = CoroutineScope(Dispatchers.Default)
-        val VIRTUAL_THREAD_SCOPE =
-            CoroutineScope(Executors.newVirtualThreadPerTaskExecutor().asCoroutineDispatcher())
     }
 }

@@ -7,3 +7,4 @@ io.github.dankosik.starter.invest.configuration.InstrumentsMapAutoConfiguration
 io.github.dankosik.starter.invest.configuration.StreamStartAutoconfiguration
 io.github.dankosik.starter.invest.configuration.InstrumentsAutoConfiguration
 io.github.dankosik.starter.invest.configuration.RegistryAutoConfiguration
+io.github.dankosik.starter.invest.configuration.ExecutorAutoconfiguration
