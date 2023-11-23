@@ -1,5 +1,6 @@
 package io.github.dankosik.starter.invest.configuration
 
+import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -103,7 +104,8 @@ class StreamStartAutoconfiguration(
     private val accountsOrdersSandbox: MutableSet<String>? = null
 
 
-    init {
+    @PostConstruct
+    fun init() {
         subscribeMarketDataStream()
         subscribeMarketDataStreamSandbox()
 
