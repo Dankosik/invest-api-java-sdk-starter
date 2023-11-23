@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.dankosik"
-version = "0.6.1-beta22"
+version = "0.6.1-beta23"
 
 extra["tinkoffSdkVersion"] = "1.6"
 extra["kotlinLoggingVersion"] = "3.0.5"
