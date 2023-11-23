@@ -108,14 +108,15 @@ class StreamProcessorsAutoConfiguration {
         mutableMapOf<BaseOrdersStreamProcessor, (TradesStreamResponse) -> Unit>()
 
     @Bean
-    internal fun commonMarketDataStreamProcessor(
+    fun commonMarketDataStreamProcessor(
         streamProcessors: List<StreamProcessor<MarketDataResponse>>
     ): StreamProcessor<MarketDataResponse> = StreamProcessor<MarketDataResponse> { response ->
         streamProcessors.forEach { it.process(response) }
     }
 
     @Bean
-    @ConditionalOnBean(name = ["commonMarketDataStreamProcessor"])
+    @ConditionalOnBean(name = ["marketDataStreamService"])
+    @DependsOn(value = ["commonMarketDataStreamProcessor"])
     fun commonMarketDataSubscription(
         @Qualifier("marketDataStreamService")
         marketDataStreamService: MarketDataStreamService,
@@ -129,7 +130,8 @@ class StreamProcessorsAutoConfiguration {
 
     @Bean("commonMarketDataSubscription")
     @ConditionalOnMissingBean(name = ["commonMarketDataSubscription"])
-    @ConditionalOnBean(name = ["commonMarketDataStreamProcessor"])
+    @ConditionalOnBean(name = ["marketDataStreamServiceReadonly"])
+    @DependsOn(value = ["commonMarketDataStreamProcessor"])
     fun commonMarketDataSubscriptionReadonly(
         @Qualifier("marketDataStreamServiceReadonly")
         marketDataStreamServiceReadonly: MarketDataStreamService,
@@ -142,7 +144,8 @@ class StreamProcessorsAutoConfiguration {
     )
 
     @Bean
-    @ConditionalOnBean(name = ["marketDataStreamServiceSandbox", "commonMarketDataStreamProcessor"])
+    @ConditionalOnBean(name = ["marketDataStreamServiceSandbox"])
+    @DependsOn(value = ["commonMarketDataStreamProcessor"])
     fun commonDataSubscriptionServiceSandbox(
         @Qualifier("marketDataStreamServiceSandbox")
         marketDataStreamServiceSandbox: MarketDataStreamService,
