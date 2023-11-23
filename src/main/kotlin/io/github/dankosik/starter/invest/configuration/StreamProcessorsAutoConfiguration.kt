@@ -62,7 +62,10 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import ru.tinkoff.piapi.contract.v1.Candle
@@ -77,6 +80,8 @@ import ru.tinkoff.piapi.contract.v1.PositionsStreamResponse
 import ru.tinkoff.piapi.contract.v1.Trade
 import ru.tinkoff.piapi.contract.v1.TradesStreamResponse
 import ru.tinkoff.piapi.contract.v1.TradingStatus
+import ru.tinkoff.piapi.core.stream.MarketDataStreamService
+import ru.tinkoff.piapi.core.stream.MarketDataSubscriptionService
 import ru.tinkoff.piapi.core.stream.StreamProcessor
 import java.util.concurrent.Executors
 
@@ -107,6 +112,41 @@ class StreamProcessorsAutoConfiguration {
     ): StreamProcessor<MarketDataResponse> = StreamProcessor<MarketDataResponse> { response ->
         streamProcessors.forEach { it.process(response) }
     }
+
+    @Bean
+    fun commonMarketDataSubscription(
+        @Qualifier("marketDataStreamService")
+        marketDataStreamService: MarketDataStreamService,
+        commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>
+    ): MarketDataSubscriptionService? = marketDataStreamService.newStream(
+        "commonMarketDataSubscription",
+        commonMarketDataStreamProcessor,
+        null
+    )
+
+    @Bean("commonMarketDataSubscription")
+    @ConditionalOnMissingBean(name = ["commonMarketDataSubscription"])
+    fun commonMarketDataSubscriptionReadonly(
+        @Qualifier("marketDataStreamServiceReadonly")
+        marketDataStreamServiceReadonly: MarketDataStreamService,
+        commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>
+    ): MarketDataSubscriptionService? = marketDataStreamServiceReadonly.newStream(
+        "commonDataSubscriptionReadonly",
+        commonMarketDataStreamProcessor,
+        null
+    )
+
+    @Bean
+    @ConditionalOnBean(name = ["marketDataStreamServiceSandbox"])
+    fun commonDataSubscriptionServiceSandbox(
+        @Qualifier("marketDataStreamServiceSandbox")
+        marketDataStreamServiceSandbox: MarketDataStreamService,
+        commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>
+    ): MarketDataSubscriptionService? = marketDataStreamServiceSandbox.newStream(
+        "commonDataSubscriptionServiceSandbox",
+        commonMarketDataStreamProcessor,
+        null
+    )
 
     @Bean
     internal fun tradesStreamProcessor(

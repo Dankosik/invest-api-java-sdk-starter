@@ -51,15 +51,4 @@ class FullAccessServicesAutoConfiguration(
 
     @Bean
     fun marketDataStreamService(investApi: InvestApi) = investApi.marketDataStreamService
-
-    @Bean
-    @ConditionalOnBean(name = ["commonMarketDataStreamProcessor"])
-    fun commonMarketDataSubscription(
-        marketDataStreamService: MarketDataStreamService,
-        commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>
-    ): MarketDataSubscriptionService? = marketDataStreamService.newStream(
-        "commonMarketDataSubscription",
-        commonMarketDataStreamProcessor,
-        null
-    )
 }

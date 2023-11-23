@@ -52,17 +52,4 @@ class SandboxServicesAutoConfiguration(
 
     @Bean
     fun operationsStreamServiceSandbox(investApiSandbox: InvestApi) = investApiSandbox.operationsStreamService!!
-
-    @Bean
-    @ConditionalOnBean(name = ["commonMarketDataStreamProcessor"])
-    fun commonDataSubscriptionServiceSandbox(
-        marketDataStreamServiceSandbox: MarketDataStreamService,
-        commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>
-    ): MarketDataSubscriptionService? = marketDataStreamServiceSandbox.newStream(
-        "commonDataSubscriptionServiceSandbox",
-        commonMarketDataStreamProcessor,
-        null
-    )
-
-    private companion object : KLogging()
 }

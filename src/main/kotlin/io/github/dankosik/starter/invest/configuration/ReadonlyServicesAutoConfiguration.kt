@@ -52,17 +52,4 @@ class ReadonlyServicesAutoConfiguration(
 
     @Bean
     fun operationsStreamServiceReadonly(investApiReadonly: InvestApi) = investApiReadonly.operationsStreamService!!
-
-
-    @Bean
-    @ConditionalOnMissingBean(name = ["commonDataSubscription"])
-    @ConditionalOnBean(name = ["commonMarketDataStreamProcessor"])
-    fun commonDataSubscription(
-        marketDataStreamServiceReadonly: MarketDataStreamService,
-        commonMarketDataStreamProcessor: StreamProcessor<MarketDataResponse>
-    ): MarketDataSubscriptionService? = marketDataStreamServiceReadonly.newStream(
-        "commonDataSubscriptionReadonly",
-        commonMarketDataStreamProcessor,
-        null
-    )
 }
