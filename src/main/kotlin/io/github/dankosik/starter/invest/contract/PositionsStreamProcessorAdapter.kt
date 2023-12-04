@@ -20,8 +20,8 @@ interface CoroutinePositionsStreamProcessorAdapter : BasePositionsStreamProcesso
     suspend fun process(positionsStreamResponse: PositionsStreamResponse)
 }
 
-fun BlockingPositionsStreamProcessorAdapter(
-    block: (PositionsStreamResponse) -> Unit
+inline fun BlockingPositionsStreamProcessorAdapter(
+    crossinline block: (PositionsStreamResponse) -> Unit
 ): BlockingPositionsStreamProcessorAdapter = object : BlockingPositionsStreamProcessorAdapter {
     override fun process(positionsStreamResponse: PositionsStreamResponse) = block(positionsStreamResponse)
     override var beforePositionsHandlers = false
@@ -29,8 +29,8 @@ fun BlockingPositionsStreamProcessorAdapter(
 }
 
 
-fun AsyncPositionsStreamProcessorAdapter(
-    block: (PositionsStreamResponse) -> CompletableFuture<Void>
+inline fun AsyncPositionsStreamProcessorAdapter(
+    crossinline block: (PositionsStreamResponse) -> CompletableFuture<Void>
 ): AsyncPositionsStreamProcessorAdapter = object : AsyncPositionsStreamProcessorAdapter {
     override fun process(positionsStreamResponse: PositionsStreamResponse): CompletableFuture<Void> =
         block(positionsStreamResponse)
@@ -39,8 +39,8 @@ fun AsyncPositionsStreamProcessorAdapter(
     override var afterPositionsHandlers = false
 }
 
-fun CoroutinePositionsStreamProcessorAdapter(
-    block: suspend (PositionsStreamResponse) -> Unit
+inline fun CoroutinePositionsStreamProcessorAdapter(
+    crossinline block: suspend (PositionsStreamResponse) -> Unit
 ): CoroutinePositionsStreamProcessorAdapter = object : CoroutinePositionsStreamProcessorAdapter {
     override suspend fun process(positionsStreamResponse: PositionsStreamResponse): Unit =
         block(positionsStreamResponse)
@@ -49,12 +49,12 @@ fun CoroutinePositionsStreamProcessorAdapter(
     override var afterPositionsHandlers = false
 }
 
-fun <T : BasePositionsStreamProcessor> T.beforePositionsHandlers(): T {
+fun <T : BasePositionsStreamProcessor> T.runBeforePositionsHandlers(): T {
     this.beforePositionsHandlers = true
     return this
 }
 
-fun <T : BasePositionsStreamProcessor> T.afterPositionsHandlers(): T {
+fun <T : BasePositionsStreamProcessor> T.runAfterPositionsHandlers(): T {
     this.afterPositionsHandlers = true
     return this
 }

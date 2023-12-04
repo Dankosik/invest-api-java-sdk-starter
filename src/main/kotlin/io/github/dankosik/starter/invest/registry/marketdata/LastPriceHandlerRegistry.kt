@@ -6,9 +6,8 @@ import io.github.dankosik.starter.invest.contract.lastprice.BaseLastPriceHandler
 import io.github.dankosik.starter.invest.contract.lastprice.BlockingLastPriceHandler
 import io.github.dankosik.starter.invest.contract.lastprice.CoroutineLastPriceHandler
 import mu.KLogging
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
-import org.springframework.stereotype.Component
+import ru.tinkoff.piapi.contract.v1.LastPrice
 
 internal class LastPriceHandlerRegistry(
     private val applicationContext: ApplicationContext,
@@ -27,6 +26,9 @@ internal class LastPriceHandlerRegistry(
         coroutineHandlers.forEach { it.addInstrumentIdToHandlerMap() }
         asyncHandlers.forEach { it.addInstrumentIdToHandlerMap() }
     }
+
+    fun getHandler(lastPrice: LastPrice): BaseLastPriceHandler? =
+        getHandlerByUid(lastPrice.instrumentUid) ?: getHandlerByFigi(lastPrice.figi)
 
     fun getHandlerByUid(uId: String?): BaseLastPriceHandler? = handlersByInstrumentUid[uId]
     fun getHandlerByFigi(figi: String?): BaseLastPriceHandler? = handlersByFigi[figi]

@@ -7,8 +7,8 @@ plugins {
     id("maven-publish")
     signing
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
-    kotlin("jvm") version "1.9.20"
-    kotlin("plugin.spring") version "1.9.20"
+    kotlin("jvm") version "1.9.21"
+    kotlin("plugin.spring") version "1.9.21"
 }
 
 group = "io.github.dankosik"

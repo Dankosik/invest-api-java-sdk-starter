@@ -6,9 +6,8 @@ import io.github.dankosik.starter.invest.contract.orders.BaseOrdersHandler
 import io.github.dankosik.starter.invest.contract.orders.BlockingOrdersHandler
 import io.github.dankosik.starter.invest.contract.orders.CoroutineOrdersHandler
 import mu.KLogging
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
-import org.springframework.stereotype.Component
+import ru.tinkoff.piapi.contract.v1.OrderTrades
 
 internal class OrdersHandlerRegistry(
     private val applicationContext: ApplicationContext,
@@ -27,6 +26,9 @@ internal class OrdersHandlerRegistry(
         asyncHandlers.forEach { it.addAccountIdToHandlerMap() }
     }
 
+    fun getHandler(orderTrades: OrderTrades) =
+        getHandlerByUidAndAccountId(orderTrades.instrumentUid, orderTrades.accountId)
+            ?: getHandlerByFigiAndAccountId(orderTrades.figi, orderTrades.accountId)
 
     fun getHandlerByUidAndAccountId(uId: String?, accountId: String): BaseOrdersHandler? =
         handlersByInstrumentUid[accountId]?.get(uId)
