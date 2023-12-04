@@ -1,18 +1,22 @@
-name: ChatGPT Review
+name: Code Review
 
-on: [pull_request]
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
 
 jobs:
-  run_code_review:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Code Review GPT
-        uses: mattzcarey/code-review-gpt@v0.1.5
-        with:
+      - uses: anc95/ChatGPT-CodeReview@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          MODEL: 'gpt-3.5-turbo'
-          GITHUB_TOKEN: ${{ github.token }}
+          # Optional
+          LANGUAGE: Russian
+          OPENAI_API_ENDPOINT: https://api.proxyapi.ru/openai
+          PROMPT: "You are an expert kotlin/java developer, your task is to review a pull requests. Please check if there are any confusions or irregularities in the following code diff"
