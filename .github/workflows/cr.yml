@@ -17,6 +17,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LANGUAGE: Russian
-          OPENAI_API_ENDPOINT: https://api.proxyapi.ru/openai
+          OPENAI_API_ENDPOINT: https://api.proxyapi.ru/openai/v1
           MODEL: gpt-3.5-turbo
           PROMPT: "You are an expert kotlin/java developer, your task is to review a pull requests. Please check if there are any confusions or irregularities in the following code diff"
