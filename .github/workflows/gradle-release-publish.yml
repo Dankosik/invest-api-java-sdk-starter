@@ -22,22 +22,20 @@ jobs:
           server-id: github
           settings-path: ${{ github.workspace }}
 
-      - name: Gradle Build Action
-        uses: gradle/gradle-build-action@v2.9.0
-        with:
-          arguments: build
-
-
       - name: Restore gradle.properties
-        uses: actions/checkout@v3
         env:
           GRADLE_PROPERTIES: ${{ secrets.GRADLE_PROPERTIES }}
         shell: bash
         run: |
           mkdir -p ~/.gradle/
-          echo "::set-env name=GRADLE_USER_HOME::$HOME/.gradle"
-          echo ${GRADLE_PROPERTIES} > ~/.gradle/gradle.properties
+          echo "GRADLE_USER_HOME=${HOME}/.gradle" >> $GITHUB_ENV
+          echo "${GRADLE_PROPERTIES}" > ~/.gradle/gradle.properties
+
+
+      - name: Gradle Build Action
+        uses: gradle/gradle-build-action@v2.9.0
+        with:
+          arguments: build
 
       - name: Publish to Maven Central
-        uses: gradle/gradle-build-action@v2.9.0
         run: ./gradlew publish closeAndReleaseStagingRepository

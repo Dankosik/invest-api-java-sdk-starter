@@ -1,7 +1,19 @@
 package io.github.dankosik.starter.invest.configuration
 
-import io.github.dankosik.starter.invest.annotation.marketdata.*
-import io.github.dankosik.starter.invest.annotation.order.*
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTrades
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStatus
+import io.github.dankosik.starter.invest.annotation.marketdata.extractFigiToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.marketdata.extractTickerToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.marketdata.extractTickersWithoutInstrumentType
+import io.github.dankosik.starter.invest.annotation.marketdata.extractUidToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.order.HandleOrders
+import io.github.dankosik.starter.invest.annotation.order.extractFigiToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.order.extractTickerToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.order.extractTickersWithoutInstrumentType
+import io.github.dankosik.starter.invest.annotation.order.extractUidToInstrumentTypeMap
 import io.github.dankosik.starter.invest.contract.candle.AsyncCandleHandler
 import io.github.dankosik.starter.invest.contract.candle.BlockingCandleHandler
 import io.github.dankosik.starter.invest.contract.candle.CoroutineCandleHandler
@@ -25,16 +37,17 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
-import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import ru.tinkoff.piapi.contract.v1.InstrumentStatus
 import ru.tinkoff.piapi.contract.v1.InstrumentType
 import ru.tinkoff.piapi.core.InstrumentsService
 
-@AutoConfiguration
-@AutoConfigureAfter(value = [InstrumentsService::class])
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnBean(value = [InstrumentsService::class])
 class InstrumentsMapAutoConfiguration(
     private val applicationContext: ApplicationContext,
     private val instrumentsServices: List<InstrumentsService>,

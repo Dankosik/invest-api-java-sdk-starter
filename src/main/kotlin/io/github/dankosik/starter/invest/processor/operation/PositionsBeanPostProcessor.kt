@@ -5,10 +5,8 @@ import io.github.dankosik.starter.invest.contract.positions.AsyncPositionsHandle
 import io.github.dankosik.starter.invest.contract.positions.BlockingPositionsHandler
 import io.github.dankosik.starter.invest.contract.positions.CoroutinePositionsHandler
 import org.springframework.beans.factory.config.BeanPostProcessor
-import org.springframework.stereotype.Component
 
-@Component
-class PositionsBeanPostProcessor : BeanPostProcessor {
+internal class PositionsBeanPostProcessor : BeanPostProcessor {
 
     private val uniqueAccounts = mutableSetOf<String>()
 

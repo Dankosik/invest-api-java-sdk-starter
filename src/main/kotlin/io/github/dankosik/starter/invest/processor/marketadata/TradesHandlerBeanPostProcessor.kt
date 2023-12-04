@@ -6,10 +6,8 @@ import io.github.dankosik.starter.invest.contract.trade.BlockingTradesHandler
 import io.github.dankosik.starter.invest.contract.trade.CoroutineTradesHandler
 import io.github.dankosik.starter.invest.extension.addAllNotBlank
 import org.springframework.beans.factory.config.BeanPostProcessor
-import org.springframework.stereotype.Component
 
-@Component
-class TradesHandlerBeanPostProcessor : BeanPostProcessor {
+internal class TradesHandlerBeanPostProcessor : BeanPostProcessor {
 
     private val uniqueInstruments = mutableSetOf<String>()
 

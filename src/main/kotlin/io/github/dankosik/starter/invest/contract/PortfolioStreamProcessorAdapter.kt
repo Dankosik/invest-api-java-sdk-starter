@@ -20,8 +20,8 @@ interface CoroutinePortfolioStreamProcessorAdapter : BasePortfolioStreamProcesso
     suspend fun process(portfolioStreamResponse: PortfolioStreamResponse)
 }
 
-fun BlockingPortfolioStreamProcessorAdapter(
-    block: (PortfolioStreamResponse) -> Unit
+inline fun BlockingPortfolioStreamProcessorAdapter(
+    crossinline block: (PortfolioStreamResponse) -> Unit
 ): BlockingPortfolioStreamProcessorAdapter = object : BlockingPortfolioStreamProcessorAdapter {
     override fun process(portfolioStreamResponse: PortfolioStreamResponse) = block(portfolioStreamResponse)
     override var beforePortfolioHandlers = false
@@ -29,8 +29,8 @@ fun BlockingPortfolioStreamProcessorAdapter(
 }
 
 
-fun AsyncPortfolioStreamProcessorAdapter(
-    block: (PortfolioStreamResponse) -> CompletableFuture<Void>
+inline fun AsyncPortfolioStreamProcessorAdapter(
+    crossinline block: (PortfolioStreamResponse) -> CompletableFuture<Void>
 ): AsyncPortfolioStreamProcessorAdapter = object : AsyncPortfolioStreamProcessorAdapter {
     override fun process(portfolioStreamResponse: PortfolioStreamResponse): CompletableFuture<Void> =
         block(portfolioStreamResponse)
@@ -39,8 +39,8 @@ fun AsyncPortfolioStreamProcessorAdapter(
     override var afterPortfolioHandlers = false
 }
 
-fun CoroutinePortfolioStreamProcessorAdapter(
-    block: suspend (PortfolioStreamResponse) -> Unit
+inline fun CoroutinePortfolioStreamProcessorAdapter(
+    crossinline block: suspend (PortfolioStreamResponse) -> Unit
 ): CoroutinePortfolioStreamProcessorAdapter = object : CoroutinePortfolioStreamProcessorAdapter {
     override suspend fun process(portfolioStreamResponse: PortfolioStreamResponse): Unit =
         block(portfolioStreamResponse)
@@ -49,12 +49,12 @@ fun CoroutinePortfolioStreamProcessorAdapter(
     override var afterPortfolioHandlers = false
 }
 
-fun <T : BasePortfolioStreamProcessor> T.beforePortfolioHandlers(): T {
+fun <T : BasePortfolioStreamProcessor> T.runBeforePortfolioHandlers(): T {
     this.beforePortfolioHandlers = true
     return this
 }
 
-fun <T : BasePortfolioStreamProcessor> T.afterPortfolioHandlers(): T {
+fun <T : BasePortfolioStreamProcessor> T.runAfterPortfolioHandlers(): T {
     this.afterPortfolioHandlers = true
     return this
 }

@@ -5,12 +5,15 @@ import io.github.dankosik.starter.invest.contract.orderbook.AsyncOrderBookHandle
 import io.github.dankosik.starter.invest.contract.orderbook.BaseOrderBookHandler
 import io.github.dankosik.starter.invest.contract.orderbook.BlockingOrderBookHandler
 import io.github.dankosik.starter.invest.contract.orderbook.CoroutineOrderBookHandler
+import io.github.dankosik.starter.invest.contract.trade.BaseTradesHandler
 import mu.KLogging
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
+import ru.tinkoff.piapi.contract.v1.OrderBook
+import ru.tinkoff.piapi.contract.v1.Trade
 
-@Component
-class OrderBookHandlerRegistry(
+internal class OrderBookHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,
 ) {
@@ -26,6 +29,9 @@ class OrderBookHandlerRegistry(
         coroutineTradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
         tradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
     }
+
+    fun getHandler(orderBook: OrderBook): BaseOrderBookHandler? =
+        getHandlerByUid(orderBook.instrumentUid) ?: getHandlerByFigi(orderBook.figi)
 
     fun getHandlerByFigi(figi: String?): BaseOrderBookHandler? = handlersByFigi[figi]
     fun getHandlerByUid(uId: String?): BaseOrderBookHandler? = handlersByInstrumentUid[uId]

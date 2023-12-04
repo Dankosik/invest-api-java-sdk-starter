@@ -6,10 +6,8 @@ import io.github.dankosik.starter.invest.contract.status.BlockingTradingStatusHa
 import io.github.dankosik.starter.invest.contract.status.CoroutineTradingStatusHandler
 import io.github.dankosik.starter.invest.extension.addAllNotBlank
 import org.springframework.beans.factory.config.BeanPostProcessor
-import org.springframework.stereotype.Component
 
-@Component
-class TradingStatusBeanPostProcessor : BeanPostProcessor {
+internal class TradingStatusBeanPostProcessor : BeanPostProcessor {
 
     private val uniqueInstruments = mutableSetOf<String>()
 

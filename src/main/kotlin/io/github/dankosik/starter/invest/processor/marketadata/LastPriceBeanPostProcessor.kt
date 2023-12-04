@@ -8,8 +8,7 @@ import io.github.dankosik.starter.invest.extension.addAllNotBlank
 import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.stereotype.Component
 
-@Component
-class LastPriceBeanPostProcessor : BeanPostProcessor {
+internal class LastPriceBeanPostProcessor : BeanPostProcessor {
 
     private val uniqueInstruments = mutableSetOf<String>()
 
@@ -17,7 +16,7 @@ class LastPriceBeanPostProcessor : BeanPostProcessor {
         check(
             !(bean.javaClass.declaredAnnotations.filterIsInstance<HandleLastPrice>().isNotEmpty()
                     && (bean !is CoroutineLastPriceHandler && bean !is BlockingLastPriceHandler && bean !is AsyncLastPriceHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleLastPrice should be implements AsyncLastPriceHandler or BlockingTradesHandler or CoroutineTradesHandler" }
+        ) { "Class: ${bean.javaClass.name} that annotated of HandleLastPrice should be implements AsyncLastPriceHandler or BlockingLastPriceHandler or CoroutineLastPriceHandler" }
         if (bean is CoroutineLastPriceHandler || bean is BlockingLastPriceHandler || bean is AsyncLastPriceHandler) {
             val classNameInMessage = when (bean) {
                 is CoroutineLastPriceHandler -> "CoroutineLastPriceHandler"

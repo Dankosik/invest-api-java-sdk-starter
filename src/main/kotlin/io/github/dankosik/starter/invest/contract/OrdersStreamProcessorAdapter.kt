@@ -20,8 +20,8 @@ interface CoroutineOrdersStreamProcessorAdapter : BaseOrdersStreamProcessor {
     suspend fun process(tradesStreamResponse: TradesStreamResponse)
 }
 
-fun BlockingOrdersStreamProcessorAdapter(
-    block: (TradesStreamResponse) -> Unit
+inline fun BlockingOrdersStreamProcessorAdapter(
+    crossinline block: (TradesStreamResponse) -> Unit
 ): BlockingOrdersStreamProcessorAdapter = object : BlockingOrdersStreamProcessorAdapter {
     override fun process(tradesStreamResponse: TradesStreamResponse) = block(tradesStreamResponse)
     override var beforeOrdersHandlers = false
@@ -29,8 +29,8 @@ fun BlockingOrdersStreamProcessorAdapter(
 }
 
 
-fun AsyncOrdersStreamProcessorAdapter(
-    block: (TradesStreamResponse) -> CompletableFuture<Void>
+inline fun AsyncOrdersStreamProcessorAdapter(
+    crossinline block: (TradesStreamResponse) -> CompletableFuture<Void>
 ): AsyncOrdersStreamProcessorAdapter = object : AsyncOrdersStreamProcessorAdapter {
     override fun process(tradesStreamResponse: TradesStreamResponse): CompletableFuture<Void> =
         block(tradesStreamResponse)
@@ -39,8 +39,8 @@ fun AsyncOrdersStreamProcessorAdapter(
     override var afterOrdersHandlers = false
 }
 
-fun CoroutineOrdersStreamProcessorAdapter(
-    block: suspend (TradesStreamResponse) -> Unit
+inline fun CoroutineOrdersStreamProcessorAdapter(
+    crossinline block: suspend (TradesStreamResponse) -> Unit
 ): CoroutineOrdersStreamProcessorAdapter = object : CoroutineOrdersStreamProcessorAdapter {
     override suspend fun process(tradesStreamResponse: TradesStreamResponse): Unit =
         block(tradesStreamResponse)
@@ -49,12 +49,12 @@ fun CoroutineOrdersStreamProcessorAdapter(
     override var afterOrdersHandlers = false
 }
 
-fun <T : BaseOrdersStreamProcessor> T.beforePositionsHandlers(): T {
+fun <T : BaseOrdersStreamProcessor> T.runBeforePositionsHandlers(): T {
     this.beforeOrdersHandlers = true
     return this
 }
 
-fun <T : BaseOrdersStreamProcessor> T.afterPositionsHandlers(): T {
+fun <T : BaseOrdersStreamProcessor> T.runAfterPositionsHandlers(): T {
     this.afterOrdersHandlers = true
     return this
 }

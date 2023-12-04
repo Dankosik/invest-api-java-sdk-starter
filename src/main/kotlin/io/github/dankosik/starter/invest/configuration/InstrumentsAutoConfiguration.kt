@@ -1,6 +1,10 @@
 package io.github.dankosik.starter.invest.configuration
 
-import io.github.dankosik.starter.invest.annotation.marketdata.*
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTrades
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStatus
 import io.github.dankosik.starter.invest.annotation.operation.HandlePortfolio
 import io.github.dankosik.starter.invest.annotation.operation.HandlePositions
 import io.github.dankosik.starter.invest.annotation.order.HandleOrders
@@ -25,15 +29,15 @@ import io.github.dankosik.starter.invest.contract.status.CoroutineTradingStatusH
 import io.github.dankosik.starter.invest.contract.trade.AsyncTradesHandler
 import io.github.dankosik.starter.invest.contract.trade.BlockingTradesHandler
 import io.github.dankosik.starter.invest.contract.trade.CoroutineTradesHandler
-import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import ru.tinkoff.piapi.contract.v1.SubscriptionInterval
 
-@AutoConfiguration
+@Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(name = ["tickerToUidMap"])
 class InstrumentsAutoConfiguration(
     private val applicationContext: ApplicationContext,

@@ -1,12 +1,10 @@
-package io.github.dankosik.starter.invest.service
+package io.github.dankosik.starter.invest.configuration
 
-import io.github.dankosik.starter.invest.configuration.properties.TinkoffApiProperties
-import mu.KLogging
+import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.ApplicationArguments
-import org.springframework.boot.ApplicationRunner
-import org.springframework.stereotype.Component
+import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.context.annotation.Configuration
 import ru.tinkoff.piapi.contract.v1.PortfolioStreamResponse
 import ru.tinkoff.piapi.contract.v1.PositionsStreamResponse
 import ru.tinkoff.piapi.contract.v1.SubscriptionInterval
@@ -16,13 +14,13 @@ import ru.tinkoff.piapi.core.stream.OperationsStreamService
 import ru.tinkoff.piapi.core.stream.OrdersStreamService
 import ru.tinkoff.piapi.core.stream.StreamProcessor
 
-@Component
-class StarterApplicationRunner(
-    private val tinkoffApiProperties: TinkoffApiProperties,
+@Configuration(proxyBeanMethods = false)
+@AutoConfigureAfter(StreamProcessorsAutoConfiguration::class)
+class StreamStartAutoconfiguration(
     private val positionsStreamProcessor: StreamProcessor<PositionsStreamResponse>,
     private val ordersStreamProcessor: StreamProcessor<TradesStreamResponse>,
     private val portfolioStreamProcessor: StreamProcessor<PortfolioStreamResponse>,
-) : ApplicationRunner {
+) {
 
     @Autowired(required = false)
     @Qualifier("commonMarketDataSubscription")
@@ -106,7 +104,8 @@ class StarterApplicationRunner(
     private val accountsOrdersSandbox: MutableSet<String>? = null
 
 
-    override fun run(args: ApplicationArguments?) {
+    @PostConstruct
+    fun init() {
         subscribeMarketDataStream()
         subscribeMarketDataStreamSandbox()
 
@@ -191,6 +190,4 @@ class StarterApplicationRunner(
         instrumentsTradingStatus.takeIf { !it.isNullOrEmpty() }?.toList()
             ?.let { commonMarketDataSubscription?.subscribeInfo(it) }
     }
-
-    private companion object : KLogging()
 }

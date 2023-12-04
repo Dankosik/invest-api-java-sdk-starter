@@ -7,11 +7,10 @@ import io.github.dankosik.starter.invest.contract.candle.BlockingCandleHandler
 import io.github.dankosik.starter.invest.contract.candle.CoroutineCandleHandler
 import mu.KLogging
 import org.springframework.context.ApplicationContext
-import org.springframework.stereotype.Component
+import ru.tinkoff.piapi.contract.v1.Candle
 import ru.tinkoff.piapi.contract.v1.SubscriptionInterval
 
-@Component
-class CandleHandlerRegistry(
+internal class CandleHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,
 ) {
@@ -28,6 +27,9 @@ class CandleHandlerRegistry(
         coroutineHandlers.forEach { it.addIntervalToHandlerMap() }
         asyncHandlers.forEach { it.addIntervalToHandlerMap() }
     }
+
+    fun getHandler(candle: Candle) = getHandlerByUidAndInterval(candle.instrumentUid, candle.interval)
+        ?: getHandlerByFigiAndInterval(candle.figi, candle.interval)
 
     fun getHandlerByUidAndInterval(uId: String?, subscriptionInterval: SubscriptionInterval): BaseCandleHandler? =
         handlersByInstrumentUid[subscriptionInterval]?.get(uId)

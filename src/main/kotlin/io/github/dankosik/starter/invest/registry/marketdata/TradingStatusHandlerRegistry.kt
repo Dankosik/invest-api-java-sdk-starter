@@ -5,12 +5,15 @@ import io.github.dankosik.starter.invest.contract.status.AsyncTradingStatusHandl
 import io.github.dankosik.starter.invest.contract.status.BaseTradingStatusHandler
 import io.github.dankosik.starter.invest.contract.status.BlockingTradingStatusHandler
 import io.github.dankosik.starter.invest.contract.status.CoroutineTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.trade.BaseTradesHandler
 import mu.KLogging
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
+import ru.tinkoff.piapi.contract.v1.Trade
+import ru.tinkoff.piapi.contract.v1.TradingStatus
 
-@Component
-class TradingStatusHandlerRegistry(
+internal class TradingStatusHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,
 ) {
@@ -27,6 +30,9 @@ class TradingStatusHandlerRegistry(
         coroutineHandlers.forEach { it.addInstrumentIdToHandlerMap() }
         asyncHandlers.forEach { it.addInstrumentIdToHandlerMap() }
     }
+
+    fun getHandler(tradingStatus: TradingStatus): BaseTradingStatusHandler? =
+        getHandlerByUid(tradingStatus.instrumentUid) ?: getHandlerByFigi(tradingStatus.figi)
 
     fun getHandlerByUid(uId: String?): BaseTradingStatusHandler? = handlersByInstrumentUid[uId]
     fun getHandlerByFigi(figi: String?): BaseTradingStatusHandler? = handlersByFigi[figi]

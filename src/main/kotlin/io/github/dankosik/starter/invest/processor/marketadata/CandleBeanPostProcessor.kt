@@ -5,11 +5,9 @@ import io.github.dankosik.starter.invest.contract.candle.AsyncCandleHandler
 import io.github.dankosik.starter.invest.contract.candle.BlockingCandleHandler
 import io.github.dankosik.starter.invest.contract.candle.CoroutineCandleHandler
 import org.springframework.beans.factory.config.BeanPostProcessor
-import org.springframework.stereotype.Component
 import ru.tinkoff.piapi.contract.v1.SubscriptionInterval
 
-@Component
-class CandleBeanPostProcessor : BeanPostProcessor {
+internal class CandleBeanPostProcessor : BeanPostProcessor {
 
     private val uniquePairs = mutableSetOf<Pair<String, SubscriptionInterval>>()
 

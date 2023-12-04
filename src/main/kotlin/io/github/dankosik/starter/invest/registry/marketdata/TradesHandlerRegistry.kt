@@ -7,10 +7,9 @@ import io.github.dankosik.starter.invest.contract.trade.BlockingTradesHandler
 import io.github.dankosik.starter.invest.contract.trade.CoroutineTradesHandler
 import mu.KLogging
 import org.springframework.context.ApplicationContext
-import org.springframework.stereotype.Component
+import ru.tinkoff.piapi.contract.v1.Trade
 
-@Component
-class TradesHandlerRegistry(
+internal class TradesHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,
 ) {
@@ -27,6 +26,9 @@ class TradesHandlerRegistry(
         coroutineTradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
         asyncTradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
     }
+
+    fun getHandler(trade: Trade): BaseTradesHandler? =
+        getHandlerByUid(trade.instrumentUid) ?: getHandlerByFigi(trade.figi)
 
     fun getHandlerByUid(uId: String?): BaseTradesHandler? = handlersByInstrumentUid[uId]
     fun getHandlerByFigi(figi: String?): BaseTradesHandler? = handlersByFigi[figi]
