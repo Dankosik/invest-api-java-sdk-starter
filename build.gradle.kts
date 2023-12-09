@@ -16,7 +16,7 @@ version = "0.6.1-beta27"
 
 extra["tinkoffSdkVersion"] = "1.6"
 extra["kotlinLoggingVersion"] = "3.0.5"
-extra["kotlinCoroutinesVersion"] = "1.7.3"
+extra["kotlinCoroutinesVersion"] = "1.8.0-RC"
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(17))
@@ -26,12 +26,10 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://repo.spring.io/milestone") }
 }
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-configuration-processor")
     implementation("org.springframework.boot:spring-boot-autoconfigure")
 
@@ -84,9 +82,13 @@ publishing {
             pom {
                 name.set("Invest API java sdk starter")
                 url.set("https://github.com/Dankosik/invest-api-java-sdk-starter")
-                description.set("Starter for RussianInvestments/invest-api-java-sdk is a convenient tool that allows you to" +
-                        " quickly and easily integrate RussianInvestments/invest-api-java-sdk for accessing market data and trading into your Spring Boot applications." +
-                        " This starter provides easy configuration and automatic setup, allowing you to focus on developing functionality instead of spending time on setting up the integration with RussianInvestments/invest-api-java-sdk.")
+                val projectDescription = """
+            Starter for RussianInvestments/invest-api-java-sdk is a convenient tool that allows you to quickly and easily 
+            integrate RussianInvestments/invest-api-java-sdk for accessing market data and trading into your Spring Boot 
+            applications. This starter provides easy configuration and automatic setup, allowing you to focus on developing 
+            functionality instead of spending time on setting up the integration with RussianInvestments/invest-api-java-sdk.
+        """.trimIndent()
+                description.set(projectDescription)
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
@@ -123,8 +125,8 @@ publishing {
 
 
 signing {
-        val signingKey: String = project.properties["signing.key"].toString()
-        val signingPassword: String = project.properties["signing.password"].toString()
-        useInMemoryPgpKeys(signingKey, signingPassword)
-        sign(publishing.publications["mavenJava"])
+    val signingKey: String = project.properties["signing.key"].toString()
+    val signingPassword: String = project.properties["signing.password"].toString()
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign(publishing.publications["mavenJava"])
 }

@@ -1,6 +1,6 @@
 package io.github.dankosik.starter.invest.annotation.marketdata
 
-import io.github.dankosik.starter.invest.contract.lastprice.BaseLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BaseLastPriceHandler
 import org.springframework.stereotype.Service
 import ru.tinkoff.piapi.contract.v1.InstrumentType
 

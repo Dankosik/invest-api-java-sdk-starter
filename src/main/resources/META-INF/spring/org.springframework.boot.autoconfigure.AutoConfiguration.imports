@@ -1,3 +1,4 @@
+io.github.dankosik.starter.invest.configuration.StreamProcessorsAdaptersAutoConfiguration
 io.github.dankosik.starter.invest.configuration.FullAccessServicesAutoConfiguration
 io.github.dankosik.starter.invest.configuration.BeanPostProcessorAutoconfiguration
 io.github.dankosik.starter.invest.configuration.StreamProcessorsAutoConfiguration

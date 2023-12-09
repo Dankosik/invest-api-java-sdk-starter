@@ -3,32 +3,33 @@ package io.github.dankosik.starter.invest.configuration
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
-import io.github.dankosik.starter.invest.annotation.marketdata.HandleTrades
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTrade
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStatus
 import io.github.dankosik.starter.invest.annotation.operation.HandlePortfolio
-import io.github.dankosik.starter.invest.annotation.operation.HandlePositions
-import io.github.dankosik.starter.invest.annotation.order.HandleOrders
-import io.github.dankosik.starter.invest.contract.candle.AsyncCandleHandler
-import io.github.dankosik.starter.invest.contract.candle.BlockingCandleHandler
-import io.github.dankosik.starter.invest.contract.candle.CoroutineCandleHandler
-import io.github.dankosik.starter.invest.contract.lastprice.AsyncLastPriceHandler
-import io.github.dankosik.starter.invest.contract.lastprice.BlockingLastPriceHandler
-import io.github.dankosik.starter.invest.contract.lastprice.CoroutineLastPriceHandler
-import io.github.dankosik.starter.invest.contract.orderbook.AsyncOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.BlockingOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.CoroutineOrderBookHandler
-import io.github.dankosik.starter.invest.contract.portfolio.AsyncPortfolioHandler
-import io.github.dankosik.starter.invest.contract.portfolio.BlockingPortfolioHandler
-import io.github.dankosik.starter.invest.contract.portfolio.CoroutinePortfolioHandler
-import io.github.dankosik.starter.invest.contract.positions.AsyncPositionsHandler
-import io.github.dankosik.starter.invest.contract.positions.BlockingPositionsHandler
-import io.github.dankosik.starter.invest.contract.positions.CoroutinePositionsHandler
-import io.github.dankosik.starter.invest.contract.status.AsyncTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.status.BlockingTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.status.CoroutineTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.trade.AsyncTradesHandler
-import io.github.dankosik.starter.invest.contract.trade.BlockingTradesHandler
-import io.github.dankosik.starter.invest.contract.trade.CoroutineTradesHandler
+import io.github.dankosik.starter.invest.annotation.operation.HandlePosition
+import io.github.dankosik.starter.invest.annotation.order.HandleOrder
+import io.github.dankosik.starter.invest.contract.marketdata.candle.AsyncCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.BlockingCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.CoroutineCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.AsyncLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BlockingLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.CoroutineLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.AsyncOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.BlockingOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.CoroutineOrderBookHandler
+import io.github.dankosik.starter.invest.contract.operation.portfolio.AsyncPortfolioHandler
+import io.github.dankosik.starter.invest.contract.operation.portfolio.BlockingPortfolioHandler
+import io.github.dankosik.starter.invest.contract.operation.portfolio.CoroutinePortfolioHandler
+import io.github.dankosik.starter.invest.contract.operation.positions.AsyncPositionHandler
+import io.github.dankosik.starter.invest.contract.operation.positions.BlockingPositionHandler
+import io.github.dankosik.starter.invest.contract.operation.positions.CoroutinePositionHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.AsyncTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.BlockingTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.CoroutineTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.trade.AsyncTradeHandler
+import io.github.dankosik.starter.invest.contract.marketdata.trade.BlockingTradeHandler
+import io.github.dankosik.starter.invest.contract.marketdata.trade.CoroutineTradeHandler
+import mu.KLogging
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -160,8 +161,8 @@ class InstrumentsAutoConfiguration(
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
-    fun instrumentsCandle(): MutableMap<SubscriptionInterval, MutableList<String>> {
-        val result = mutableMapOf<SubscriptionInterval, MutableList<String>>()
+    fun instrumentsCandle(): MutableMap<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>> {
+        val result = mutableMapOf<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>>()
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values
         val candleBookHandlers = annotatedBeans.filterIsInstance<CoroutineCandleHandler>() +
                 annotatedBeans.filterIsInstance<AsyncCandleHandler>() +
@@ -184,8 +185,8 @@ class InstrumentsAutoConfiguration(
     @Bean("instrumentsCandle")
     @ConditionalOnMissingBean(name = ["instrumentsCandle"])
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
-    fun instrumentsCandleReadonly(): MutableMap<SubscriptionInterval, MutableList<String>> {
-        val result = mutableMapOf<SubscriptionInterval, MutableList<String>>()
+    fun instrumentsCandleReadonly(): MutableMap<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>> {
+        val result = mutableMapOf<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>>()
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values
         val candleBookHandlers = annotatedBeans.filterIsInstance<CoroutineCandleHandler>() +
                 annotatedBeans.filterIsInstance<AsyncCandleHandler>() +
@@ -208,12 +209,12 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
     fun instrumentsTrades(): MutableSet<String> {
         val result = mutableSetOf<String>()
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrades::class.java).values
-        val tradesHandlers = annotatedBeans.filterIsInstance<AsyncTradesHandler>() +
-                annotatedBeans.filterIsInstance<CoroutineTradesHandler>() +
-                annotatedBeans.filterIsInstance<BlockingTradesHandler>()
+        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values
+        val tradesHandlers = annotatedBeans.filterIsInstance<AsyncTradeHandler>() +
+                annotatedBeans.filterIsInstance<CoroutineTradeHandler>() +
+                annotatedBeans.filterIsInstance<BlockingTradeHandler>()
         tradesHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleTrades::class.java)
+            val annotation = bean.javaClass.getAnnotation(HandleTrade::class.java)
             if (!annotation.sandboxOnly) {
                 result.add(annotation.extractInstrumentFromHandleTrades())
             }
@@ -242,12 +243,12 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
     fun accountsPositions(): MutableSet<String> {
         val result = mutableSetOf<String>()
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePositions::class.java).values
-        val positionsHandlers = annotatedBeans.filterIsInstance<CoroutinePositionsHandler>() +
-                annotatedBeans.filterIsInstance<AsyncPositionsHandler>() +
-                annotatedBeans.filterIsInstance<BlockingPositionsHandler>()
+        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePosition::class.java).values
+        val positionsHandlers = annotatedBeans.filterIsInstance<CoroutinePositionHandler>() +
+                annotatedBeans.filterIsInstance<AsyncPositionHandler>() +
+                annotatedBeans.filterIsInstance<BlockingPositionHandler>()
         positionsHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandlePositions::class.java)
+            val annotation = bean.javaClass.getAnnotation(HandlePosition::class.java)
             if (!annotation.sandboxOnly) {
                 result.add(annotation.account)
             }
@@ -260,12 +261,12 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnMissingBean(name = ["instrumentsTrades"])
     fun instrumentsTradesReadonly(): MutableSet<String> {
         val result = mutableSetOf<String>()
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrades::class.java).values
-        val tradesHandlers = annotatedBeans.filterIsInstance<AsyncTradesHandler>() +
-                annotatedBeans.filterIsInstance<CoroutineTradesHandler>() +
-                annotatedBeans.filterIsInstance<BlockingTradesHandler>()
+        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values
+        val tradesHandlers = annotatedBeans.filterIsInstance<AsyncTradeHandler>() +
+                annotatedBeans.filterIsInstance<CoroutineTradeHandler>() +
+                annotatedBeans.filterIsInstance<BlockingTradeHandler>()
         tradesHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleTrades::class.java)
+            val annotation = bean.javaClass.getAnnotation(HandleTrade::class.java)
             if (!annotation.sandboxOnly) {
                 result.add(annotation.extractInstrumentFromHandleTrades())
             }
@@ -296,12 +297,12 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnMissingBean(name = ["accountsPositions"])
     fun accountsPositionsReadonly(): MutableSet<String> {
         val result = mutableSetOf<String>()
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePositions::class.java).values
-        val positionsHandlers = annotatedBeans.filterIsInstance<CoroutinePositionsHandler>() +
-                annotatedBeans.filterIsInstance<AsyncPositionsHandler>() +
-                annotatedBeans.filterIsInstance<BlockingPositionsHandler>()
+        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePosition::class.java).values
+        val positionsHandlers = annotatedBeans.filterIsInstance<CoroutinePositionHandler>() +
+                annotatedBeans.filterIsInstance<AsyncPositionHandler>() +
+                annotatedBeans.filterIsInstance<BlockingPositionHandler>()
         positionsHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandlePositions::class.java)
+            val annotation = bean.javaClass.getAnnotation(HandlePosition::class.java)
             if (!annotation.sandboxOnly) {
                 result.add(annotation.account)
             }
@@ -313,12 +314,12 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
     fun accountsOrders(): MutableSet<String> {
         val result = mutableSetOf<String>()
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrders::class.java).values
+        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values
         val ordersHandlers = annotatedBeans.filterIsInstance<CoroutineOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<AsyncOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<BlockingOrderBookHandler>()
         ordersHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleOrders::class.java)
+            val annotation = bean.javaClass.getAnnotation(HandleOrder::class.java)
             if (!annotation.sandboxOnly) {
                 result.add(annotation.account)
             }
@@ -331,12 +332,12 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnMissingBean(name = ["accountsOrders"])
     fun accountsOrdersReadonly(): MutableSet<String> {
         val result = mutableSetOf<String>()
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrders::class.java).values
+        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values
         val ordersHandlers = annotatedBeans.filterIsInstance<CoroutineOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<AsyncOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<BlockingOrderBookHandler>()
         ordersHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleOrders::class.java)
+            val annotation = bean.javaClass.getAnnotation(HandleOrder::class.java)
             if (!annotation.sandboxOnly) {
                 result.add(annotation.account)
             }
@@ -348,12 +349,12 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
     fun instrumentsTradesSandbox(): MutableSet<String> {
         val result = mutableSetOf<String>()
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrades::class.java).values
-        val tradesHandlers = annotatedBeans.filterIsInstance<AsyncTradesHandler>() +
-                annotatedBeans.filterIsInstance<CoroutineTradesHandler>() +
-                annotatedBeans.filterIsInstance<BlockingTradesHandler>()
+        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values
+        val tradesHandlers = annotatedBeans.filterIsInstance<AsyncTradeHandler>() +
+                annotatedBeans.filterIsInstance<CoroutineTradeHandler>() +
+                annotatedBeans.filterIsInstance<BlockingTradeHandler>()
         tradesHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleTrades::class.java)
+            val annotation = bean.javaClass.getAnnotation(HandleTrade::class.java)
             if (annotation.sandboxOnly) {
                 result.add(annotation.extractInstrumentFromHandleTrades())
             }
@@ -417,8 +418,8 @@ class InstrumentsAutoConfiguration(
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
-    fun instrumentsCandleSandbox(): MutableMap<SubscriptionInterval, MutableList<String>> {
-        val result = mutableMapOf<SubscriptionInterval, MutableList<String>>()
+    fun instrumentsCandleSandbox(): MutableMap<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>> {
+        val result = mutableMapOf<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>>()
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values
         val candleBookHandlers = annotatedBeans.filterIsInstance<CoroutineCandleHandler>() +
                 annotatedBeans.filterIsInstance<AsyncCandleHandler>() +
@@ -457,12 +458,12 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
     fun accountsPositionsSandbox(): MutableSet<String> {
         val result = mutableSetOf<String>()
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePositions::class.java).values
-        val positionsHandlers = annotatedBeans.filterIsInstance<CoroutinePositionsHandler>() +
-                annotatedBeans.filterIsInstance<AsyncPositionsHandler>() +
-                annotatedBeans.filterIsInstance<BlockingPositionsHandler>()
+        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePosition::class.java).values
+        val positionsHandlers = annotatedBeans.filterIsInstance<CoroutinePositionHandler>() +
+                annotatedBeans.filterIsInstance<AsyncPositionHandler>() +
+                annotatedBeans.filterIsInstance<BlockingPositionHandler>()
         positionsHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandlePositions::class.java)
+            val annotation = bean.javaClass.getAnnotation(HandlePosition::class.java)
             if (annotation.sandboxOnly) {
                 result.add(annotation.account)
             }
@@ -474,12 +475,12 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
     fun accountsOrdersSandbox(): MutableSet<String> {
         val result = mutableSetOf<String>()
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrders::class.java).values
+        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values
         val ordersHandlers = annotatedBeans.filterIsInstance<CoroutineOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<AsyncOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<BlockingOrderBookHandler>()
         ordersHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleOrders::class.java)
+            val annotation = bean.javaClass.getAnnotation(HandleOrder::class.java)
             if (annotation.sandboxOnly) {
                 result.add(annotation.account)
             }
@@ -488,38 +489,53 @@ class InstrumentsAutoConfiguration(
     }
 
 
-    private fun HandleTrades.extractInstrumentFromHandleTrades(): String {
-        return if (figi.isNotBlank()) figi
-        else if (instrumentUid.isNotBlank()) instrumentUid
-        else if (ticker.isNotBlank()) tickerToUidMap[ticker]!!
-        else throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
+    private fun HandleTrade.extractInstrumentFromHandleTrades(): String = when {
+        figi.isNotBlank() -> figi
+        instrumentUid.isNotBlank() -> instrumentUid
+        ticker.isNotBlank() -> tickerToUidMap[ticker]!!
+        else -> throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
     }
 
-    private fun HandleOrderBook.extractInstrumentFromHandleOrderBook(): String {
-        return if (figi.isNotBlank()) figi
-        else if (instrumentUid.isNotBlank()) instrumentUid
-        else if (ticker.isNotBlank()) tickerToUidMap[ticker]!!
-        else throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
+    private fun HandleOrderBook.extractInstrumentFromHandleOrderBook(): String = when {
+        figi.isNotBlank() -> figi
+        instrumentUid.isNotBlank() -> instrumentUid
+        ticker.isNotBlank() -> tickerToUidMap[ticker]!!
+        else -> throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
     }
 
-    private fun HandleTradingStatus.extractInstrumentFromHandleTradingStatus(): String {
-        return if (figi.isNotBlank()) figi
-        else if (instrumentUid.isNotBlank()) instrumentUid
-        else if (ticker.isNotBlank()) tickerToUidMap[ticker]!!
-        else throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
+    private fun HandleTradingStatus.extractInstrumentFromHandleTradingStatus(): String = when {
+        figi.isNotBlank() -> figi
+        instrumentUid.isNotBlank() -> instrumentUid
+        ticker.isNotBlank() -> tickerToUidMap[ticker]!!
+        else -> throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
     }
 
-    private fun HandleLastPrice.extractInstrumentFromHandleLastPrice(): String {
-        return if (figi.isNotBlank()) figi
-        else if (instrumentUid.isNotBlank()) instrumentUid
-        else if (ticker.isNotBlank()) tickerToUidMap[ticker]!!
-        else throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
+    private fun HandleLastPrice.extractInstrumentFromHandleLastPrice(): String = when {
+        figi.isNotBlank() -> figi
+        instrumentUid.isNotBlank() -> instrumentUid
+        ticker.isNotBlank() -> tickerToUidMap[ticker]!!
+        else -> throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
     }
 
-    private fun HandleCandle.extractInstrumentFromCandle(): Pair<SubscriptionInterval, String> {
-        return if (figi.isNotBlank()) subscriptionInterval to figi
-        else if (instrumentUid.isNotBlank()) subscriptionInterval to instrumentUid
-        else if (ticker.isNotBlank()) subscriptionInterval to tickerToUidMap[ticker]!!
-        else throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
+    private fun HandleCandle.extractInstrumentFromCandle(): Pair<SubscriptionInterval, InstrumentIdToWaitingClose> {
+        if (subscriptionInterval != SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE && waitClose){
+            logger.warn { "\'subscriptionInterval\':$subscriptionInterval and \'waitClose\': true not supported" }
+        }
+        return when {
+            figi.isNotBlank() -> subscriptionInterval to InstrumentIdToWaitingClose(figi, waitClose)
+            instrumentUid.isNotBlank() -> subscriptionInterval to InstrumentIdToWaitingClose(instrumentUid, waitClose)
+            ticker.isNotBlank() -> {
+                subscriptionInterval to InstrumentIdToWaitingClose(tickerToUidMap[ticker]!!, waitClose)
+            }
+
+            else -> throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
+        }
     }
+
+    data class InstrumentIdToWaitingClose(
+        val instrumentId: String,
+        val waitingClose: Boolean
+    )
+
+    private companion object: KLogging()
 }

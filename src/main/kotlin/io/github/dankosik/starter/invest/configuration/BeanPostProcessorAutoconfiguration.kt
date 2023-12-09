@@ -1,13 +1,13 @@
 package io.github.dankosik.starter.invest.configuration
 
-import io.github.dankosik.starter.invest.processor.marketadata.CandleBeanPostProcessor
-import io.github.dankosik.starter.invest.processor.marketadata.LastPriceBeanPostProcessor
-import io.github.dankosik.starter.invest.processor.marketadata.OrderBookHandlerBeanPostProcessor
-import io.github.dankosik.starter.invest.processor.marketadata.TradesHandlerBeanPostProcessor
-import io.github.dankosik.starter.invest.processor.marketadata.TradingStatusBeanPostProcessor
-import io.github.dankosik.starter.invest.processor.operation.PortfolioBeanPostProcessor
-import io.github.dankosik.starter.invest.processor.operation.PositionsBeanPostProcessor
-import io.github.dankosik.starter.invest.processor.orders.OrdersBeanPostProcessor
+import io.github.dankosik.starter.invest.validation.marketadata.CandleBeanPostProcessor
+import io.github.dankosik.starter.invest.validation.marketadata.LastPriceBeanPostProcessor
+import io.github.dankosik.starter.invest.validation.marketadata.OrderBookHandlerBeanPostProcessor
+import io.github.dankosik.starter.invest.validation.marketadata.TradesHandlerBeanPostProcessor
+import io.github.dankosik.starter.invest.validation.marketadata.TradingStatusBeanPostProcessor
+import io.github.dankosik.starter.invest.validation.operation.PortfolioBeanPostProcessor
+import io.github.dankosik.starter.invest.validation.operation.PositionsBeanPostProcessor
+import io.github.dankosik.starter.invest.validation.orders.OrdersBeanPostProcessor
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 

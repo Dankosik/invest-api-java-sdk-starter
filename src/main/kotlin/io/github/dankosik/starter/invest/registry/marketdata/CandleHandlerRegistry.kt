@@ -1,10 +1,10 @@
 package io.github.dankosik.starter.invest.registry.marketdata
 
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
-import io.github.dankosik.starter.invest.contract.candle.AsyncCandleHandler
-import io.github.dankosik.starter.invest.contract.candle.BaseCandleHandler
-import io.github.dankosik.starter.invest.contract.candle.BlockingCandleHandler
-import io.github.dankosik.starter.invest.contract.candle.CoroutineCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.AsyncCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.BaseCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.BlockingCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.CoroutineCandleHandler
 import mu.KLogging
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.Candle

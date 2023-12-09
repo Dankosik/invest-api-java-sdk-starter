@@ -1,10 +1,10 @@
 package io.github.dankosik.starter.invest.registry.marketdata
 
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
-import io.github.dankosik.starter.invest.contract.lastprice.AsyncLastPriceHandler
-import io.github.dankosik.starter.invest.contract.lastprice.BaseLastPriceHandler
-import io.github.dankosik.starter.invest.contract.lastprice.BlockingLastPriceHandler
-import io.github.dankosik.starter.invest.contract.lastprice.CoroutineLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.AsyncLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BaseLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BlockingLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.CoroutineLastPriceHandler
 import mu.KLogging
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.LastPrice

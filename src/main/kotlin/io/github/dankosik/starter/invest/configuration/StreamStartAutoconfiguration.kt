@@ -1,5 +1,6 @@
 package io.github.dankosik.starter.invest.configuration
 
+import io.github.dankosik.starter.invest.configuration.properties.TinkoffApiProperties
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -20,6 +21,7 @@ class StreamStartAutoconfiguration(
     private val positionsStreamProcessor: StreamProcessor<PositionsStreamResponse>,
     private val ordersStreamProcessor: StreamProcessor<TradesStreamResponse>,
     private val portfolioStreamProcessor: StreamProcessor<PortfolioStreamResponse>,
+    private val tinkoffApiProperties: TinkoffApiProperties,
 ) {
 
     @Autowired(required = false)
@@ -70,7 +72,8 @@ class StreamStartAutoconfiguration(
     private val instrumentsTradingStatus: MutableSet<String>? = null
 
     @Autowired(required = false)
-    private val instrumentsCandle: MutableMap<SubscriptionInterval, MutableList<String>>? = null
+    private val instrumentsCandle: MutableMap<SubscriptionInterval, MutableList<InstrumentsAutoConfiguration.InstrumentIdToWaitingClose>>? =
+        null
 
     @Autowired(required = false)
     private val instrumentsLastPriceSandbox: MutableSet<String>? = null
@@ -79,7 +82,8 @@ class StreamStartAutoconfiguration(
     private val instrumentsOrderBookSandbox: MutableSet<String>? = null
 
     @Autowired(required = false)
-    private val instrumentsCandleSandbox: MutableMap<SubscriptionInterval, MutableList<String>>? = null
+    private val instrumentsCandleSandbox: MutableMap<SubscriptionInterval, MutableList<InstrumentsAutoConfiguration.InstrumentIdToWaitingClose>>? =
+        null
 
     @Autowired(required = false)
     private val instrumentsTradingStatusSandbox: MutableSet<String>? = null
@@ -156,30 +160,47 @@ class StreamStartAutoconfiguration(
     }
 
     private fun subscribeMarketDataStreamSandbox() {
-        instrumentsCandleSandbox?.forEach {
-            if (it.key == SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE) {
-                commonMarketDataSubscriptionSandbox?.subscribeCandles(it.value, it.key, true)
-            } else {
-                commonMarketDataSubscriptionSandbox?.subscribeCandles(it.value, it.key)
-            }
+        instrumentsCandleSandbox?.forEach { intervalToInstrumentsMap ->
+            intervalToInstrumentsMap.value.filter { it.waitingClose }
+                .map { it.instrumentId }
+                .takeIf { it.isNotEmpty() }
+                ?.let {
+                    commonMarketDataSubscriptionSandbox?.subscribeCandles(it, intervalToInstrumentsMap.key, true)
+                }
+            intervalToInstrumentsMap.value.filter { !it.waitingClose }
+                .map { it.instrumentId }
+                .takeIf { it.isNotEmpty() }
+                ?.let {
+                    commonMarketDataSubscriptionSandbox?.subscribeCandles(it, intervalToInstrumentsMap.key, false)
+                }
         }
         instrumentsTradesSandbox.takeIf { !it.isNullOrEmpty() }?.toList()
             ?.let { commonMarketDataSubscriptionSandbox?.subscribeTrades(it) }
         instrumentsLastPriceSandbox.takeIf { !it.isNullOrEmpty() }?.toList()
             ?.let { commonMarketDataSubscriptionSandbox?.subscribeLastPrices(it) }
         instrumentsOrderBookSandbox.takeIf { !it.isNullOrEmpty() }?.toList()
-            ?.let { commonMarketDataSubscriptionSandbox?.subscribeOrderbook(it) }
+            ?.let {
+                val depth = tinkoffApiProperties.subscription?.orderBook?.depth ?: DEFAULT_ORDERBOOK_DEPTH
+                commonMarketDataSubscriptionSandbox?.subscribeOrderbook(it, depth)
+            }
         instrumentsTradingStatusSandbox.takeIf { !it.isNullOrEmpty() }?.toList()
             ?.let { commonMarketDataSubscriptionSandbox?.subscribeInfo(it) }
     }
 
     private fun subscribeMarketDataStream() {
-        instrumentsCandle?.forEach {
-            if (it.key == SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE) {
-                commonMarketDataSubscription?.subscribeCandles(it.value, it.key, true)
-            } else {
-                commonMarketDataSubscription?.subscribeCandles(it.value, it.key)
-            }
+        instrumentsCandle?.forEach { intervalToInstrumentsMap ->
+            intervalToInstrumentsMap.value.filter { it.waitingClose }
+                .map { it.instrumentId }
+                .takeIf { it.isNotEmpty() }
+                ?.let {
+                    commonMarketDataSubscription?.subscribeCandles(it, intervalToInstrumentsMap.key, true)
+                }
+            intervalToInstrumentsMap.value.filter { !it.waitingClose }
+                .map { it.instrumentId }
+                .takeIf { it.isNotEmpty() }
+                ?.let {
+                    commonMarketDataSubscription?.subscribeCandles(it, intervalToInstrumentsMap.key, false)
+                }
         }
         instrumentsTrades.takeIf { !it.isNullOrEmpty() }?.toList()
             ?.let { commonMarketDataSubscription?.subscribeTrades(it) }
@@ -189,5 +210,9 @@ class StreamStartAutoconfiguration(
             ?.let { commonMarketDataSubscription?.subscribeOrderbook(it) }
         instrumentsTradingStatus.takeIf { !it.isNullOrEmpty() }?.toList()
             ?.let { commonMarketDataSubscription?.subscribeInfo(it) }
+    }
+
+    private companion object {
+        private const val DEFAULT_ORDERBOOK_DEPTH = 50
     }
 }

@@ -1,16 +1,12 @@
 package io.github.dankosik.starter.invest.registry.marketdata
 
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStatus
-import io.github.dankosik.starter.invest.contract.status.AsyncTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.status.BaseTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.status.BlockingTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.status.CoroutineTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.trade.BaseTradesHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.AsyncTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.BaseTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.BlockingTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.CoroutineTradingStatusHandler
 import mu.KLogging
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
-import org.springframework.stereotype.Component
-import ru.tinkoff.piapi.contract.v1.Trade
 import ru.tinkoff.piapi.contract.v1.TradingStatus
 
 internal class TradingStatusHandlerRegistry(

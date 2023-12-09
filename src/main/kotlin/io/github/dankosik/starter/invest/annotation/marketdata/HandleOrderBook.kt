@@ -1,6 +1,6 @@
 package io.github.dankosik.starter.invest.annotation.marketdata
 
-import io.github.dankosik.starter.invest.contract.orderbook.BaseOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.BaseOrderBookHandler
 import org.springframework.stereotype.Service
 import ru.tinkoff.piapi.contract.v1.InstrumentType
 

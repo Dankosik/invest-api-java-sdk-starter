@@ -1,6 +1,6 @@
 package io.github.dankosik.starter.invest.annotation.marketdata
 
-import io.github.dankosik.starter.invest.contract.status.BaseTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.BaseTradingStatusHandler
 import org.springframework.stereotype.Service
 import ru.tinkoff.piapi.contract.v1.InstrumentType
 

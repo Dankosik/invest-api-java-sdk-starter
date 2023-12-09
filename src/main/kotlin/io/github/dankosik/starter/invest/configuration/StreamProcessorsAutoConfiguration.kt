@@ -1,53 +1,53 @@
 package io.github.dankosik.starter.invest.configuration
 
-import io.github.dankosik.starter.invest.contract.AsyncMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.AsyncOrdersStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.AsyncPortfolioStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.AsyncPositionsStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.BaseMarketDataStreamProcessor
-import io.github.dankosik.starter.invest.contract.BaseOrdersStreamProcessor
-import io.github.dankosik.starter.invest.contract.BasePortfolioStreamProcessor
-import io.github.dankosik.starter.invest.contract.BasePositionsStreamProcessor
-import io.github.dankosik.starter.invest.contract.BlockingMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.BlockingOrdersStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.BlockingPortfolioStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.BlockingPositionsStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.CoroutineMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.CoroutineOrdersStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.CoroutinePortfolioStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.CoroutinePositionsStreamProcessorAdapter
-import io.github.dankosik.starter.invest.contract.candle.AsyncCandleHandler
-import io.github.dankosik.starter.invest.contract.candle.BaseCandleHandler
-import io.github.dankosik.starter.invest.contract.candle.BlockingCandleHandler
-import io.github.dankosik.starter.invest.contract.candle.CoroutineCandleHandler
-import io.github.dankosik.starter.invest.contract.lastprice.AsyncLastPriceHandler
-import io.github.dankosik.starter.invest.contract.lastprice.BaseLastPriceHandler
-import io.github.dankosik.starter.invest.contract.lastprice.BlockingLastPriceHandler
-import io.github.dankosik.starter.invest.contract.lastprice.CoroutineLastPriceHandler
-import io.github.dankosik.starter.invest.contract.orderbook.AsyncOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.BaseOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.BlockingOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.CoroutineOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orders.AsyncOrdersHandler
-import io.github.dankosik.starter.invest.contract.orders.BaseOrdersHandler
-import io.github.dankosik.starter.invest.contract.orders.BlockingOrdersHandler
-import io.github.dankosik.starter.invest.contract.orders.CoroutineOrdersHandler
-import io.github.dankosik.starter.invest.contract.portfolio.AsyncPortfolioHandler
-import io.github.dankosik.starter.invest.contract.portfolio.BasePortfolioHandler
-import io.github.dankosik.starter.invest.contract.portfolio.BlockingPortfolioHandler
-import io.github.dankosik.starter.invest.contract.portfolio.CoroutinePortfolioHandler
-import io.github.dankosik.starter.invest.contract.positions.AsyncPositionsHandler
-import io.github.dankosik.starter.invest.contract.positions.BasePositionsHandler
-import io.github.dankosik.starter.invest.contract.positions.BlockingPositionsHandler
-import io.github.dankosik.starter.invest.contract.positions.CoroutinePositionsHandler
-import io.github.dankosik.starter.invest.contract.status.AsyncTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.status.BaseTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.status.BlockingTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.status.CoroutineTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.trade.AsyncTradesHandler
-import io.github.dankosik.starter.invest.contract.trade.BaseTradesHandler
-import io.github.dankosik.starter.invest.contract.trade.BlockingTradesHandler
-import io.github.dankosik.starter.invest.contract.trade.CoroutineTradesHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.AsyncCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.BaseCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.BlockingCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.CoroutineCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.AsyncLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BaseLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BlockingLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.CoroutineLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.AsyncOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.BaseOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.BlockingOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.CoroutineOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.AsyncTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.BaseTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.BlockingTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.status.CoroutineTradingStatusHandler
+import io.github.dankosik.starter.invest.contract.marketdata.trade.AsyncTradeHandler
+import io.github.dankosik.starter.invest.contract.marketdata.trade.BaseTradeHandler
+import io.github.dankosik.starter.invest.contract.marketdata.trade.BlockingTradeHandler
+import io.github.dankosik.starter.invest.contract.marketdata.trade.CoroutineTradeHandler
+import io.github.dankosik.starter.invest.contract.operation.portfolio.AsyncPortfolioHandler
+import io.github.dankosik.starter.invest.contract.operation.portfolio.BasePortfolioHandler
+import io.github.dankosik.starter.invest.contract.operation.portfolio.BlockingPortfolioHandler
+import io.github.dankosik.starter.invest.contract.operation.portfolio.CoroutinePortfolioHandler
+import io.github.dankosik.starter.invest.contract.operation.positions.AsyncPositionHandler
+import io.github.dankosik.starter.invest.contract.operation.positions.BasePositionHandler
+import io.github.dankosik.starter.invest.contract.operation.positions.BlockingPositionHandler
+import io.github.dankosik.starter.invest.contract.operation.positions.CoroutinePositionHandler
+import io.github.dankosik.starter.invest.contract.orders.AsyncOrderHandler
+import io.github.dankosik.starter.invest.contract.orders.BaseOrderHandler
+import io.github.dankosik.starter.invest.contract.orders.BlockingOrderHandler
+import io.github.dankosik.starter.invest.contract.orders.CoroutineOrderHandler
+import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.operation.AsyncPortfolioStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.operation.AsyncPositionsStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.operation.BasePortfolioStreamProcessor
+import io.github.dankosik.starter.invest.processor.operation.BasePositionsStreamProcessor
+import io.github.dankosik.starter.invest.processor.operation.BlockingPortfolioStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.operation.BlockingPositionsStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.operation.CoroutinePortfolioStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.operation.CoroutinePositionsStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.order.AsyncOrdersStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.order.BaseOrdersStreamProcessor
+import io.github.dankosik.starter.invest.processor.order.BlockingOrdersStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.order.CoroutineOrdersStreamProcessorAdapter
 import io.github.dankosik.starter.invest.registry.marketdata.CandleHandlerRegistry
 import io.github.dankosik.starter.invest.registry.marketdata.LastPriceHandlerRegistry
 import io.github.dankosik.starter.invest.registry.marketdata.OrderBookHandlerRegistry
@@ -58,6 +58,7 @@ import io.github.dankosik.starter.invest.registry.operation.PositionsHandlerRegi
 import io.github.dankosik.starter.invest.registry.order.OrdersHandlerRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
@@ -90,13 +91,13 @@ import ru.tinkoff.piapi.core.stream.StreamProcessor
 class StreamProcessorsAutoConfiguration {
 
     val orderBookHandlerFunctionMap = mutableMapOf<BaseOrderBookHandler, (OrderBook) -> Unit>()
-    val tradesHandlerFunctionMap = mutableMapOf<BaseTradesHandler, (Trade) -> Unit>()
+    val tradesHandlerFunctionMap = mutableMapOf<BaseTradeHandler, (Trade) -> Unit>()
     val lastPriceHandlerFunctionMap = mutableMapOf<BaseLastPriceHandler, (LastPrice) -> Unit>()
     val tradingStatusHandlerFunctionMap = mutableMapOf<BaseTradingStatusHandler, (TradingStatus) -> Unit>()
     val candleHandlerFunctionMap = mutableMapOf<BaseCandleHandler, (Candle) -> Unit>()
     val portfolioHandlerFunctionMap = mutableMapOf<BasePortfolioHandler, (PortfolioResponse) -> Unit>()
-    val positionsHandlerFunctionMap = mutableMapOf<BasePositionsHandler, (PositionData) -> Unit>()
-    val ordersHandlerFunctionMap = mutableMapOf<BaseOrdersHandler, (OrderTrades) -> Unit>()
+    val positionsHandlerFunctionMap = mutableMapOf<BasePositionHandler, (PositionData) -> Unit>()
+    val ordersHandlerFunctionMap = mutableMapOf<BaseOrderHandler, (OrderTrades) -> Unit>()
     val baseMarketDataStreamProcessorFunctionMap =
         mutableMapOf<BaseMarketDataStreamProcessor, (MarketDataResponse) -> Unit>()
     val baseCustomPortfolioStreamProcessorFunctionMap =
@@ -325,12 +326,48 @@ class StreamProcessorsAutoConfiguration {
         portfolioHandlerRegistry: PortfolioHandlerRegistry,
         streamProcessors: List<BasePortfolioStreamProcessor>
     ): StreamProcessor<PortfolioStreamResponse> = when {
-        streamProcessors.isEmpty() -> {
+        streamProcessors.isEmpty() && portfolioHandlerRegistry.allHandlersByAccount.isEmpty() -> {
             StreamProcessor<PortfolioStreamResponse> { response ->
                 if (response.hasPortfolio()) {
                     with(response.portfolio) {
                         portfolioHandlerRegistry.getHandlerByAccountId(this.accountId)?.handlePortfolio(this)
                     }
+                }
+            }
+        }
+
+        streamProcessors.isEmpty() && portfolioHandlerRegistry.allHandlersByAccount.isNotEmpty() -> {
+            StreamProcessor<PortfolioStreamResponse> { response ->
+                if (response.hasPortfolio()) {
+                    val portfolio = response.portfolio
+                    DEFAULT_SCOPE.launch {
+                        portfolioHandlerRegistry.getHandlerByAccountId(portfolio.accountId)?.handlePortfolio(portfolio)
+                    }
+                    DEFAULT_SCOPE.launch {
+                        portfolioHandlerRegistry.getHandlersByAccountId(portfolio.accountId)?.forEach {
+                            it.handlePortfolio(portfolio)
+                        }
+                    }
+                }
+            }
+        }
+
+        streamProcessors.isNotEmpty() && portfolioHandlerRegistry.allHandlersByAccount.isNotEmpty() -> {
+            val beforeLastPriceHandlers =
+                streamProcessors.filter { it.beforePortfolioHandlers }.takeIf { it.isNotEmpty() }
+            val afterLastPriceHandlers =
+                streamProcessors.filter { it.afterPortfolioHandlers }.takeIf { it.isNotEmpty() }
+            StreamProcessor<PortfolioStreamResponse> { response ->
+                if (response.hasPortfolio()) {
+                    beforeLastPriceHandlers?.runProcessors(response)
+                    val portfolio = response.portfolio
+                    DEFAULT_SCOPE.launch {
+                        portfolioHandlerRegistry.getHandlerByAccountId(portfolio.accountId)?.handlePortfolio(portfolio)
+                    }
+                    portfolioHandlerRegistry.getHandlersByAccountId(portfolio.accountId)?.forEach {
+                        it.handlePortfolio(portfolio)
+                    }
+                    afterLastPriceHandlers?.runProcessors(response)
                 }
             }
         }
@@ -357,12 +394,52 @@ class StreamProcessorsAutoConfiguration {
         positionsHandlerRegistry: PositionsHandlerRegistry,
         streamProcessors: List<BasePositionsStreamProcessor>
     ): StreamProcessor<PositionsStreamResponse> = when {
-        streamProcessors.isEmpty() -> {
+        streamProcessors.isEmpty() && positionsHandlerRegistry.allHandlersByAccount.isEmpty() -> {
             StreamProcessor<PositionsStreamResponse> { response ->
                 if (response.hasPosition()) {
                     with(response.position) {
                         positionsHandlerRegistry.getHandlerByAccountId(this.accountId)?.handlePositions(this)
                     }
+                }
+            }
+        }
+
+        streamProcessors.isEmpty() && positionsHandlerRegistry.allHandlersByAccount.isNotEmpty() -> {
+            StreamProcessor<PositionsStreamResponse> { response ->
+                if (response.hasPosition()) {
+                    val positionData = response.position
+                    DEFAULT_SCOPE.launch {
+                        positionsHandlerRegistry.getHandlerByAccountId(positionData.accountId)
+                            ?.handlePositions(positionData)
+                    }
+                    DEFAULT_SCOPE.launch {
+                        positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)?.forEach {
+                            it.handlePositions(positionData)
+                        }
+                    }
+                }
+            }
+        }
+
+        streamProcessors.isNotEmpty() && positionsHandlerRegistry.allHandlersByAccount.isNotEmpty() -> {
+            val beforeLastPriceHandlers =
+                streamProcessors.filter { it.beforePositionsHandlers }.takeIf { it.isNotEmpty() }
+            val afterLastPriceHandlers =
+                streamProcessors.filter { it.afterPositionsHandlers }.takeIf { it.isNotEmpty() }
+            StreamProcessor<PositionsStreamResponse> { response ->
+                if (response.hasPosition()) {
+                    beforeLastPriceHandlers?.runProcessors(response)
+                    val positionData = response.position
+                    DEFAULT_SCOPE.launch {
+                        positionsHandlerRegistry.getHandlerByAccountId(positionData.accountId)
+                            ?.handlePositions(positionData)
+                    }
+                    DEFAULT_SCOPE.launch {
+                        positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)?.forEach {
+                            it.handlePositions(positionData)
+                        }
+                    }
+                    afterLastPriceHandlers?.runProcessors(response)
                 }
             }
         }
@@ -389,7 +466,7 @@ class StreamProcessorsAutoConfiguration {
         ordersHandlerRegistry: OrdersHandlerRegistry,
         streamProcessors: List<BaseOrdersStreamProcessor>
     ): StreamProcessor<TradesStreamResponse> = when {
-        streamProcessors.isEmpty() -> {
+        streamProcessors.isEmpty() && ordersHandlerRegistry.allHandlersByAccount.isEmpty() -> {
             StreamProcessor<TradesStreamResponse> { response ->
                 if (response.hasOrderTrades()) {
                     with(response.orderTrades) {
@@ -399,7 +476,23 @@ class StreamProcessorsAutoConfiguration {
             }
         }
 
-        else -> {
+        streamProcessors.isEmpty() && ordersHandlerRegistry.allHandlersByAccount.isNotEmpty() -> {
+            StreamProcessor<TradesStreamResponse> { response ->
+                if (response.hasOrderTrades()) {
+                    val orderTrades = response.orderTrades
+                    DEFAULT_SCOPE.launch {
+                        ordersHandlerRegistry.getHandler(orderTrades)?.handleOrders(orderTrades)
+                    }
+                    DEFAULT_SCOPE.launch {
+                        ordersHandlerRegistry.getAllHandlersByAccountId(orderTrades)?.forEach {
+                            this.launch { it.handleOrders(orderTrades) }
+                        }
+                    }
+                }
+            }
+        }
+
+        streamProcessors.isNotEmpty() && ordersHandlerRegistry.allHandlersByAccount.isEmpty() -> {
             val beforeLastPriceHandlers =
                 streamProcessors.filter { it.beforeOrdersHandlers }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
@@ -414,6 +507,28 @@ class StreamProcessorsAutoConfiguration {
                 }
             }
         }
+
+        else -> {
+            val beforeLastPriceHandlers =
+                streamProcessors.filter { it.beforeOrdersHandlers }.takeIf { it.isNotEmpty() }
+            val afterLastPriceHandlers =
+                streamProcessors.filter { it.afterOrdersHandlers }.takeIf { it.isNotEmpty() }
+            StreamProcessor<TradesStreamResponse> { response ->
+                if (response.hasOrderTrades()) {
+                    beforeLastPriceHandlers?.runProcessors(response)
+                    val orderTrades = response.orderTrades
+                    DEFAULT_SCOPE.launch {
+                        ordersHandlerRegistry.getHandler(orderTrades)?.handleOrders(orderTrades)
+                    }
+                    DEFAULT_SCOPE.launch {
+                        ordersHandlerRegistry.getAllHandlersByAccountId(orderTrades)?.forEach {
+                            this.launch { it.handleOrders(orderTrades) }
+                        }
+                    }
+                    afterLastPriceHandlers?.runProcessors(response)
+                }
+            }
+        }
     }
 
     private fun BaseOrderBookHandler.handleOrderBook(orderBook: OrderBook) =
@@ -421,7 +536,7 @@ class StreamProcessorsAutoConfiguration {
             orderBookHandlerFunctionMap[this] = createFunctionForHandler().also { it.invoke(orderBook) }
         }
 
-    private fun BaseTradesHandler.handleTrade(trade: Trade) =
+    private fun BaseTradeHandler.handleTrade(trade: Trade) =
         tradesHandlerFunctionMap[this]?.invoke(trade) ?: run {
             tradesHandlerFunctionMap[this] = createFunctionForHandler().also { it.invoke(trade) }
         }
@@ -446,12 +561,12 @@ class StreamProcessorsAutoConfiguration {
             portfolioHandlerFunctionMap[this] = createFunctionForHandler().also { it.invoke(portfolio) }
         }
 
-    private fun BasePositionsHandler.handlePositions(positionData: PositionData) =
+    private fun BasePositionHandler.handlePositions(positionData: PositionData) =
         positionsHandlerFunctionMap[this]?.invoke(positionData) ?: run {
             positionsHandlerFunctionMap[this] = createFunctionForHandler().also { it.invoke(positionData) }
         }
 
-    private fun BaseOrdersHandler.handleOrders(orderTrades: OrderTrades) =
+    private fun BaseOrderHandler.handleOrders(orderTrades: OrderTrades) =
         ordersHandlerFunctionMap[this]?.invoke(orderTrades) ?: run {
             ordersHandlerFunctionMap[this] = createFunctionForHandler().also { it.invoke(orderTrades) }
         }
@@ -490,14 +605,14 @@ class StreamProcessorsAutoConfiguration {
     }
 
 
-    private fun BaseTradesHandler.createFunctionForHandler(): (Trade) -> Unit = { trade ->
+    private fun BaseTradeHandler.createFunctionForHandler(): (Trade) -> Unit = { trade ->
         when (val baseTradesHandler = this) {
-            is BlockingTradesHandler -> executor?.submit {
+            is BlockingTradeHandler -> executor?.submit {
                 baseTradesHandler.handleBlocking(trade)
             } ?: baseTradesHandler.handleBlocking(trade)
 
-            is CoroutineTradesHandler -> DEFAULT_SCOPE.launch { baseTradesHandler.handle(trade) }
-            is AsyncTradesHandler -> baseTradesHandler.handleAsync(trade)
+            is CoroutineTradeHandler -> DEFAULT_SCOPE.launch { baseTradesHandler.handle(trade) }
+            is AsyncTradeHandler -> baseTradesHandler.handleAsync(trade)
         }
     }
 
@@ -523,25 +638,25 @@ class StreamProcessorsAutoConfiguration {
         }
     }
 
-    private fun BasePositionsHandler.createFunctionForHandler(): (PositionData) -> Unit = { positions ->
+    private fun BasePositionHandler.createFunctionForHandler(): (PositionData) -> Unit = { positions ->
         when (val baseOrderBookHandler = this) {
-            is BlockingPositionsHandler -> executor?.submit {
+            is BlockingPositionHandler -> executor?.submit {
                 baseOrderBookHandler.handleBlocking(positions)
             } ?: baseOrderBookHandler.handleBlocking(positions)
 
-            is CoroutinePositionsHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(positions) }
-            is AsyncPositionsHandler -> baseOrderBookHandler.handleAsync(positions)
+            is CoroutinePositionHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(positions) }
+            is AsyncPositionHandler -> baseOrderBookHandler.handleAsync(positions)
         }
     }
 
-    private fun BaseOrdersHandler.createFunctionForHandler(): (OrderTrades) -> Unit = { orders ->
+    private fun BaseOrderHandler.createFunctionForHandler(): (OrderTrades) -> Unit = { orders ->
         when (val baseOrderBookHandler = this) {
-            is BlockingOrdersHandler -> executor?.submit {
+            is BlockingOrderHandler -> executor?.submit {
                 baseOrderBookHandler.handleBlocking(orders)
             } ?: baseOrderBookHandler.handleBlocking(orders)
 
-            is CoroutineOrdersHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(orders) }
-            is AsyncOrdersHandler -> baseOrderBookHandler.handleAsync(orders)
+            is CoroutineOrderHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(orders) }
+            is AsyncOrderHandler -> baseOrderBookHandler.handleAsync(orders)
         }
     }
 
@@ -552,8 +667,10 @@ class StreamProcessorsAutoConfiguration {
                     marketDataStreamProcessor.process(marketDataResponse)
                 } ?: marketDataStreamProcessor.process(marketDataResponse)
 
-                is CoroutineMarketDataStreamProcessorAdapter -> DEFAULT_SCOPE.launch {
-                    marketDataStreamProcessor.process(marketDataResponse)
+                is CoroutineMarketDataStreamProcessorAdapter -> suspend {
+                    DEFAULT_SCOPE.async {
+                        marketDataStreamProcessor.process(marketDataResponse)
+                    }.await()
                 }
 
                 is AsyncMarketDataStreamProcessorAdapter -> marketDataStreamProcessor.process(marketDataResponse)
@@ -567,8 +684,10 @@ class StreamProcessorsAutoConfiguration {
                     portfolioStreamProcessor.process(portfolioResponse)
                 } ?: portfolioStreamProcessor.process(portfolioResponse)
 
-                is CoroutinePortfolioStreamProcessorAdapter -> DEFAULT_SCOPE.launch {
-                    portfolioStreamProcessor.process(portfolioResponse)
+                is CoroutinePortfolioStreamProcessorAdapter -> suspend {
+                    DEFAULT_SCOPE.async {
+                        portfolioStreamProcessor.process(portfolioResponse)
+                    }.await()
                 }
 
                 is AsyncPortfolioStreamProcessorAdapter -> portfolioStreamProcessor.process(portfolioResponse)
@@ -582,8 +701,10 @@ class StreamProcessorsAutoConfiguration {
                     customPositionsStreamProcessor.process(positionsStreamResponse)
                 } ?: customPositionsStreamProcessor.process(positionsStreamResponse)
 
-                is CoroutinePositionsStreamProcessorAdapter -> DEFAULT_SCOPE.launch {
-                    customPositionsStreamProcessor.process(positionsStreamResponse)
+                is CoroutinePositionsStreamProcessorAdapter -> suspend {
+                    DEFAULT_SCOPE.async {
+                        customPositionsStreamProcessor.process(positionsStreamResponse)
+                    }.await()
                 }
 
                 is AsyncPositionsStreamProcessorAdapter -> customPositionsStreamProcessor.process(
@@ -599,8 +720,10 @@ class StreamProcessorsAutoConfiguration {
                     customPositionsStreamProcessor.process(tradesStreamResponse)
                 } ?: customPositionsStreamProcessor.process(tradesStreamResponse)
 
-                is CoroutineOrdersStreamProcessorAdapter -> DEFAULT_SCOPE.launch {
-                    customPositionsStreamProcessor.process(tradesStreamResponse)
+                is CoroutineOrdersStreamProcessorAdapter -> suspend {
+                    DEFAULT_SCOPE.async {
+                        customPositionsStreamProcessor.process(tradesStreamResponse)
+                    }.await()
                 }
 
                 is AsyncOrdersStreamProcessorAdapter -> customPositionsStreamProcessor.process(

@@ -1,6 +1,6 @@
 package io.github.dankosik.starter.invest.annotation.marketdata
 
-import io.github.dankosik.starter.invest.contract.candle.BaseCandleHandler
+import io.github.dankosik.starter.invest.contract.marketdata.candle.BaseCandleHandler
 import org.springframework.stereotype.Service
 import ru.tinkoff.piapi.contract.v1.InstrumentType
 import ru.tinkoff.piapi.contract.v1.SubscriptionInterval

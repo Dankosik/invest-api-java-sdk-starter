@@ -1,17 +1,13 @@
 package io.github.dankosik.starter.invest.registry.marketdata
 
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
-import io.github.dankosik.starter.invest.contract.orderbook.AsyncOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.BaseOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.BlockingOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.CoroutineOrderBookHandler
-import io.github.dankosik.starter.invest.contract.trade.BaseTradesHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.AsyncOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.BaseOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.BlockingOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.CoroutineOrderBookHandler
 import mu.KLogging
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
-import org.springframework.stereotype.Component
 import ru.tinkoff.piapi.contract.v1.OrderBook
-import ru.tinkoff.piapi.contract.v1.Trade
 
 internal class OrderBookHandlerRegistry(
     private val applicationContext: ApplicationContext,
@@ -54,7 +50,6 @@ internal class OrderBookHandlerRegistry(
             }
         }
     }
-
 
     private companion object : KLogging()
 }
