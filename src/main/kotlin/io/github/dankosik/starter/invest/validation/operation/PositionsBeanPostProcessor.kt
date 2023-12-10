@@ -10,8 +10,6 @@ import org.springframework.beans.factory.config.BeanPostProcessor
 
 internal class PositionsBeanPostProcessor : BeanPostProcessor {
 
-    private val uniqueAccounts = mutableSetOf<String>()
-
     override fun postProcessBeforeInitialization(bean: Any, beanName: String): Any {
         val isHandlePosition = bean.javaClass.declaredAnnotations.filterIsInstance<HandlePosition>().isNotEmpty()
         val isAllHandlePosition = bean.javaClass.declaredAnnotations.filterIsInstance<HandleAllPositions>().isNotEmpty()
@@ -36,10 +34,6 @@ internal class PositionsBeanPostProcessor : BeanPostProcessor {
             check(account.isNotBlank()) {
                 "Argument 'account' must be provided in ${bean.javaClass.name}"
             }
-            check(account !in uniqueAccounts) {
-                "Account: $account is already have handlers ${bean.javaClass.name}"
-            }
-            uniqueAccounts.add(account)
         }
         if (isAllHandlePosition) {
             check(bean.javaClass.getAnnotation(HandleAllPositions::class.java).accounts.isNotEmpty()) {

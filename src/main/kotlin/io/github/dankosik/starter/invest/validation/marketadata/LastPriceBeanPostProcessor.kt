@@ -11,7 +11,6 @@ import org.springframework.beans.factory.config.BeanPostProcessor
 
 internal class LastPriceBeanPostProcessor : BeanPostProcessor {
 
-    private val uniqueInstruments = mutableSetOf<String>()
 
     override fun postProcessBeforeInitialization(bean: Any, beanName: String): Any {
         val isHandleLastPrice = bean.javaClass.declaredAnnotations.filterIsInstance<HandleLastPrice>().isNotEmpty()
@@ -41,16 +40,6 @@ internal class LastPriceBeanPostProcessor : BeanPostProcessor {
             check(tickerValue.isNotBlank() || figiValue.isNotBlank() || instrumentIdValue.isNotBlank()) {
                 "At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided in ${bean.javaClass.name}"
             }
-            check(tickerValue !in uniqueInstruments) {
-                "Duplicate ticker value found: $tickerValue for bean: ${bean.javaClass.name}"
-            }
-            check(instrumentIdValue !in uniqueInstruments) {
-                "Duplicate instrumentIdValue value found: $instrumentIdValue for bean: ${bean.javaClass.name}"
-            }
-            check(figiValue !in uniqueInstruments) {
-                "Duplicate figiValue value found: $figiValue for bean: ${bean.javaClass.name}"
-            }
-            uniqueInstruments.addAllNotBlank(listOf(tickerValue, figiValue, instrumentIdValue))
         }
 
         if (isAllHandleLastPrice) {

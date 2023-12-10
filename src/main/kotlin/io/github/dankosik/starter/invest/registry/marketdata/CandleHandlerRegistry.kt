@@ -1,5 +1,6 @@
 package io.github.dankosik.starter.invest.registry.marketdata
 
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllCandles
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
 import io.github.dankosik.starter.invest.contract.marketdata.candle.AsyncCandleHandler
 import io.github.dankosik.starter.invest.contract.marketdata.candle.BaseCandleHandler
@@ -14,8 +15,10 @@ internal class CandleHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,
 ) {
-    private val handlersByFigi = HashMap<SubscriptionInterval, Map<String, BaseCandleHandler>>()
-    private val handlersByInstrumentUid = HashMap<SubscriptionInterval, Map<String, BaseCandleHandler>>()
+    private val handlersByFigi = HashMap<SubscriptionInterval, MutableMap<String, MutableList<BaseCandleHandler>>>()
+    private val handlersByInstrumentUid =
+        HashMap<SubscriptionInterval, MutableMap<String, MutableList<BaseCandleHandler>>>()
+    val allHandlersBySubscription = HashMap<SubscriptionInterval, MutableList<BaseCandleHandler>>()
 
 
     init {
@@ -26,34 +29,73 @@ internal class CandleHandlerRegistry(
         blockingHandlers.forEach { it.addIntervalToHandlerMap() }
         coroutineHandlers.forEach { it.addIntervalToHandlerMap() }
         asyncHandlers.forEach { it.addIntervalToHandlerMap() }
+
+        val annotatedBeansAll = applicationContext.getBeansWithAnnotation(HandleAllCandles::class.java).values
+        val coroutineHandlersAll = annotatedBeansAll.filterIsInstance<CoroutineCandleHandler>()
+        val blockingHandlersAll = annotatedBeansAll.filterIsInstance<BlockingCandleHandler>()
+        val asyncHandlersAll = annotatedBeansAll.filterIsInstance<AsyncCandleHandler>()
+        blockingHandlersAll.forEach { it.addIntervalToAllHandlerMap() }
+        coroutineHandlersAll.forEach { it.addIntervalToAllHandlerMap() }
+        asyncHandlersAll.forEach { it.addIntervalToAllHandlerMap() }
     }
 
-    fun getHandler(candle: Candle) = getHandlerByUidAndInterval(candle.instrumentUid, candle.interval)
-        ?: getHandlerByFigiAndInterval(candle.figi, candle.interval)
+    fun getHandlers(candle: Candle) = getHandlersByUidAndInterval(candle.instrumentUid, candle.interval)
+        ?: getHandlersByFigiAndInterval(candle.figi, candle.interval)
 
-    fun getHandlerByUidAndInterval(uId: String?, subscriptionInterval: SubscriptionInterval): BaseCandleHandler? =
+    fun getCommonHandlers(candle: Candle) = allHandlersBySubscription[candle.interval]
+
+    fun getHandlersByUidAndInterval(uId: String?, subscriptionInterval: SubscriptionInterval) =
         handlersByInstrumentUid[subscriptionInterval]?.get(uId)
 
-    fun getHandlerByFigiAndInterval(figi: String?, subscriptionInterval: SubscriptionInterval): BaseCandleHandler? =
+    fun getHandlersByFigiAndInterval(figi: String?, subscriptionInterval: SubscriptionInterval) =
         handlersByFigi[subscriptionInterval]?.get(figi)
 
-
-    private fun BaseCandleHandler.addIntervalToHandlerMap() {
+    fun BaseCandleHandler.addIntervalToHandlerMap() {
         val annotation = this::class.java.getAnnotation(HandleCandle::class.java)
         val figi = annotation.figi
         val instrumentUid = annotation.instrumentUid
         val subscriptionInterval = annotation.subscriptionInterval
         if (figi.isNotBlank()) {
-            handlersByFigi[subscriptionInterval] = mapOf(figi to this)
+            if (handlersByFigi[subscriptionInterval] == null) {
+                handlersByFigi[subscriptionInterval] = mutableMapOf(figi to mutableListOf(this))
+            } else {
+                if (handlersByFigi[subscriptionInterval]!![figi] != null) {
+                    handlersByFigi[subscriptionInterval]!![figi]!!.add(this)
+                } else {
+                    handlersByFigi[subscriptionInterval]!![figi] = mutableListOf(this)
+                }
+            }
         } else if (instrumentUid.isNotBlank()) {
-            handlersByInstrumentUid[subscriptionInterval] = mapOf(instrumentUid to this)
+            if (handlersByInstrumentUid[subscriptionInterval] == null) {
+                handlersByInstrumentUid[subscriptionInterval] = mutableMapOf(instrumentUid to mutableListOf(this))
+            } else {
+                if (handlersByInstrumentUid[subscriptionInterval]!![instrumentUid] != null) {
+                    handlersByInstrumentUid[subscriptionInterval]!![instrumentUid]!!.add(this)
+                } else {
+                    handlersByInstrumentUid[subscriptionInterval]!![instrumentUid] = mutableListOf(this)
+                }
+            }
         } else {
             val ticker = annotation.ticker
             if (ticker.isNotBlank()) {
                 val uId = tickerToUidMap[ticker]!!
-                handlersByInstrumentUid[subscriptionInterval] = mapOf(uId to this)
+                if (handlersByInstrumentUid[subscriptionInterval] == null) {
+                    handlersByInstrumentUid[subscriptionInterval] = mutableMapOf(uId to mutableListOf(this))
+                } else {
+                    if (handlersByInstrumentUid[subscriptionInterval]!![uId] != null) {
+                        handlersByInstrumentUid[subscriptionInterval]!![uId]!!.add(this)
+                    } else {
+                        handlersByInstrumentUid[subscriptionInterval]!![uId] = mutableListOf(this)
+                    }
+                }
             }
         }
+    }
+
+    private fun BaseCandleHandler.addIntervalToAllHandlerMap() {
+        val annotation = this::class.java.getAnnotation(HandleAllCandles::class.java)
+        val subscriptionInterval = annotation.subscriptionInterval
+        allHandlersBySubscription[subscriptionInterval]?.add(this) ?: mutableListOf(this)
     }
 
     private companion object : KLogging()

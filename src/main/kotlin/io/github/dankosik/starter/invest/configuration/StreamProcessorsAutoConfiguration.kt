@@ -59,6 +59,7 @@ import io.github.dankosik.starter.invest.registry.order.OrdersHandlerRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
@@ -169,8 +170,16 @@ class StreamProcessorsAutoConfiguration {
         streamProcessors.isEmpty() -> {
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasTrade()) {
-                    with(response.trade) {
-                        tradesHandlerRegistry.getHandler(this)?.handleTrade(this)
+                    val trade = response.trade
+                    val handlers = tradesHandlerRegistry.getHandlers(trade)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleTrade(trade)
+                    } else {
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleTrade(trade)
+                            }
+                        }
                     }
                 }
             }
@@ -182,8 +191,18 @@ class StreamProcessorsAutoConfiguration {
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasTrade()) {
                     beforeTradesHandlers?.runProcessors(response)
-                    with(response.trade) {
-                        tradesHandlerRegistry.getHandler(this)?.handleTrade(this)
+                    val trade = response.trade
+                    val handlers = tradesHandlerRegistry.getHandlers(trade)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleTrade(trade)
+                    } else {
+                        suspend {
+                            handlers?.map {
+                                DEFAULT_SCOPE.async {
+                                    it.handleTrade(trade)
+                                }
+                            }?.awaitAll()
+                        }
                     }
                     afterTradesHandlers?.runProcessors(response)
                 }
@@ -200,8 +219,16 @@ class StreamProcessorsAutoConfiguration {
         streamProcessors.isEmpty() -> {
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasOrderbook()) {
-                    with(response.orderbook) {
-                        orderBookHandlerRegistry.getHandler(this)?.handleOrderBook(this)
+                    val orderbook = response.orderbook
+                    val handlers = orderBookHandlerRegistry.getHandlers(orderbook)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleOrderBook(orderbook)
+                    } else {
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleOrderBook(orderbook)
+                            }
+                        }
                     }
                 }
             }
@@ -215,8 +242,18 @@ class StreamProcessorsAutoConfiguration {
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasOrderbook()) {
                     beforeOrderBookHandlers?.runProcessors(response)
-                    with(response.orderbook) {
-                        orderBookHandlerRegistry.getHandler(this)?.handleOrderBook(this)
+                    val orderbook = response.orderbook
+                    val handlers = orderBookHandlerRegistry.getHandlers(orderbook)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleOrderBook(orderbook)
+                    } else {
+                        suspend {
+                            handlers?.map {
+                                DEFAULT_SCOPE.async {
+                                    it.handleOrderBook(orderbook)
+                                }
+                            }?.awaitAll()
+                        }
                     }
                     afterOrderBookHandlers?.runProcessors(response)
                 }
@@ -232,8 +269,16 @@ class StreamProcessorsAutoConfiguration {
         streamProcessors.isEmpty() -> {
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasLastPrice()) {
-                    with(response.lastPrice) {
-                        lastPriceHandlerRegistry.getHandler(this)?.handleLastPrice(this)
+                    val lastPrice = response.lastPrice
+                    val handlers = lastPriceHandlerRegistry.getHandlers(lastPrice)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleLastPrice(lastPrice)
+                    } else {
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleLastPrice(lastPrice)
+                            }
+                        }
                     }
                 }
             }
@@ -247,8 +292,18 @@ class StreamProcessorsAutoConfiguration {
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasOrderbook()) {
                     beforeLastPriceHandlers?.runProcessors(response)
-                    with(response.lastPrice) {
-                        lastPriceHandlerRegistry.getHandler(this)?.handleLastPrice(this)
+                    val lastPrice = response.lastPrice
+                    val handlers = lastPriceHandlerRegistry.getHandlers(lastPrice)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleLastPrice(lastPrice)
+                    } else {
+                        suspend {
+                            handlers?.map {
+                                DEFAULT_SCOPE.async {
+                                    it.handleLastPrice(lastPrice)
+                                }
+                            }?.awaitAll()
+                        }
                     }
                     afterLastPriceHandlers?.runProcessors(response)
                 }
@@ -265,8 +320,16 @@ class StreamProcessorsAutoConfiguration {
         streamProcessors.isEmpty() -> {
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasTradingStatus()) {
-                    with(response.tradingStatus) {
-                        tradingStatusHandlerRegistry.getHandler(this)?.handleTradingStatus(this)
+                    val tradingStatus = response.tradingStatus
+                    val handlers = tradingStatusHandlerRegistry.getHandlers(tradingStatus)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleTradingStatus(tradingStatus)
+                    } else {
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleTradingStatus(tradingStatus)
+                            }
+                        }
                     }
                 }
             }
@@ -280,8 +343,18 @@ class StreamProcessorsAutoConfiguration {
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasOrderbook()) {
                     beforeLastPriceHandlers?.runProcessors(response)
-                    with(response.tradingStatus) {
-                        tradingStatusHandlerRegistry.getHandler(this)?.handleTradingStatus(this)
+                    val tradingStatus = response.tradingStatus
+                    val handlers = tradingStatusHandlerRegistry.getHandlers(tradingStatus)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleTradingStatus(tradingStatus)
+                    } else {
+                        suspend {
+                            handlers?.map {
+                                DEFAULT_SCOPE.async {
+                                    it.handleTradingStatus(tradingStatus)
+                                }
+                            }?.awaitAll()
+                        }
                     }
                     afterLastPriceHandlers?.runProcessors(response)
                 }
@@ -291,31 +364,107 @@ class StreamProcessorsAutoConfiguration {
 
     @Bean
     internal fun candleStreamProcessor(
-        lastPriceHandlerRegistry: CandleHandlerRegistry,
+        candleHandlerRegistry: CandleHandlerRegistry,
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
-        streamProcessors.isEmpty() -> {
+        streamProcessors.isEmpty() && candleHandlerRegistry.allHandlersBySubscription.isEmpty() -> {
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasCandle()) {
-                    with(response.candle) {
-                        lastPriceHandlerRegistry.getHandler(this)?.handleCandle(this)
+                    val candle = response.candle
+                    val handlers = candleHandlerRegistry.getHandlers(candle)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleCandle(candle)
+                    } else {
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleCandle(candle)
+                            }
+                        }
                     }
                 }
             }
         }
 
-        else -> {
+        streamProcessors.isEmpty() && candleHandlerRegistry.allHandlersBySubscription.isNotEmpty() -> {
+            StreamProcessor<MarketDataResponse> { response ->
+                if (response.hasCandle()) {
+                    val candle = response.candle
+                    DEFAULT_SCOPE.launch {
+                        val handlers = candleHandlerRegistry.getHandlers(candle)
+                        if (handlers != null && handlers.size == 1) {
+                            handlers.first().handleCandle(candle)
+                        } else {
+                            handlers?.forEach {
+                                launch {
+                                    it.handleCandle(candle)
+                                }
+                            }
+                        }
+                    }
+                    DEFAULT_SCOPE.launch {
+                        candleHandlerRegistry.getCommonHandlers(candle)?.forEach {
+                            it.handleCandle(candle)
+                        }
+                    }
+                }
+            }
+        }
+
+        streamProcessors.isNotEmpty() && candleHandlerRegistry.allHandlersBySubscription.isNotEmpty() -> {
             val beforeLastPriceHandlers =
                 streamProcessors.filter { it.beforeCandleHandlers }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
                 streamProcessors.filter { it.afterCandleHandlers }.takeIf { it.isNotEmpty() }
             StreamProcessor<MarketDataResponse> { response ->
-                if (response.hasOrderbook()) {
+                if (response.hasCandle()) {
                     beforeLastPriceHandlers?.runProcessors(response)
-                    with(response.candle) {
-                        lastPriceHandlerRegistry.getHandler(this)?.handleCandle(this)
+                    val candle = response.candle
+                    DEFAULT_SCOPE.launch {
+                        val handlers = candleHandlerRegistry.getHandlers(candle)
+                        if (handlers != null && handlers.size == 1) {
+                            handlers.first().handleCandle(candle)
+                        } else {
+                            suspend {
+                                handlers?.map {
+                                    async {
+                                        it.handleCandle(candle)
+                                    }
+                                }?.awaitAll()
+                            }
+                        }
+                    }
+                    DEFAULT_SCOPE.launch {
+                        candleHandlerRegistry.getCommonHandlers(candle)?.forEach {
+                            it.handleCandle(candle)
+                        }
                     }
                     afterLastPriceHandlers?.runProcessors(response)
+                }
+            }
+        }
+
+        else -> {
+            val beforeCandleHandlers =
+                streamProcessors.filter { it.beforeCandleHandlers }.takeIf { it.isNotEmpty() }
+            val afterCandleHandlers =
+                streamProcessors.filter { it.afterCandleHandlers }.takeIf { it.isNotEmpty() }
+            StreamProcessor<MarketDataResponse> { response ->
+                if (response.hasOrderbook()) {
+                    beforeCandleHandlers?.runProcessors(response)
+                    val candle = response.candle
+                    val handlers = candleHandlerRegistry.getHandlers(candle)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleCandle(candle)
+                    } else {
+                        suspend {
+                            handlers?.map {
+                                DEFAULT_SCOPE.async {
+                                    it.handleCandle(candle)
+                                }
+                            }?.awaitAll()
+                        }
+                    }
+                    afterCandleHandlers?.runProcessors(response)
                 }
             }
         }
@@ -329,8 +478,16 @@ class StreamProcessorsAutoConfiguration {
         streamProcessors.isEmpty() && portfolioHandlerRegistry.allHandlersByAccount.isEmpty() -> {
             StreamProcessor<PortfolioStreamResponse> { response ->
                 if (response.hasPortfolio()) {
-                    with(response.portfolio) {
-                        portfolioHandlerRegistry.getHandlerByAccountId(this.accountId)?.handlePortfolio(this)
+                    val portfolio = response.portfolio
+                    val handlers = portfolioHandlerRegistry.getHandlersByAccountId(portfolio.accountId)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handlePortfolio(portfolio)
+                    } else {
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handlePortfolio(portfolio)
+                            }
+                        }
                     }
                 }
             }
@@ -341,11 +498,22 @@ class StreamProcessorsAutoConfiguration {
                 if (response.hasPortfolio()) {
                     val portfolio = response.portfolio
                     DEFAULT_SCOPE.launch {
-                        portfolioHandlerRegistry.getHandlerByAccountId(portfolio.accountId)?.handlePortfolio(portfolio)
+                        val handlers = portfolioHandlerRegistry.getHandlersByAccountId(portfolio.accountId)
+                        if (handlers != null && handlers.size == 1) {
+                            handlers.first().handlePortfolio(portfolio)
+                        } else {
+                            handlers?.forEach {
+                                launch {
+                                    it.handlePortfolio(portfolio)
+                                }
+                            }
+                        }
                     }
                     DEFAULT_SCOPE.launch {
-                        portfolioHandlerRegistry.getHandlersByAccountId(portfolio.accountId)?.forEach {
-                            it.handlePortfolio(portfolio)
+                        portfolioHandlerRegistry.getCommonHandlersByAccountId(portfolio.accountId)?.forEach {
+                            launch {
+                                it.handlePortfolio(portfolio)
+                            }
                         }
                     }
                 }
@@ -362,10 +530,23 @@ class StreamProcessorsAutoConfiguration {
                     beforeLastPriceHandlers?.runProcessors(response)
                     val portfolio = response.portfolio
                     DEFAULT_SCOPE.launch {
-                        portfolioHandlerRegistry.getHandlerByAccountId(portfolio.accountId)?.handlePortfolio(portfolio)
+                        val handlers = portfolioHandlerRegistry.getHandlersByAccountId(portfolio.accountId)
+                        if (handlers != null && handlers.size == 1) {
+                            handlers.first().handlePortfolio(portfolio)
+                        } else {
+                            handlers?.forEach {
+                                launch {
+                                    it.handlePortfolio(portfolio)
+                                }
+                            }
+                        }
                     }
-                    portfolioHandlerRegistry.getHandlersByAccountId(portfolio.accountId)?.forEach {
-                        it.handlePortfolio(portfolio)
+                    DEFAULT_SCOPE.launch {
+                        portfolioHandlerRegistry.getCommonHandlersByAccountId(portfolio.accountId)?.forEach {
+                            launch {
+                                it.handlePortfolio(portfolio)
+                            }
+                        }
                     }
                     afterLastPriceHandlers?.runProcessors(response)
                 }
@@ -380,8 +561,16 @@ class StreamProcessorsAutoConfiguration {
             StreamProcessor<PortfolioStreamResponse> { response ->
                 if (response.hasPortfolio()) {
                     beforeLastPriceHandlers?.runProcessors(response)
-                    with(response.portfolio) {
-                        portfolioHandlerRegistry.getHandlerByAccountId(this.accountId)?.handlePortfolio(this)
+                    val portfolio = response.portfolio
+                    val handlers = portfolioHandlerRegistry.getHandlersByAccountId(portfolio.accountId)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handlePortfolio(portfolio)
+                    } else {
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handlePortfolio(portfolio)
+                            }
+                        }
                     }
                     afterLastPriceHandlers?.runProcessors(response)
                 }
@@ -397,8 +586,16 @@ class StreamProcessorsAutoConfiguration {
         streamProcessors.isEmpty() && positionsHandlerRegistry.allHandlersByAccount.isEmpty() -> {
             StreamProcessor<PositionsStreamResponse> { response ->
                 if (response.hasPosition()) {
-                    with(response.position) {
-                        positionsHandlerRegistry.getHandlerByAccountId(this.accountId)?.handlePositions(this)
+                    val positionData = response.position
+                    val handlers = positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handlePositions(positionData)
+                    } else {
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handlePositions(positionData)
+                            }
+                        }
                     }
                 }
             }
@@ -409,12 +606,22 @@ class StreamProcessorsAutoConfiguration {
                 if (response.hasPosition()) {
                     val positionData = response.position
                     DEFAULT_SCOPE.launch {
-                        positionsHandlerRegistry.getHandlerByAccountId(positionData.accountId)
-                            ?.handlePositions(positionData)
+                        val handlers = positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)
+                        if (handlers != null && handlers.size == 1) {
+                            handlers.first().handlePositions(positionData)
+                        } else {
+                            handlers?.forEach {
+                                launch {
+                                    it.handlePositions(positionData)
+                                }
+                            }
+                        }
                     }
                     DEFAULT_SCOPE.launch {
-                        positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)?.forEach {
-                            it.handlePositions(positionData)
+                        positionsHandlerRegistry.getCommonHandlersByAccountId(positionData.accountId)?.forEach {
+                            launch {
+                                it.handlePositions(positionData)
+                            }
                         }
                     }
                 }
@@ -431,12 +638,22 @@ class StreamProcessorsAutoConfiguration {
                     beforeLastPriceHandlers?.runProcessors(response)
                     val positionData = response.position
                     DEFAULT_SCOPE.launch {
-                        positionsHandlerRegistry.getHandlerByAccountId(positionData.accountId)
-                            ?.handlePositions(positionData)
+                        val handlers = positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)
+                        if (handlers != null && handlers.size == 1) {
+                            handlers.first().handlePositions(positionData)
+                        } else {
+                            handlers?.forEach {
+                                launch {
+                                    it.handlePositions(positionData)
+                                }
+                            }
+                        }
                     }
                     DEFAULT_SCOPE.launch {
-                        positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)?.forEach {
-                            it.handlePositions(positionData)
+                        positionsHandlerRegistry.getCommonHandlersByAccountId(positionData.accountId)?.forEach {
+                            launch {
+                                it.handlePositions(positionData)
+                            }
                         }
                     }
                     afterLastPriceHandlers?.runProcessors(response)
@@ -452,8 +669,16 @@ class StreamProcessorsAutoConfiguration {
             StreamProcessor<PositionsStreamResponse> { response ->
                 if (response.hasPosition()) {
                     beforeLastPriceHandlers?.runProcessors(response)
-                    with(response.position) {
-                        positionsHandlerRegistry.getHandlerByAccountId(this.accountId)?.handlePositions(this)
+                    val positionData = response.position
+                    val handlers = positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handlePositions(positionData)
+                    } else {
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handlePositions(positionData)
+                            }
+                        }
                     }
                     afterLastPriceHandlers?.runProcessors(response)
                 }
@@ -469,8 +694,16 @@ class StreamProcessorsAutoConfiguration {
         streamProcessors.isEmpty() && ordersHandlerRegistry.allHandlersByAccount.isEmpty() -> {
             StreamProcessor<TradesStreamResponse> { response ->
                 if (response.hasOrderTrades()) {
-                    with(response.orderTrades) {
-                        ordersHandlerRegistry.getHandler(this)?.handleOrders(this)
+                    val orderTrades = response.orderTrades
+                    val handlers = ordersHandlerRegistry.getHandlers(orderTrades)
+                    if (handlers != null && handlers.size == 1) {
+                        handlers.first().handleOrders(orderTrades)
+                    } else {
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleOrders(orderTrades)
+                            }
+                        }
                     }
                 }
             }
@@ -481,11 +714,22 @@ class StreamProcessorsAutoConfiguration {
                 if (response.hasOrderTrades()) {
                     val orderTrades = response.orderTrades
                     DEFAULT_SCOPE.launch {
-                        ordersHandlerRegistry.getHandler(orderTrades)?.handleOrders(orderTrades)
+                        val handlers = ordersHandlerRegistry.getHandlers(orderTrades)
+                        if (handlers != null && handlers.size == 1) {
+                            handlers.first().handleOrders(orderTrades)
+                        } else {
+                            handlers?.forEach {
+                                launch {
+                                    it.handleOrders(orderTrades)
+                                }
+                            }
+                        }
                     }
                     DEFAULT_SCOPE.launch {
-                        ordersHandlerRegistry.getAllHandlersByAccountId(orderTrades)?.forEach {
-                            this.launch { it.handleOrders(orderTrades) }
+                        ordersHandlerRegistry.getCommonHandlersByAccountId(orderTrades)?.forEach {
+                            launch {
+                                it.handleOrders(orderTrades)
+                            }
                         }
                     }
                 }
@@ -500,8 +744,25 @@ class StreamProcessorsAutoConfiguration {
             StreamProcessor<TradesStreamResponse> { response ->
                 if (response.hasOrderTrades()) {
                     beforeLastPriceHandlers?.runProcessors(response)
-                    with(response.orderTrades) {
-                        ordersHandlerRegistry.getHandler(this)?.handleOrders(this)
+                    val orderTrades = response.orderTrades
+                    DEFAULT_SCOPE.launch {
+                        val handlers = ordersHandlerRegistry.getHandlers(orderTrades)
+                        if (handlers != null && handlers.size == 1) {
+                            handlers.first().handleOrders(orderTrades)
+                        } else {
+                            handlers?.forEach {
+                                launch {
+                                    it.handleOrders(orderTrades)
+                                }
+                            }
+                        }
+                    }
+                    DEFAULT_SCOPE.launch {
+                        ordersHandlerRegistry.getCommonHandlersByAccountId(orderTrades)?.forEach {
+                            launch {
+                                it.handleOrders(orderTrades)
+                            }
+                        }
                     }
                     afterLastPriceHandlers?.runProcessors(response)
                 }
@@ -518,11 +779,20 @@ class StreamProcessorsAutoConfiguration {
                     beforeLastPriceHandlers?.runProcessors(response)
                     val orderTrades = response.orderTrades
                     DEFAULT_SCOPE.launch {
-                        ordersHandlerRegistry.getHandler(orderTrades)?.handleOrders(orderTrades)
+                        val handlers = ordersHandlerRegistry.getHandlers(orderTrades)
+                        if (handlers != null && handlers.size == 1) {
+                            handlers.first().handleOrders(orderTrades)
+                        } else {
+                            handlers?.forEach {
+                                DEFAULT_SCOPE.launch {
+                                    it.handleOrders(orderTrades)
+                                }
+                            }
+                        }
                     }
                     DEFAULT_SCOPE.launch {
-                        ordersHandlerRegistry.getAllHandlersByAccountId(orderTrades)?.forEach {
-                            this.launch { it.handleOrders(orderTrades) }
+                        ordersHandlerRegistry.getCommonHandlersByAccountId(orderTrades)?.forEach {
+                            launch { it.handleOrders(orderTrades) }
                         }
                     }
                     afterLastPriceHandlers?.runProcessors(response)
@@ -575,7 +845,7 @@ class StreamProcessorsAutoConfiguration {
         when (val baseCandleHandler = this) {
             is BlockingCandleHandler -> executor?.submit {
                 baseCandleHandler.handleBlocking(candle)
-            } ?: baseCandleHandler.handleBlocking(candle)
+            } ?: BLOCKING_SCOPE.launch { baseCandleHandler.handleBlocking(candle) }
 
             is CoroutineCandleHandler -> DEFAULT_SCOPE.launch { baseCandleHandler.handle(candle) }
             is AsyncCandleHandler -> baseCandleHandler.handleAsync(candle)
@@ -586,7 +856,7 @@ class StreamProcessorsAutoConfiguration {
         when (val baseLastPriceHandler = this) {
             is BlockingLastPriceHandler -> executor?.submit {
                 baseLastPriceHandler.handleBlocking(lastPrice)
-            } ?: baseLastPriceHandler.handleBlocking(lastPrice)
+            } ?: BLOCKING_SCOPE.launch { baseLastPriceHandler.handleBlocking(lastPrice) }
 
             is CoroutineLastPriceHandler -> DEFAULT_SCOPE.launch { baseLastPriceHandler.handle(lastPrice) }
             is AsyncLastPriceHandler -> baseLastPriceHandler.handleAsync(lastPrice)
@@ -597,7 +867,7 @@ class StreamProcessorsAutoConfiguration {
         when (val baseLastPriceHandler = this) {
             is BlockingTradingStatusHandler -> executor?.submit {
                 baseLastPriceHandler.handleBlocking(tradingStatus)
-            } ?: baseLastPriceHandler.handleBlocking(tradingStatus)
+            } ?: BLOCKING_SCOPE.launch { baseLastPriceHandler.handleBlocking(tradingStatus) }
 
             is CoroutineTradingStatusHandler -> DEFAULT_SCOPE.launch { baseLastPriceHandler.handle(tradingStatus) }
             is AsyncTradingStatusHandler -> baseLastPriceHandler.handleAsync(tradingStatus)
@@ -609,7 +879,7 @@ class StreamProcessorsAutoConfiguration {
         when (val baseTradesHandler = this) {
             is BlockingTradeHandler -> executor?.submit {
                 baseTradesHandler.handleBlocking(trade)
-            } ?: baseTradesHandler.handleBlocking(trade)
+            } ?: BLOCKING_SCOPE.launch { baseTradesHandler.handleBlocking(trade) }
 
             is CoroutineTradeHandler -> DEFAULT_SCOPE.launch { baseTradesHandler.handle(trade) }
             is AsyncTradeHandler -> baseTradesHandler.handleAsync(trade)
@@ -620,7 +890,7 @@ class StreamProcessorsAutoConfiguration {
         when (val baseOrderBookHandler = this) {
             is BlockingOrderBookHandler -> executor?.submit {
                 baseOrderBookHandler.handleBlocking(orderBook)
-            } ?: baseOrderBookHandler.handleBlocking(orderBook)
+            } ?: BLOCKING_SCOPE.launch { baseOrderBookHandler.handleBlocking(orderBook) }
 
             is CoroutineOrderBookHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(orderBook) }
             is AsyncOrderBookHandler -> baseOrderBookHandler.handleAsync(orderBook)
@@ -631,7 +901,7 @@ class StreamProcessorsAutoConfiguration {
         when (val baseOrderBookHandler = this) {
             is BlockingPortfolioHandler -> executor?.submit {
                 baseOrderBookHandler.handleBlocking(portfolio)
-            } ?: baseOrderBookHandler.handleBlocking(portfolio)
+            } ?: BLOCKING_SCOPE.launch { baseOrderBookHandler.handleBlocking(portfolio) }
 
             is CoroutinePortfolioHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(portfolio) }
             is AsyncPortfolioHandler -> baseOrderBookHandler.handleAsync(portfolio)
@@ -642,7 +912,7 @@ class StreamProcessorsAutoConfiguration {
         when (val baseOrderBookHandler = this) {
             is BlockingPositionHandler -> executor?.submit {
                 baseOrderBookHandler.handleBlocking(positions)
-            } ?: baseOrderBookHandler.handleBlocking(positions)
+            } ?: BLOCKING_SCOPE.launch { baseOrderBookHandler.handleBlocking(positions) }
 
             is CoroutinePositionHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(positions) }
             is AsyncPositionHandler -> baseOrderBookHandler.handleAsync(positions)
@@ -653,7 +923,7 @@ class StreamProcessorsAutoConfiguration {
         when (val baseOrderBookHandler = this) {
             is BlockingOrderHandler -> executor?.submit {
                 baseOrderBookHandler.handleBlocking(orders)
-            } ?: baseOrderBookHandler.handleBlocking(orders)
+            } ?: BLOCKING_SCOPE.launch { baseOrderBookHandler.handleBlocking(orders) }
 
             is CoroutineOrderHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(orders) }
             is AsyncOrderHandler -> baseOrderBookHandler.handleAsync(orders)
@@ -770,5 +1040,6 @@ class StreamProcessorsAutoConfiguration {
 
     private companion object : KLogging() {
         val DEFAULT_SCOPE = CoroutineScope(Dispatchers.Default)
+        val BLOCKING_SCOPE = CoroutineScope(Dispatchers.IO)
     }
 }

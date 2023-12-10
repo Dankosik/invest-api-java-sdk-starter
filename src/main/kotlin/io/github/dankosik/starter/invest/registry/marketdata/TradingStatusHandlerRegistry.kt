@@ -13,8 +13,8 @@ internal class TradingStatusHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,
 ) {
-    private val handlersByFigi = HashMap<String, BaseTradingStatusHandler>()
-    private val handlersByInstrumentUid = HashMap<String, BaseTradingStatusHandler>()
+    private val handlersByFigi = HashMap<String, MutableList<BaseTradingStatusHandler>>()
+    private val handlersByInstrumentUid = HashMap<String, MutableList<BaseTradingStatusHandler>>()
 
 
     init {
@@ -27,11 +27,12 @@ internal class TradingStatusHandlerRegistry(
         asyncHandlers.forEach { it.addInstrumentIdToHandlerMap() }
     }
 
-    fun getHandler(tradingStatus: TradingStatus): BaseTradingStatusHandler? =
-        getHandlerByUid(tradingStatus.instrumentUid) ?: getHandlerByFigi(tradingStatus.figi)
+    fun getHandlers(tradingStatus: TradingStatus) =
+        getHandlersByUid(tradingStatus.instrumentUid) ?: getHandlersByFigi(tradingStatus.figi)
 
-    fun getHandlerByUid(uId: String?): BaseTradingStatusHandler? = handlersByInstrumentUid[uId]
-    fun getHandlerByFigi(figi: String?): BaseTradingStatusHandler? = handlersByFigi[figi]
+    fun getHandlersByUid(uId: String?) = handlersByInstrumentUid[uId]
+
+    fun getHandlersByFigi(figi: String?) = handlersByFigi[figi]
 
 
     private fun BaseTradingStatusHandler.addInstrumentIdToHandlerMap() {
@@ -39,14 +40,26 @@ internal class TradingStatusHandlerRegistry(
         val figi = annotation.figi
         val instrumentUid = annotation.instrumentUid
         if (figi.isNotBlank()) {
-            handlersByFigi[figi] = this
+            if (handlersByFigi[figi] == null) {
+                handlersByFigi[figi] = mutableListOf(this)
+            } else {
+                handlersByFigi[figi]!!.add(this)
+            }
         } else if (instrumentUid.isNotBlank()) {
-            handlersByInstrumentUid[instrumentUid] = this
+            if (handlersByInstrumentUid[instrumentUid] == null) {
+                handlersByInstrumentUid[instrumentUid] = mutableListOf(this)
+            } else {
+                handlersByInstrumentUid[instrumentUid]!!.add(this)
+            }
         } else {
             val ticker = annotation.ticker
             if (ticker.isNotBlank()) {
                 val uId = tickerToUidMap[ticker]!!
-                handlersByInstrumentUid[uId] = this
+                if (handlersByInstrumentUid[uId] == null) {
+                    handlersByInstrumentUid[uId] = mutableListOf(this)
+                } else {
+                    handlersByInstrumentUid[uId]!!.add(this)
+                }
             }
         }
     }

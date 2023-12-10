@@ -12,7 +12,7 @@ import org.springframework.context.ApplicationContext
 internal class PositionsHandlerRegistry(
     private val applicationContext: ApplicationContext,
 ) {
-    private val handlersByAccount = HashMap<String, BasePositionHandler>()
+    private val handlersByAccount = HashMap<String, MutableList<BasePositionHandler>>()
     val allHandlersByAccount = HashMap<String, MutableList<BasePositionHandler>>()
 
     init {
@@ -33,12 +33,16 @@ internal class PositionsHandlerRegistry(
         asyncHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
     }
 
-    fun getHandlerByAccountId(accountId: String?): BasePositionHandler? = handlersByAccount[accountId]
-    fun getHandlersByAccountId(accountId: String?) = allHandlersByAccount[accountId]
+    fun getHandlersByAccountId(accountId: String?) = handlersByAccount[accountId]
+    fun getCommonHandlersByAccountId(accountId: String?) = allHandlersByAccount[accountId]
 
     private fun BasePositionHandler.addAccountIdToHandlerMap() {
-        val annotation = this::class.java.getAnnotation(HandlePosition::class.java)
-        handlersByAccount[annotation.account] = this
+        val account = this::class.java.getAnnotation(HandlePosition::class.java).account
+        if (handlersByAccount[account] == null) {
+            handlersByAccount[account] = mutableListOf(this)
+        } else {
+            handlersByAccount[account]!!.add(this)
+        }
     }
 
     private fun BasePositionHandler.addAccountIdToAllHandlerMap() =

@@ -9,8 +9,6 @@ import org.springframework.beans.factory.config.BeanPostProcessor
 
 internal class PortfolioBeanPostProcessor : BeanPostProcessor {
 
-    private val uniqueAccounts = mutableSetOf<String>()
-
     override fun postProcessBeforeInitialization(bean: Any, beanName: String): Any {
         val isHandlePortfolio = bean.javaClass.declaredAnnotations.filterIsInstance<HandlePortfolio>().isNotEmpty()
         val isAllHandlePortfolio =
@@ -36,10 +34,6 @@ internal class PortfolioBeanPostProcessor : BeanPostProcessor {
             check(account.isNotBlank()) {
                 "Argument 'account' must be provided in ${bean.javaClass.name}"
             }
-            check(account !in uniqueAccounts) {
-                "Account: $account is already have handlers ${bean.javaClass.name}"
-            }
-            uniqueAccounts.add(account)
         }
 
         if (isAllHandlePortfolio) {

@@ -11,8 +11,6 @@ import ru.tinkoff.piapi.contract.v1.SubscriptionInterval
 
 internal class CandleBeanPostProcessor : BeanPostProcessor {
 
-    private val uniquePairs = mutableSetOf<Pair<String, SubscriptionInterval>>()
-
     override fun postProcessBeforeInitialization(bean: Any, beanName: String): Any {
         val isHandleCandle = bean.javaClass.declaredAnnotations.filterIsInstance<HandleCandle>().isNotEmpty()
         val isAllHandleCandles = bean.javaClass.declaredAnnotations.filterIsInstance<HandleAllCandles>().isNotEmpty()
@@ -41,19 +39,9 @@ internal class CandleBeanPostProcessor : BeanPostProcessor {
             check(tickerValue.isNotBlank() || figiValue.isNotBlank() || instrumentIdValue.isNotBlank()) {
                 "At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided in ${bean.javaClass.name}"
             }
-            val instrumentId = when {
-                tickerValue.isNotBlank() -> tickerValue
-                instrumentIdValue.isNotBlank() -> instrumentIdValue
-                else -> figiValue
-            }
             check(subscriptionInterval != SubscriptionInterval.SUBSCRIPTION_INTERVAL_UNSPECIFIED) {
                 "SubscriptionInterval is required for CandleHandler ${bean.javaClass.name}"
             }
-            val pair = instrumentId to subscriptionInterval
-            check(pair !in uniquePairs) {
-                "$instrumentId with $subscriptionInterval already exist ${bean.javaClass.name}"
-            }
-            uniquePairs.add(pair)
         }
 
         if (isAllHandleCandles) {

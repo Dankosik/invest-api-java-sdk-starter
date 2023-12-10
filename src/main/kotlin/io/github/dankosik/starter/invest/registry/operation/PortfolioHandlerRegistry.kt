@@ -13,9 +13,8 @@ import org.springframework.context.ApplicationContext
 internal class PortfolioHandlerRegistry(
     private val applicationContext: ApplicationContext,
 ) {
-    private val handlersByAccount = HashMap<String, BasePortfolioHandler>()
+    private val handlersByAccount = HashMap<String, MutableList<BasePortfolioHandler>>()
     val allHandlersByAccount = HashMap<String, MutableList<BasePortfolioHandler>>()
-
 
     init {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePortfolio::class.java).values
@@ -35,12 +34,16 @@ internal class PortfolioHandlerRegistry(
         asyncHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
     }
 
-    fun getHandlerByAccountId(accountId: String?): BasePortfolioHandler? = handlersByAccount[accountId]
-    fun getHandlersByAccountId(accountId: String?) = allHandlersByAccount[accountId]
+    fun getHandlersByAccountId(accountId: String?) = handlersByAccount[accountId]
+    fun getCommonHandlersByAccountId(accountId: String?) = allHandlersByAccount[accountId]
 
     private fun BasePortfolioHandler.addAccountIdToHandlerMap() {
-        val annotation = this::class.java.getAnnotation(HandlePortfolio::class.java)
-        handlersByAccount[annotation.account] = this
+        val account = this::class.java.getAnnotation(HandlePortfolio::class.java).account
+        if (handlersByAccount[account] == null) {
+            handlersByAccount[account] = mutableListOf(this)
+        } else {
+            handlersByAccount[account]!!.add(this)
+        }
     }
 
     private fun BasePortfolioHandler.addAccountIdToAllHandlerMap() =

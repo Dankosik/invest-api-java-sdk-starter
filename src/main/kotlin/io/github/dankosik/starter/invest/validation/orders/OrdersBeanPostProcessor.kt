@@ -9,8 +9,6 @@ import org.springframework.beans.factory.config.BeanPostProcessor
 
 internal class OrdersBeanPostProcessor : BeanPostProcessor {
 
-    private val uniquePairs = mutableSetOf<Pair<String, String>>()
-
     override fun postProcessBeforeInitialization(bean: Any, beanName: String): Any {
         val isHandleOrder = bean.javaClass.declaredAnnotations.filterIsInstance<HandleOrder>().isNotEmpty()
         val isAllHandleOrders = bean.javaClass.declaredAnnotations.filterIsInstance<HandleAllOrders>().isNotEmpty()
@@ -43,16 +41,6 @@ internal class OrdersBeanPostProcessor : BeanPostProcessor {
             check(account.isNotBlank()) {
                 "Argument 'account' must be provided in ${bean.javaClass.name}"
             }
-            val instrumentId = when {
-                tickerValue.isNotBlank() -> tickerValue
-                instrumentIdValue.isNotBlank() -> instrumentIdValue
-                else -> figiValue
-            }
-            val pair = instrumentId to account
-            check(pair !in uniquePairs) {
-                "$instrumentId with $account already exist ${bean.javaClass.name}"
-            }
-            uniquePairs.add(pair)
         }
         if (isAllHandleOrders) {
             check(bean.javaClass.getAnnotation(HandleAllOrders::class.java).accounts.isNotEmpty()) {
