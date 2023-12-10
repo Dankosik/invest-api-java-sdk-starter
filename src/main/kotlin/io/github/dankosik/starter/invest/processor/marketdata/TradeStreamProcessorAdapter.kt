@@ -1,6 +1,7 @@
 package io.github.dankosik.starter.invest.processor.marketdata
 
 import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterTradesHandlers
@@ -58,6 +59,18 @@ fun <T : BaseTradeStreamProcessor> T.runBeforeEachTradingStatusHandlers(): T {
 fun <T : BaseTradeStreamProcessor> T.runAfterEachTradingStatusHandlers(): T {
     this.afterEachTradeHandlers = true
     return this
+}
+
+fun BaseTradeStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamProcessor = when (this) {
+    is BlockingTradeStreamProcessorAdapter -> this.toMarketDataProcessor()
+
+    is AsyncTradeStreamProcessorAdapter -> this.toMarketDataProcessor()
+
+    is CoroutineTradeStreamProcessorAdapter -> this.toMarketDataProcessor()
+
+    else -> {
+        throw RuntimeException()
+    }
 }
 
 fun BlockingTradeStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarketDataStreamProcessorAdapter =

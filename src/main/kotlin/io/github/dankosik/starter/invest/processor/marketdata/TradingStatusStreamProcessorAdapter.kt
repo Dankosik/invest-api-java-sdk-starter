@@ -1,10 +1,12 @@
 package io.github.dankosik.starter.invest.processor.marketdata
 
 import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterTradesHandlers
 import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeTradesHandlers
+import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeTradingStatusHandlers
 import ru.tinkoff.piapi.contract.v1.TradingStatus
 import java.util.concurrent.CompletableFuture
 
@@ -60,14 +62,26 @@ fun <T : BaseTradingStatusStreamProcessor> T.runAfterEachTradingStatusHandlers()
     return this
 }
 
+fun BaseTradingStatusStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamProcessor = when (this) {
+    is BlockingTradingStatusStreamProcessorAdapter -> this.toMarketDataProcessor()
+
+    is AsyncTradingStatusStreamProcessorAdapter -> this.toMarketDataProcessor()
+
+    is CoroutineTradingStatusStreamProcessorAdapter -> this.toMarketDataProcessor()
+
+    else -> {
+        throw RuntimeException()
+    }
+}
+
 fun BlockingTradingStatusStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarketDataStreamProcessorAdapter =
     BlockingMarketDataStreamProcessorAdapter {
         if (it.hasTradingStatus()) {
             process(it.tradingStatus)
         }
     }.apply {
-        if (afterEachTradingStatusHandlers) runAfterTradesHandlers()
-        if (beforeEachTradingStatusHandlers) runBeforeTradesHandlers()
+        if (afterEachTradingStatusHandlers) runAfterEachTradingStatusHandlers()
+        if (beforeEachTradingStatusHandlers) runBeforeTradingStatusHandlers()
     }
 
 fun AsyncTradingStatusStreamProcessorAdapter.toMarketDataProcessor() =
@@ -78,8 +92,8 @@ fun AsyncTradingStatusStreamProcessorAdapter.toMarketDataProcessor() =
             }
         }
     }.apply {
-        if (afterEachTradingStatusHandlers) runAfterTradesHandlers()
-        if (beforeEachTradingStatusHandlers) runBeforeTradesHandlers()
+        if (afterEachTradingStatusHandlers) runAfterEachTradingStatusHandlers()
+        if (beforeEachTradingStatusHandlers) runBeforeTradingStatusHandlers()
     }
 
 fun CoroutineTradingStatusStreamProcessorAdapter.toMarketDataProcessor() =
@@ -88,6 +102,6 @@ fun CoroutineTradingStatusStreamProcessorAdapter.toMarketDataProcessor() =
             process(it.tradingStatus)
         }
     }.apply {
-        if (afterEachTradingStatusHandlers) runAfterTradesHandlers()
-        if (beforeEachTradingStatusHandlers) runBeforeTradesHandlers()
+        if (afterEachTradingStatusHandlers) runAfterEachTradingStatusHandlers()
+        if (beforeEachTradingStatusHandlers) runBeforeTradingStatusHandlers()
     }

@@ -1,6 +1,7 @@
 package io.github.dankosik.starter.invest.processor.marketdata
 
 import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterCandleHandlers
@@ -58,6 +59,18 @@ fun <T : BaseCandleStreamProcessor> T.runBeforeEachCandleHandlers(): T {
 fun <T : BaseCandleStreamProcessor> T.runAfterEachCandleBookHandlers(): T {
     this.afterEachCandleHandlers = true
     return this
+}
+
+fun BaseCandleStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamProcessor = when (this) {
+    is BlockingCandleStreamProcessorAdapter -> this.toMarketDataProcessor()
+
+    is AsyncCandleStreamProcessorAdapter -> this.toMarketDataProcessor()
+
+    is CoroutineCandleStreamProcessorAdapter -> this.toMarketDataProcessor()
+
+    else -> {
+        throw RuntimeException()
+    }
 }
 
 fun BlockingCandleStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarketDataStreamProcessorAdapter =

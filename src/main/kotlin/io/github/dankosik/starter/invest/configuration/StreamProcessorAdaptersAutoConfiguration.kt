@@ -24,6 +24,10 @@ import io.github.dankosik.starter.invest.processor.marketdata.AsyncLastPriceStre
 import io.github.dankosik.starter.invest.processor.marketdata.AsyncOrderBookStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.AsyncTradeStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.AsyncTradingStatusStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.BaseLastPriceStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.BaseOrderBookStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.BaseTradeStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.BaseTradingStatusStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.BlockingLastPriceStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.BlockingOrderBookStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.BlockingTradeStreamProcessorAdapter
@@ -32,7 +36,10 @@ import io.github.dankosik.starter.invest.processor.marketdata.CoroutineLastPrice
 import io.github.dankosik.starter.invest.processor.marketdata.CoroutineOrderBookStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.CoroutineTradeStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.CoroutineTradingStatusStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.runAfterEachLastPriceBookHandlers
 import io.github.dankosik.starter.invest.processor.marketdata.runAfterEachOrderBookHandlers
 import io.github.dankosik.starter.invest.processor.marketdata.runAfterEachTradingStatusHandlers
@@ -47,18 +54,34 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureBefore(StreamProcessorsAutoConfiguration::class)
-class StreamProcessorsAdaptersAutoConfiguration(
+class StreamProcessorAdaptersAutoConfiguration(
     private val applicationContext: ApplicationContext
 ) {
 
     @Bean
     fun baseMarketDataStreamProcessor(): List<BaseMarketDataStreamProcessor> =
         createAllOrderBooksStreamProcessors() +
+                createAllOrderBooksStreamProcessorsFromType() +
                 createAllTradeStreamProcessors() +
+                createAllTradeStreamProcessorsFromType() +
                 createAllLastPriceStreamProcessors() +
-                createAllTradingStatusStreamProcessors()
+                createAllLastPriceStreamProcessorsFromType() +
+                createAllTradingStatusStreamProcessors() +
+                createAllTradingStatusStreamProcessorsFromType() +
+                createAllCoroutineMarketDataStreamProcessorAdapters() +
+                createAllAsyncMarketDataStreamProcessorAdapters() +
+                createAllBlockingMarketDataStreamProcessorAdapters()
 
-    private fun createAllOrderBooksStreamProcessors() =
+    private fun createAllCoroutineMarketDataStreamProcessorAdapters(): List<BaseMarketDataStreamProcessor> =
+        applicationContext.getBeansOfType(CoroutineMarketDataStreamProcessorAdapter::class.java).values.toList()
+
+    private fun createAllAsyncMarketDataStreamProcessorAdapters(): List<BaseMarketDataStreamProcessor> =
+        applicationContext.getBeansOfType(AsyncMarketDataStreamProcessorAdapter::class.java).values.toList()
+
+    private fun createAllBlockingMarketDataStreamProcessorAdapters(): List<BaseMarketDataStreamProcessor> =
+        applicationContext.getBeansOfType(BlockingMarketDataStreamProcessorAdapter::class.java).values.toList()
+
+    private fun createAllOrderBooksStreamProcessors(): List<BaseMarketDataStreamProcessor> =
         applicationContext.getBeansWithAnnotation(HandleAllOrderBooks::class.java).values
             .filterIsInstance<BaseOrderBookHandler>()
             .map { handler ->
@@ -91,6 +114,9 @@ class StreamProcessorsAdaptersAutoConfiguration(
                     }
                 }
             }
+
+    private fun createAllOrderBooksStreamProcessorsFromType(): List<BaseMarketDataStreamProcessor> =
+        applicationContext.getBeansOfType(BaseOrderBookStreamProcessor::class.java).values.map { it.toMarketDataProcessor() }
 
     private fun createAllTradeStreamProcessors() =
         applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values
@@ -126,6 +152,9 @@ class StreamProcessorsAdaptersAutoConfiguration(
                 }
             }
 
+    private fun createAllTradeStreamProcessorsFromType(): List<BaseMarketDataStreamProcessor> =
+        applicationContext.getBeansOfType(BaseTradeStreamProcessor::class.java).values.map { it.toMarketDataProcessor() }
+
     private fun createAllLastPriceStreamProcessors() =
         applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values
             .filterIsInstance<BaseLastPriceHandler>()
@@ -160,6 +189,9 @@ class StreamProcessorsAdaptersAutoConfiguration(
                 }
             }
 
+    private fun createAllLastPriceStreamProcessorsFromType(): List<BaseMarketDataStreamProcessor> =
+        applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map { it.toMarketDataProcessor() }
+
     private fun createAllTradingStatusStreamProcessors() =
         applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values
             .filterIsInstance<BaseTradingStatusHandler>()
@@ -193,4 +225,7 @@ class StreamProcessorsAdaptersAutoConfiguration(
                     }
                 }
             }
+
+    private fun createAllTradingStatusStreamProcessorsFromType(): List<BaseMarketDataStreamProcessor> =
+        applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map { it.toMarketDataProcessor() }
 }
