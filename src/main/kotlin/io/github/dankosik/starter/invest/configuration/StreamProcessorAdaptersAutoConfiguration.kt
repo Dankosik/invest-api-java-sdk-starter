@@ -24,6 +24,7 @@ import io.github.dankosik.starter.invest.processor.marketdata.AsyncLastPriceStre
 import io.github.dankosik.starter.invest.processor.marketdata.AsyncOrderBookStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.AsyncTradeStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.AsyncTradingStatusStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.BaseCandleStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.BaseLastPriceStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.BaseOrderBookStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.BaseTradeStreamProcessor
@@ -47,6 +48,7 @@ import io.github.dankosik.starter.invest.processor.marketdata.runBeforeEachLastP
 import io.github.dankosik.starter.invest.processor.marketdata.runBeforeEachOrderBookHandlers
 import io.github.dankosik.starter.invest.processor.marketdata.runBeforeEachTradingStatusHandlers
 import io.github.dankosik.starter.invest.processor.marketdata.toMarketDataProcessor
+import io.github.dankosik.starter.invest.processor.operation.BasePortfolioStreamProcessor
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
@@ -70,7 +72,8 @@ class StreamProcessorAdaptersAutoConfiguration(
                 createAllTradingStatusStreamProcessorsFromType() +
                 createAllCoroutineMarketDataStreamProcessorAdapters() +
                 createAllAsyncMarketDataStreamProcessorAdapters() +
-                createAllBlockingMarketDataStreamProcessorAdapters()
+                createAllBlockingMarketDataStreamProcessorAdapters() +
+                createAllCandleStreamProcessorsFromType()
 
     private fun createAllCoroutineMarketDataStreamProcessorAdapters(): List<BaseMarketDataStreamProcessor> =
         applicationContext.getBeansOfType(CoroutineMarketDataStreamProcessorAdapter::class.java).values.toList()
@@ -191,6 +194,9 @@ class StreamProcessorAdaptersAutoConfiguration(
 
     private fun createAllLastPriceStreamProcessorsFromType(): List<BaseMarketDataStreamProcessor> =
         applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map { it.toMarketDataProcessor() }
+
+    private fun createAllCandleStreamProcessorsFromType(): List<BaseMarketDataStreamProcessor> =
+        applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map { it.toMarketDataProcessor() }
 
     private fun createAllTradingStatusStreamProcessors() =
         applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values

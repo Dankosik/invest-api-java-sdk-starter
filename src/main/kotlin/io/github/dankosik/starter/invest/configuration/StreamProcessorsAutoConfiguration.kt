@@ -165,6 +165,7 @@ class StreamProcessorsAutoConfiguration {
     @Bean
     internal fun tradesStreamProcessor(
         tradesHandlerRegistry: TradesHandlerRegistry,
+        @Qualifier("baseMarketDataStreamProcessor")
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
         streamProcessors.isEmpty() -> {
@@ -214,6 +215,7 @@ class StreamProcessorsAutoConfiguration {
     @Bean
     internal fun orderBookStreamProcessor(
         orderBookHandlerRegistry: OrderBookHandlerRegistry,
+        @Qualifier("baseMarketDataStreamProcessor")
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
         streamProcessors.isEmpty() -> {
@@ -264,6 +266,7 @@ class StreamProcessorsAutoConfiguration {
     @Bean
     internal fun lastPriceStreamProcessor(
         lastPriceHandlerRegistry: LastPriceHandlerRegistry,
+        @Qualifier("baseMarketDataStreamProcessor")
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
         streamProcessors.isEmpty() -> {
@@ -315,6 +318,7 @@ class StreamProcessorsAutoConfiguration {
     @Bean
     internal fun tradingStatusStreamProcessor(
         tradingStatusHandlerRegistry: TradingStatusHandlerRegistry,
+        @Qualifier("baseMarketDataStreamProcessor")
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
         streamProcessors.isEmpty() -> {
@@ -365,6 +369,7 @@ class StreamProcessorsAutoConfiguration {
     @Bean
     internal fun candleStreamProcessor(
         candleHandlerRegistry: CandleHandlerRegistry,
+        @Qualifier("baseMarketDataStreamProcessor")
         streamProcessors: List<BaseMarketDataStreamProcessor>
     ): StreamProcessor<MarketDataResponse> = when {
         streamProcessors.isEmpty() && candleHandlerRegistry.allHandlersBySubscription.isEmpty() -> {
