@@ -4,8 +4,8 @@ import ru.tinkoff.piapi.contract.v1.PortfolioStreamResponse
 import java.util.concurrent.CompletableFuture
 
 interface BasePortfolioStreamProcessor {
-    var beforePortfolioHandlers: Boolean
-    var afterPortfolioHandlers: Boolean
+    var beforeEachPortfolioHandler: Boolean
+    var afterEachPortfolioHandler: Boolean
 }
 
 interface BlockingPortfolioStreamProcessorAdapter : BasePortfolioStreamProcessor {
@@ -24,8 +24,8 @@ inline fun BlockingPortfolioStreamProcessorAdapter(
     crossinline block: (PortfolioStreamResponse) -> Unit
 ): BlockingPortfolioStreamProcessorAdapter = object : BlockingPortfolioStreamProcessorAdapter {
     override fun process(portfolioStreamResponse: PortfolioStreamResponse) = block(portfolioStreamResponse)
-    override var beforePortfolioHandlers = false
-    override var afterPortfolioHandlers = false
+    override var beforeEachPortfolioHandler = false
+    override var afterEachPortfolioHandler = false
 }
 
 
@@ -35,8 +35,8 @@ inline fun AsyncPortfolioStreamProcessorAdapter(
     override fun process(portfolioStreamResponse: PortfolioStreamResponse): CompletableFuture<Void> =
         block(portfolioStreamResponse)
 
-    override var beforePortfolioHandlers = false
-    override var afterPortfolioHandlers = false
+    override var beforeEachPortfolioHandler = false
+    override var afterEachPortfolioHandler = false
 }
 
 inline fun CoroutinePortfolioStreamProcessorAdapter(
@@ -45,16 +45,16 @@ inline fun CoroutinePortfolioStreamProcessorAdapter(
     override suspend fun process(portfolioStreamResponse: PortfolioStreamResponse): Unit =
         block(portfolioStreamResponse)
 
-    override var beforePortfolioHandlers = false
-    override var afterPortfolioHandlers = false
+    override var beforeEachPortfolioHandler = false
+    override var afterEachPortfolioHandler = false
 }
 
-fun <T : BasePortfolioStreamProcessor> T.runBeforePortfolioHandlers(): T {
-    this.beforePortfolioHandlers = true
+fun <T : BasePortfolioStreamProcessor> T.runBeforeEachPortfolioHandler(): T {
+    this.beforeEachPortfolioHandler = true
     return this
 }
 
-fun <T : BasePortfolioStreamProcessor> T.runAfterPortfolioHandlers(): T {
-    this.afterPortfolioHandlers = true
+fun <T : BasePortfolioStreamProcessor> T.runAfterEachPortfolioHandler(): T {
+    this.afterEachPortfolioHandler = true
     return this
 }

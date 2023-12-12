@@ -187,8 +187,8 @@ class StreamProcessorsAutoConfiguration {
         }
 
         else -> {
-            val beforeTradesHandlers = streamProcessors.filter { it.beforeTradesHandlers }.takeIf { it.isNotEmpty() }
-            val afterTradesHandlers = streamProcessors.filter { it.afterTradesHandlers }.takeIf { it.isNotEmpty() }
+            val beforeTradesHandlers = streamProcessors.filter { it.beforeEachTradeHandler }.takeIf { it.isNotEmpty() }
+            val afterTradesHandlers = streamProcessors.filter { it.afterEachTradeHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasTrade()) {
                     beforeTradesHandlers?.runProcessors(response)
@@ -238,9 +238,9 @@ class StreamProcessorsAutoConfiguration {
 
         else -> {
             val beforeOrderBookHandlers =
-                streamProcessors.filter { it.beforeOrderBookHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachOrderBookHandler }.takeIf { it.isNotEmpty() }
             val afterOrderBookHandlers =
-                streamProcessors.filter { it.afterOrderBookHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachOrderBookHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasOrderbook()) {
                     beforeOrderBookHandlers?.runProcessors(response)
@@ -289,9 +289,9 @@ class StreamProcessorsAutoConfiguration {
 
         else -> {
             val beforeLastPriceHandlers =
-                streamProcessors.filter { it.beforeLastPriceHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachLastPriceHandler }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
-                streamProcessors.filter { it.afterLastPriceHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachLastPriceHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasOrderbook()) {
                     beforeLastPriceHandlers?.runProcessors(response)
@@ -341,9 +341,9 @@ class StreamProcessorsAutoConfiguration {
 
         else -> {
             val beforeLastPriceHandlers =
-                streamProcessors.filter { it.beforeLastPriceHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachLastPriceHandler }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
-                streamProcessors.filter { it.afterLastPriceHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachLastPriceHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasOrderbook()) {
                     beforeLastPriceHandlers?.runProcessors(response)
@@ -417,9 +417,9 @@ class StreamProcessorsAutoConfiguration {
 
         streamProcessors.isNotEmpty() && candleHandlerRegistry.allHandlersBySubscription.isNotEmpty() -> {
             val beforeLastPriceHandlers =
-                streamProcessors.filter { it.beforeCandleHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachCandleHandler }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
-                streamProcessors.filter { it.afterCandleHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachCandleHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasCandle()) {
                     beforeLastPriceHandlers?.runProcessors(response)
@@ -450,9 +450,9 @@ class StreamProcessorsAutoConfiguration {
 
         else -> {
             val beforeCandleHandlers =
-                streamProcessors.filter { it.beforeCandleHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachCandleHandler }.takeIf { it.isNotEmpty() }
             val afterCandleHandlers =
-                streamProcessors.filter { it.afterCandleHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachCandleHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasOrderbook()) {
                     beforeCandleHandlers?.runProcessors(response)
@@ -527,9 +527,9 @@ class StreamProcessorsAutoConfiguration {
 
         streamProcessors.isNotEmpty() && portfolioHandlerRegistry.allHandlersByAccount.isNotEmpty() -> {
             val beforeLastPriceHandlers =
-                streamProcessors.filter { it.beforePortfolioHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachPortfolioHandler }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
-                streamProcessors.filter { it.afterPortfolioHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachPortfolioHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<PortfolioStreamResponse> { response ->
                 if (response.hasPortfolio()) {
                     beforeLastPriceHandlers?.runProcessors(response)
@@ -560,9 +560,9 @@ class StreamProcessorsAutoConfiguration {
 
         else -> {
             val beforeLastPriceHandlers =
-                streamProcessors.filter { it.beforePortfolioHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachPortfolioHandler }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
-                streamProcessors.filter { it.afterPortfolioHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachPortfolioHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<PortfolioStreamResponse> { response ->
                 if (response.hasPortfolio()) {
                     beforeLastPriceHandlers?.runProcessors(response)
@@ -635,9 +635,9 @@ class StreamProcessorsAutoConfiguration {
 
         streamProcessors.isNotEmpty() && positionsHandlerRegistry.allHandlersByAccount.isNotEmpty() -> {
             val beforeLastPriceHandlers =
-                streamProcessors.filter { it.beforePositionsHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachPositionHandler }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
-                streamProcessors.filter { it.afterPositionsHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachPositionHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<PositionsStreamResponse> { response ->
                 if (response.hasPosition()) {
                     beforeLastPriceHandlers?.runProcessors(response)
@@ -668,9 +668,9 @@ class StreamProcessorsAutoConfiguration {
 
         else -> {
             val beforeLastPriceHandlers =
-                streamProcessors.filter { it.beforePositionsHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachPositionHandler }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
-                streamProcessors.filter { it.afterPositionsHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachPositionHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<PositionsStreamResponse> { response ->
                 if (response.hasPosition()) {
                     beforeLastPriceHandlers?.runProcessors(response)
@@ -743,9 +743,9 @@ class StreamProcessorsAutoConfiguration {
 
         streamProcessors.isNotEmpty() && ordersHandlerRegistry.allHandlersByAccount.isEmpty() -> {
             val beforeLastPriceHandlers =
-                streamProcessors.filter { it.beforeOrdersHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachOrdersHandler }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
-                streamProcessors.filter { it.afterOrdersHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachOrdersHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<TradesStreamResponse> { response ->
                 if (response.hasOrderTrades()) {
                     beforeLastPriceHandlers?.runProcessors(response)
@@ -776,9 +776,9 @@ class StreamProcessorsAutoConfiguration {
 
         else -> {
             val beforeLastPriceHandlers =
-                streamProcessors.filter { it.beforeOrdersHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.beforeEachOrdersHandler }.takeIf { it.isNotEmpty() }
             val afterLastPriceHandlers =
-                streamProcessors.filter { it.afterOrdersHandlers }.takeIf { it.isNotEmpty() }
+                streamProcessors.filter { it.afterEachOrdersHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<TradesStreamResponse> { response ->
                 if (response.hasOrderTrades()) {
                     beforeLastPriceHandlers?.runProcessors(response)

@@ -1,17 +1,19 @@
 package io.github.dankosik.starter.invest.processor.marketdata
 
+import io.github.dankosik.starter.invest.exception.CommonException
+import io.github.dankosik.starter.invest.exception.ErrorCode
 import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterOrderBookHandlers
-import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeOrderBookHandlers
+import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterEachOrderBookHandler
+import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeEachOrderBookHandler
 import ru.tinkoff.piapi.contract.v1.OrderBook
 import java.util.concurrent.CompletableFuture
 
 interface BaseOrderBookStreamProcessor {
-    var beforeEachOrderBookHandlers: Boolean
-    var afterEachOrderBookHandlers: Boolean
+    var beforeEachOrderBookHandler: Boolean
+    var afterEachOrderBookHandler: Boolean
 }
 
 interface BlockingOrderBookStreamProcessorAdapter : BaseOrderBookStreamProcessor {
@@ -30,8 +32,8 @@ inline fun BlockingOrderBookStreamProcessorAdapter(
     crossinline block: (OrderBook) -> Unit
 ): BlockingOrderBookStreamProcessorAdapter = object : BlockingOrderBookStreamProcessorAdapter {
     override fun process(orderBook: OrderBook) = block(orderBook)
-    override var beforeEachOrderBookHandlers: Boolean = false
-    override var afterEachOrderBookHandlers: Boolean = false
+    override var beforeEachOrderBookHandler: Boolean = false
+    override var afterEachOrderBookHandler: Boolean = false
 }
 
 
@@ -39,25 +41,25 @@ inline fun AsyncOrderBookStreamProcessorAdapter(
     crossinline block: (OrderBook) -> CompletableFuture<Void>
 ): AsyncOrderBookStreamProcessorAdapter = object : AsyncOrderBookStreamProcessorAdapter {
     override fun process(orderBook: OrderBook): CompletableFuture<Void> = block(orderBook)
-    override var beforeEachOrderBookHandlers: Boolean = false
-    override var afterEachOrderBookHandlers: Boolean = false
+    override var beforeEachOrderBookHandler: Boolean = false
+    override var afterEachOrderBookHandler: Boolean = false
 }
 
 inline fun CoroutineOrderBookStreamProcessorAdapter(
     crossinline block: suspend (OrderBook) -> Unit
 ): CoroutineOrderBookStreamProcessorAdapter = object : CoroutineOrderBookStreamProcessorAdapter {
     override suspend fun process(orderBook: OrderBook): Unit = block(orderBook)
-    override var beforeEachOrderBookHandlers: Boolean = false
-    override var afterEachOrderBookHandlers: Boolean = false
+    override var beforeEachOrderBookHandler: Boolean = false
+    override var afterEachOrderBookHandler: Boolean = false
 }
 
-fun <T : BaseOrderBookStreamProcessor> T.runBeforeEachOrderBookHandlers(): T {
-    this.beforeEachOrderBookHandlers = true
+fun <T : BaseOrderBookStreamProcessor> T.runBeforeEachOrderBookHandler(): T {
+    this.beforeEachOrderBookHandler = true
     return this
 }
 
-fun <T : BaseOrderBookStreamProcessor> T.runAfterEachOrderBookHandlers(): T {
-    this.afterEachOrderBookHandlers = true
+fun <T : BaseOrderBookStreamProcessor> T.runAfterEachOrderBookHandler(): T {
+    this.afterEachOrderBookHandler = true
     return this
 }
 
@@ -69,7 +71,7 @@ fun BaseOrderBookStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamPr
     is CoroutineOrderBookStreamProcessorAdapter -> this.toMarketDataProcessor()
 
     else -> {
-        throw RuntimeException()
+        throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
     }
 }
 
@@ -79,8 +81,8 @@ fun BlockingOrderBookStreamProcessorAdapter.toMarketDataProcessor(): BlockingMar
             process(it.orderbook)
         }
     }.apply {
-        if (afterEachOrderBookHandlers) runAfterOrderBookHandlers()
-        if (beforeEachOrderBookHandlers) runBeforeOrderBookHandlers()
+        if (this@toMarketDataProcessor.afterEachOrderBookHandler) runAfterEachOrderBookHandler()
+        if (this@toMarketDataProcessor.beforeEachOrderBookHandler) runBeforeEachOrderBookHandler()
     }
 
 fun AsyncOrderBookStreamProcessorAdapter.toMarketDataProcessor() =
@@ -91,8 +93,8 @@ fun AsyncOrderBookStreamProcessorAdapter.toMarketDataProcessor() =
             }
         }
     }.apply {
-        if (afterEachOrderBookHandlers) runAfterOrderBookHandlers()
-        if (beforeEachOrderBookHandlers) runBeforeOrderBookHandlers()
+        if (this@toMarketDataProcessor.afterEachOrderBookHandler) runAfterEachOrderBookHandler()
+        if (this@toMarketDataProcessor.beforeEachOrderBookHandler) runBeforeEachOrderBookHandler()
     }
 
 fun CoroutineOrderBookStreamProcessorAdapter.toMarketDataProcessor() =
@@ -101,6 +103,6 @@ fun CoroutineOrderBookStreamProcessorAdapter.toMarketDataProcessor() =
             process(it.orderbook)
         }
     }.apply {
-        if (afterEachOrderBookHandlers) runAfterOrderBookHandlers()
-        if (beforeEachOrderBookHandlers) runBeforeOrderBookHandlers()
+        if (this@toMarketDataProcessor.afterEachOrderBookHandler) runAfterEachOrderBookHandler()
+        if (this@toMarketDataProcessor.beforeEachOrderBookHandler) runBeforeEachOrderBookHandler()
     }

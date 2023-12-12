@@ -1,17 +1,19 @@
 package io.github.dankosik.starter.invest.processor.marketdata
 
+import io.github.dankosik.starter.invest.exception.CommonException
+import io.github.dankosik.starter.invest.exception.ErrorCode
 import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterCandleHandlers
-import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeCandleHandlers
+import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterEachCandleHandler
+import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeEachCandleHandler
 import ru.tinkoff.piapi.contract.v1.Candle
 import java.util.concurrent.CompletableFuture
 
 interface BaseCandleStreamProcessor {
-    var beforeEachCandleHandlers: Boolean
-    var afterEachCandleHandlers: Boolean
+    var beforeEachCandleHandler: Boolean
+    var afterEachCandleHandler: Boolean
 }
 
 interface BlockingCandleStreamProcessorAdapter : BaseCandleStreamProcessor {
@@ -30,8 +32,8 @@ inline fun BlockingCandleStreamProcessorAdapter(
     crossinline block: (Candle) -> Unit
 ): BlockingCandleStreamProcessorAdapter = object : BlockingCandleStreamProcessorAdapter {
     override fun process(candle: Candle) = block(candle)
-    override var beforeEachCandleHandlers: Boolean = false
-    override var afterEachCandleHandlers: Boolean = false
+    override var beforeEachCandleHandler: Boolean = false
+    override var afterEachCandleHandler: Boolean = false
 }
 
 
@@ -39,25 +41,25 @@ inline fun AsyncCandleStreamProcessorAdapter(
     crossinline block: (Candle) -> CompletableFuture<Void>
 ): AsyncCandleStreamProcessorAdapter = object : AsyncCandleStreamProcessorAdapter {
     override fun process(candle: Candle): CompletableFuture<Void> = block(candle)
-    override var beforeEachCandleHandlers: Boolean = false
-    override var afterEachCandleHandlers: Boolean = false
+    override var beforeEachCandleHandler: Boolean = false
+    override var afterEachCandleHandler: Boolean = false
 }
 
 inline fun CoroutineCandleStreamProcessorAdapter(
     crossinline block: suspend (Candle) -> Unit
 ): CoroutineCandleStreamProcessorAdapter = object : CoroutineCandleStreamProcessorAdapter {
     override suspend fun process(candle: Candle): Unit = block(candle)
-    override var beforeEachCandleHandlers: Boolean = false
-    override var afterEachCandleHandlers: Boolean = false
+    override var beforeEachCandleHandler: Boolean = false
+    override var afterEachCandleHandler: Boolean = false
 }
 
 fun <T : BaseCandleStreamProcessor> T.runBeforeEachCandleHandlers(): T {
-    this.beforeEachCandleHandlers = true
+    this.beforeEachCandleHandler = true
     return this
 }
 
 fun <T : BaseCandleStreamProcessor> T.runAfterEachCandleBookHandlers(): T {
-    this.afterEachCandleHandlers = true
+    this.afterEachCandleHandler = true
     return this
 }
 
@@ -69,7 +71,7 @@ fun BaseCandleStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamProce
     is CoroutineCandleStreamProcessorAdapter -> this.toMarketDataProcessor()
 
     else -> {
-        throw RuntimeException()
+        throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
     }
 }
 
@@ -79,8 +81,8 @@ fun BlockingCandleStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarket
             process(it.candle)
         }
     }.apply {
-        if (afterEachCandleHandlers) runAfterCandleHandlers()
-        if (beforeEachCandleHandlers) runBeforeCandleHandlers()
+        if (this@toMarketDataProcessor.afterEachCandleHandler) runAfterEachCandleHandler()
+        if (this@toMarketDataProcessor.beforeEachCandleHandler) runBeforeEachCandleHandler()
     }
 
 fun AsyncCandleStreamProcessorAdapter.toMarketDataProcessor() =
@@ -91,8 +93,8 @@ fun AsyncCandleStreamProcessorAdapter.toMarketDataProcessor() =
             }
         }
     }.apply {
-        if (afterEachCandleHandlers) runAfterCandleHandlers()
-        if (beforeEachCandleHandlers) runBeforeCandleHandlers()
+        if (this@toMarketDataProcessor.afterEachCandleHandler) runAfterEachCandleHandler()
+        if (this@toMarketDataProcessor.beforeEachCandleHandler) runBeforeEachCandleHandler()
     }
 
 fun CoroutineCandleStreamProcessorAdapter.toMarketDataProcessor() =
@@ -101,6 +103,6 @@ fun CoroutineCandleStreamProcessorAdapter.toMarketDataProcessor() =
             process(it.candle)
         }
     }.apply {
-        if (afterEachCandleHandlers) runAfterCandleHandlers()
-        if (beforeEachCandleHandlers) runBeforeCandleHandlers()
+        if (this@toMarketDataProcessor.afterEachCandleHandler) runAfterEachCandleHandler()
+        if (this@toMarketDataProcessor.beforeEachCandleHandler) runBeforeEachCandleHandler()
     }

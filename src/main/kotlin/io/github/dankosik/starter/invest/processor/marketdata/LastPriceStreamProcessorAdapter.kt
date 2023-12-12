@@ -1,17 +1,19 @@
 package io.github.dankosik.starter.invest.processor.marketdata
 
+import io.github.dankosik.starter.invest.exception.CommonException
+import io.github.dankosik.starter.invest.exception.ErrorCode
 import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterLastPriceHandlers
-import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeLastPriceHandlers
+import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterEachLastPriceHandler
+import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeEachLastPriceHandler
 import ru.tinkoff.piapi.contract.v1.LastPrice
 import java.util.concurrent.CompletableFuture
 
 interface BaseLastPriceStreamProcessor {
-    var beforeEachLastPriceHandlers: Boolean
-    var afterEachLastPriceHandlers: Boolean
+    var beforeEachLastPriceHandler: Boolean
+    var afterEachLastPriceHandler: Boolean
 }
 
 interface BlockingLastPriceStreamProcessorAdapter : BaseLastPriceStreamProcessor {
@@ -30,8 +32,8 @@ inline fun BlockingLastPriceStreamProcessorAdapter(
     crossinline block: (LastPrice) -> Unit
 ): BlockingLastPriceStreamProcessorAdapter = object : BlockingLastPriceStreamProcessorAdapter {
     override fun process(lastPrice: LastPrice) = block(lastPrice)
-    override var beforeEachLastPriceHandlers: Boolean = false
-    override var afterEachLastPriceHandlers: Boolean = false
+    override var beforeEachLastPriceHandler: Boolean = false
+    override var afterEachLastPriceHandler: Boolean = false
 }
 
 
@@ -39,25 +41,25 @@ inline fun AsyncLastPriceStreamProcessorAdapter(
     crossinline block: (LastPrice) -> CompletableFuture<Void>
 ): AsyncLastPriceStreamProcessorAdapter = object : AsyncLastPriceStreamProcessorAdapter {
     override fun process(lastPrice: LastPrice): CompletableFuture<Void> = block(lastPrice)
-    override var beforeEachLastPriceHandlers: Boolean = false
-    override var afterEachLastPriceHandlers: Boolean = false
+    override var beforeEachLastPriceHandler: Boolean = false
+    override var afterEachLastPriceHandler: Boolean = false
 }
 
 inline fun CoroutineLastPriceStreamProcessorAdapter(
     crossinline block: suspend (LastPrice) -> Unit
 ): CoroutineLastPriceStreamProcessorAdapter = object : CoroutineLastPriceStreamProcessorAdapter {
     override suspend fun process(lastPrice: LastPrice): Unit = block(lastPrice)
-    override var beforeEachLastPriceHandlers: Boolean = false
-    override var afterEachLastPriceHandlers: Boolean = false
+    override var beforeEachLastPriceHandler: Boolean = false
+    override var afterEachLastPriceHandler: Boolean = false
 }
 
-fun <T : BaseLastPriceStreamProcessor> T.runBeforeEachLastPriceHandlers(): T {
-    this.beforeEachLastPriceHandlers = true
+fun <T : BaseLastPriceStreamProcessor> T.runBeforeEachLastPriceHandler(): T {
+    this.beforeEachLastPriceHandler = true
     return this
 }
 
-fun <T : BaseLastPriceStreamProcessor> T.runAfterEachLastPriceBookHandlers(): T {
-    this.afterEachLastPriceHandlers = true
+fun <T : BaseLastPriceStreamProcessor> T.runAfterEachLastPriceBookHandler(): T {
+    this.afterEachLastPriceHandler = true
     return this
 }
 
@@ -69,7 +71,7 @@ fun BaseLastPriceStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamPr
     is CoroutineLastPriceStreamProcessorAdapter -> this.toMarketDataProcessor()
 
     else -> {
-        throw RuntimeException()
+        throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
     }
 }
 
@@ -79,8 +81,8 @@ fun BlockingLastPriceStreamProcessorAdapter.toMarketDataProcessor(): BlockingMar
             process(it.lastPrice)
         }
     }.apply {
-        if (afterEachLastPriceHandlers) runAfterLastPriceHandlers()
-        if (beforeEachLastPriceHandlers) runBeforeLastPriceHandlers()
+        if (this@toMarketDataProcessor.afterEachLastPriceHandler) runAfterEachLastPriceHandler()
+        if (this@toMarketDataProcessor.beforeEachLastPriceHandler) runBeforeEachLastPriceHandler()
     }
 
 fun AsyncLastPriceStreamProcessorAdapter.toMarketDataProcessor() =
@@ -91,8 +93,8 @@ fun AsyncLastPriceStreamProcessorAdapter.toMarketDataProcessor() =
             }
         }
     }.apply {
-        if (afterEachLastPriceHandlers) runAfterLastPriceHandlers()
-        if (beforeEachLastPriceHandlers) runBeforeLastPriceHandlers()
+        if (this@toMarketDataProcessor.afterEachLastPriceHandler) runAfterEachLastPriceHandler()
+        if (this@toMarketDataProcessor.beforeEachLastPriceHandler) runBeforeEachLastPriceHandler()
     }
 
 fun CoroutineLastPriceStreamProcessorAdapter.toMarketDataProcessor() =
@@ -101,6 +103,6 @@ fun CoroutineLastPriceStreamProcessorAdapter.toMarketDataProcessor() =
             process(it.lastPrice)
         }
     }.apply {
-        if (afterEachLastPriceHandlers) runAfterLastPriceHandlers()
-        if (beforeEachLastPriceHandlers) runBeforeLastPriceHandlers()
+        if (this@toMarketDataProcessor.afterEachLastPriceHandler) runAfterEachLastPriceHandler()
+        if (this@toMarketDataProcessor.beforeEachLastPriceHandler) runBeforeEachLastPriceHandler()
     }

@@ -4,8 +4,8 @@ import ru.tinkoff.piapi.contract.v1.PositionsStreamResponse
 import java.util.concurrent.CompletableFuture
 
 interface BasePositionsStreamProcessor {
-    var beforePositionsHandlers: Boolean
-    var afterPositionsHandlers: Boolean
+    var beforeEachPositionHandler: Boolean
+    var afterEachPositionHandler: Boolean
 }
 
 interface BlockingPositionsStreamProcessorAdapter : BasePositionsStreamProcessor {
@@ -24,8 +24,8 @@ inline fun BlockingPositionsStreamProcessorAdapter(
     crossinline block: (PositionsStreamResponse) -> Unit
 ): BlockingPositionsStreamProcessorAdapter = object : BlockingPositionsStreamProcessorAdapter {
     override fun process(positionsStreamResponse: PositionsStreamResponse) = block(positionsStreamResponse)
-    override var beforePositionsHandlers = false
-    override var afterPositionsHandlers = false
+    override var beforeEachPositionHandler = false
+    override var afterEachPositionHandler = false
 }
 
 
@@ -35,8 +35,8 @@ inline fun AsyncPositionsStreamProcessorAdapter(
     override fun process(positionsStreamResponse: PositionsStreamResponse): CompletableFuture<Void> =
         block(positionsStreamResponse)
 
-    override var beforePositionsHandlers = false
-    override var afterPositionsHandlers = false
+    override var beforeEachPositionHandler = false
+    override var afterEachPositionHandler = false
 }
 
 inline fun CoroutinePositionsStreamProcessorAdapter(
@@ -45,16 +45,16 @@ inline fun CoroutinePositionsStreamProcessorAdapter(
     override suspend fun process(positionsStreamResponse: PositionsStreamResponse): Unit =
         block(positionsStreamResponse)
 
-    override var beforePositionsHandlers = false
-    override var afterPositionsHandlers = false
+    override var beforeEachPositionHandler = false
+    override var afterEachPositionHandler = false
 }
 
-fun <T : BasePositionsStreamProcessor> T.runBeforePositionsHandlers(): T {
-    this.beforePositionsHandlers = true
+fun <T : BasePositionsStreamProcessor> T.runBeforeEachPositionHandler(): T {
+    this.beforeEachPositionHandler = true
     return this
 }
 
-fun <T : BasePositionsStreamProcessor> T.runAfterPositionsHandlers(): T {
-    this.afterPositionsHandlers = true
+fun <T : BasePositionsStreamProcessor> T.runAfterEachPositionHandler(): T {
+    this.afterEachPositionHandler = true
     return this
 }

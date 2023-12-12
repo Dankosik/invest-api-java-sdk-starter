@@ -4,8 +4,8 @@ import ru.tinkoff.piapi.contract.v1.TradesStreamResponse
 import java.util.concurrent.CompletableFuture
 
 interface BaseOrdersStreamProcessor {
-    var beforeOrdersHandlers: Boolean
-    var afterOrdersHandlers: Boolean
+    var beforeEachOrdersHandler: Boolean
+    var afterEachOrdersHandler: Boolean
 }
 
 interface BlockingOrdersStreamProcessorAdapter : BaseOrdersStreamProcessor {
@@ -24,8 +24,8 @@ inline fun BlockingOrdersStreamProcessorAdapter(
     crossinline block: (TradesStreamResponse) -> Unit
 ): BlockingOrdersStreamProcessorAdapter = object : BlockingOrdersStreamProcessorAdapter {
     override fun process(tradesStreamResponse: TradesStreamResponse) = block(tradesStreamResponse)
-    override var beforeOrdersHandlers = false
-    override var afterOrdersHandlers = false
+    override var beforeEachOrdersHandler = false
+    override var afterEachOrdersHandler = false
 }
 
 
@@ -35,8 +35,8 @@ inline fun AsyncOrdersStreamProcessorAdapter(
     override fun process(tradesStreamResponse: TradesStreamResponse): CompletableFuture<Void> =
         block(tradesStreamResponse)
 
-    override var beforeOrdersHandlers = false
-    override var afterOrdersHandlers = false
+    override var beforeEachOrdersHandler = false
+    override var afterEachOrdersHandler = false
 }
 
 inline fun CoroutineOrdersStreamProcessorAdapter(
@@ -45,16 +45,16 @@ inline fun CoroutineOrdersStreamProcessorAdapter(
     override suspend fun process(tradesStreamResponse: TradesStreamResponse): Unit =
         block(tradesStreamResponse)
 
-    override var beforeOrdersHandlers = false
-    override var afterOrdersHandlers = false
+    override var beforeEachOrdersHandler = false
+    override var afterEachOrdersHandler = false
 }
 
-fun <T : BaseOrdersStreamProcessor> T.runBeforePositionsHandlers(): T {
-    this.beforeOrdersHandlers = true
+fun <T : BaseOrdersStreamProcessor> T.runBeforeEachOrdersHandle(): T {
+    this.beforeEachOrdersHandler = true
     return this
 }
 
-fun <T : BaseOrdersStreamProcessor> T.runAfterPositionsHandlers(): T {
-    this.afterOrdersHandlers = true
+fun <T : BaseOrdersStreamProcessor> T.runAfterEachOrdersHandler(): T {
+    this.afterEachOrdersHandler = true
     return this
 }
