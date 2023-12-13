@@ -76,7 +76,7 @@ implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta34'
 <dependency>
     <groupId>io.github.dankosik</groupId>
     <artifactId>invest-api-java-sdk-starter</artifactId>
-    <version>0.6.1-beta33</version>
+    <version>0.6.1-beta34</version>
     <type>pom</type>
 </dependency>
 ```
