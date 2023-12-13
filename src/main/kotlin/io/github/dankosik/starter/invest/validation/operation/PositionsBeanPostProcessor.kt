@@ -27,8 +27,8 @@ internal class PositionsBeanPostProcessor : BeanPostProcessor {
                 is BlockingPositionHandler -> "BlockingPositionsHandler"
                 else -> "AsyncPositionsHandler"
             }
-            check(isAllHandlePosition) {
-                "$classNameInMessage: ${bean.javaClass.name} must have an annotated of HandlePositions"
+            check(isHandlePosition) {
+                "$classNameInMessage: ${bean.javaClass.name} must have an annotated of HandlePosition"
             }
             val account = bean.javaClass.getAnnotation(HandlePosition::class.java).account
             check(account.isNotBlank()) {
