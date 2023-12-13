@@ -61,6 +61,10 @@ class DollarCandleHandler(
 ```
 
 Подробные гайды, статьи и примеры скоро появятся - ждите
+### Примеры
+[На котлине](
+https://github.com/Dankosik/invest-starter-demo/blob/main/src/main/kotlin/io/github/dankosik/investstarterdemo/InvestStarterDemoApplication.kt)
+
 ### Добавить зависимость в свой проект
 
 Для build.`gradle.kts`
