@@ -58,8 +58,6 @@ import io.github.dankosik.starter.invest.registry.operation.PositionsHandlerRegi
 import io.github.dankosik.starter.invest.registry.order.OrdersHandlerRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
@@ -197,12 +195,10 @@ class StreamProcessorsAutoConfiguration {
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleTrade(trade)
                     } else {
-                        suspend {
-                            handlers?.map {
-                                DEFAULT_SCOPE.async {
-                                    it.handleTrade(trade)
-                                }
-                            }?.awaitAll()
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleTrade(trade)
+                            }
                         }
                     }
                     afterTradesHandlers?.runProcessors(response)
@@ -249,12 +245,10 @@ class StreamProcessorsAutoConfiguration {
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleOrderBook(orderbook)
                     } else {
-                        suspend {
-                            handlers?.map {
-                                DEFAULT_SCOPE.async {
-                                    it.handleOrderBook(orderbook)
-                                }
-                            }?.awaitAll()
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleOrderBook(orderbook)
+                            }
                         }
                     }
                     afterOrderBookHandlers?.runProcessors(response)
@@ -300,12 +294,10 @@ class StreamProcessorsAutoConfiguration {
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleLastPrice(lastPrice)
                     } else {
-                        suspend {
-                            handlers?.map {
-                                DEFAULT_SCOPE.async {
-                                    it.handleLastPrice(lastPrice)
-                                }
-                            }?.awaitAll()
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleLastPrice(lastPrice)
+                            }
                         }
                     }
                     afterLastPriceHandlers?.runProcessors(response)
@@ -352,12 +344,10 @@ class StreamProcessorsAutoConfiguration {
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleTradingStatus(tradingStatus)
                     } else {
-                        suspend {
-                            handlers?.map {
-                                DEFAULT_SCOPE.async {
-                                    it.handleTradingStatus(tradingStatus)
-                                }
-                            }?.awaitAll()
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleTradingStatus(tradingStatus)
+                            }
                         }
                     }
                     afterTradingStatusHandlers?.runProcessors(response)
@@ -429,12 +419,10 @@ class StreamProcessorsAutoConfiguration {
                         if (handlers != null && handlers.size == 1) {
                             handlers.first().handleCandle(candle)
                         } else {
-                            suspend {
-                                handlers?.map {
-                                    async {
-                                        it.handleCandle(candle)
-                                    }
-                                }?.awaitAll()
+                            handlers?.forEach {
+                                launch {
+                                    it.handleCandle(candle)
+                                }
                             }
                         }
                     }
@@ -461,12 +449,10 @@ class StreamProcessorsAutoConfiguration {
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleCandle(candle)
                     } else {
-                        suspend {
-                            handlers?.map {
-                                DEFAULT_SCOPE.async {
-                                    it.handleCandle(candle)
-                                }
-                            }?.awaitAll()
+                        handlers?.forEach {
+                            DEFAULT_SCOPE.launch {
+                                it.handleCandle(candle)
+                            }
                         }
                     }
                     afterCandleHandlers?.runProcessors(response)
