@@ -1,4 +1,5 @@
-# invest-api-java-sdk-starter
+# Spring Boot стартер для [invest-api-java-sdk](https://github.com/RussianInvestments/invest-api-java-sdk)
+### Простота написания кода + высокая производительность из коробки
 
 Пока в работе - следите за обновлениями, если есть вопросы пишите https://t.me/KorytoDaniil
 
