@@ -53,12 +53,12 @@ inline fun CoroutineCandleStreamProcessorAdapter(
     override var afterEachCandleHandler: Boolean = false
 }
 
-fun <T : BaseCandleStreamProcessor> T.runBeforeEachCandleHandlers(): T {
+fun <T : BaseCandleStreamProcessor> T.runBeforeEachCandleHandler(): T {
     this.beforeEachCandleHandler = true
     return this
 }
 
-fun <T : BaseCandleStreamProcessor> T.runAfterEachCandleBookHandlers(): T {
+fun <T : BaseCandleStreamProcessor> T.runAfterEachCandleBookHandler(): T {
     this.afterEachCandleHandler = true
     return this
 }
