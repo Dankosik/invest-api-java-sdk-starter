@@ -19,7 +19,7 @@ class DollarCandleHandler : CoroutineCandleHandler {
 }
 ```
 
-Помимо использования интерфейса `CoroutineCandleHandler` есть еще `BlockingCandleHandler` и `AsyncCandleHandler` используйте то что вам удобно.
+Помимо использования интерфейса `CoroutineCandleHandler` есть еще `BlockingCandleHandler` и `AsyncCandleHandler` используйте то что вам удобно. Вместо тикера можно использовать figi или instrumentUid
 
 Если у вас `jdk 21+` то все ваши блокирующие хендеры будут запущены в виртульных потоках, поэтому смело используйте блокирующий код без проблем 
 
