@@ -65,18 +65,18 @@ class DollarCandleHandler(
 
 Для build.`gradle.kts`
 ```gradle
-implementation("io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta32")
+implementation("io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta33")
 ```
 Для `build.gradle`
 ```gradle
-implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta32'
+implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta33'
 ```
 Для maven
 ```asciidoc
 <dependency>
     <groupId>io.github.dankosik</groupId>
     <artifactId>invest-api-java-sdk-starter</artifactId>
-    <version>0.6.1-beta32</version>
+    <version>0.6.1-beta33</version>
     <type>pom</type>
 </dependency>
 ```
