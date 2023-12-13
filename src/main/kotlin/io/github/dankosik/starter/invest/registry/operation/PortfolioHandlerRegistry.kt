@@ -47,8 +47,12 @@ internal class PortfolioHandlerRegistry(
     }
 
     private fun BasePortfolioHandler.addAccountIdToAllHandlerMap() =
-        this::class.java.getAnnotation(HandleAllPositions::class.java).accounts.forEach { account ->
-            allHandlersByAccount[account]?.add(this) ?: mutableListOf(this)
+        this::class.java.getAnnotation(HandleAllPortfolios::class.java).accounts.forEach { account ->
+            if (allHandlersByAccount[account] == null) {
+                allHandlersByAccount[account] = mutableListOf(this)
+            } else {
+                allHandlersByAccount[account]?.add(this)
+            }
         }
 
     private companion object : KLogging()

@@ -206,7 +206,7 @@ class StreamStartAutoconfiguration(
             ?.let { commonMarketDataSubscription?.subscribeTrades(it) }
         instrumentsLastPrice.takeIf { !it.isNullOrEmpty() }?.toList()
             ?.let { commonMarketDataSubscription?.subscribeLastPrices(it) }
-        instrumentsOrderBookSandbox.takeIf { !it.isNullOrEmpty() }?.toList()
+        instrumentsOrderBook.takeIf { !it.isNullOrEmpty() }?.toList()
             ?.let {
                 val depth = tinkoffApiProperties.subscription?.orderBook?.depth ?: DEFAULT_ORDERBOOK_DEPTH
                 commonMarketDataSubscription?.subscribeOrderbook(it, depth)

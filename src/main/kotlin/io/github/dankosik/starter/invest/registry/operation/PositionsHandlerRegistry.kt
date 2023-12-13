@@ -47,7 +47,11 @@ internal class PositionsHandlerRegistry(
 
     private fun BasePositionHandler.addAccountIdToAllHandlerMap() =
         this::class.java.getAnnotation(HandleAllPositions::class.java).accounts.forEach { account ->
-            allHandlersByAccount[account]?.add(this) ?: mutableListOf(this)
+            if (allHandlersByAccount[account] == null) {
+                allHandlersByAccount[account] = mutableListOf(this)
+            } else {
+                allHandlersByAccount[account]?.add(this)
+            }
         }
 
 

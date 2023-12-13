@@ -95,7 +95,11 @@ internal class CandleHandlerRegistry(
     private fun BaseCandleHandler.addIntervalToAllHandlerMap() {
         val annotation = this::class.java.getAnnotation(HandleAllCandles::class.java)
         val subscriptionInterval = annotation.subscriptionInterval
-        allHandlersBySubscription[subscriptionInterval]?.add(this) ?: mutableListOf(this)
+        if (allHandlersBySubscription[subscriptionInterval] == null) {
+            allHandlersBySubscription[subscriptionInterval] = mutableListOf(this)
+        } else {
+            allHandlersBySubscription[subscriptionInterval]?.add(this)
+        }
     }
 
     private companion object : KLogging()

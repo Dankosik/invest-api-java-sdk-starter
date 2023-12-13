@@ -93,7 +93,11 @@ internal class OrdersHandlerRegistry(
 
     private fun BaseOrderHandler.addAccountIdToAllHandlerMap() =
         this::class.java.getAnnotation(HandleAllOrders::class.java).accounts.forEach { account ->
-            allHandlersByAccount[account]?.add(this) ?: mutableListOf(this)
+            if (allHandlersByAccount[account] == null) {
+                allHandlersByAccount[account] = mutableListOf(this)
+            } else {
+                allHandlersByAccount[account]?.add(this)
+            }
         }
 
     private companion object : KLogging()
