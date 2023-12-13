@@ -90,3 +90,7 @@ implementation("org.springframework.boot:spring-boot-starter-web")
 ```asciidoc
 implementation("org.springframework.boot:spring-boot-starter-webflux")
 ```
+
+### Pull Requests
+
+На все ваши пулл реквесты будет приходит chatGPT, не пугайтесь, возможно он посоветует что-то хорошое  или найдет опечатку
