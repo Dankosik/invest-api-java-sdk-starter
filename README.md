@@ -25,6 +25,41 @@ class DollarCandleHandler : CoroutineCandleHandler {
 
 `LastPrice`, `Trade`, `OrderBook`, `Porfolio` и остальные события доступные в стримах invest-api-java-sdk можно будет обрабатывать также как и в примере выше используя другие аннотации и интерфейсы
 
+Также добавьте в aplication.yml
+
+```yml
+tinkoff:
+  starter:
+    apiToken:
+      fullAccess:
+        "ваш токен"
+```
+
+Вместо `fullAccess` можно использовать `readonly` или `sandbox`. Все ваши запросы к api будут использовать определенный вами токен. 
+
+Все сервисы api, такие как: `MarketDataService`, `InstrumentsService`, `OrdersService` и т.д.  будут созданы как компоненты spring. Поэтому вы можете использвать их в ваших хендлерах например вот так:
+
+```kotlin
+@HandleCandle(
+    ticker = "SiZ3",
+    subscriptionInterval = SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE
+)
+class DollarCandleHandler(
+    private val marketDataService: MarketDataService,
+    private val ordersService: OrdersService,
+    private val instrumentsService: InstrumentsService,
+) : CoroutineCandleHandler {
+
+    override suspend fun handle(candle: Candle) {
+        val uid = instrumentsService.getFutures(InstrumentStatus.INSTRUMENT_STATUS_BASE)
+            .awaitSingle()
+            .find { it.ticker == "ваш тикер" }?.uid
+        marketDataService.getOrderBook(uid!!, 50)
+        ordersService.getOrders("id вашего аккаунта")
+    }
+}
+```
+
 Подробные гайды, статьи и примеры скоро появятся - ждите
 ### Добавить зависимость в свой проект
 
