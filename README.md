@@ -70,18 +70,18 @@ https://github.com/Dankosik/invest-starter-demo/blob/main/src/main/kotlin/io/git
 
 Для build.`gradle.kts`
 ```gradle
-implementation("io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta34")
+implementation("io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta36")
 ```
 Для `build.gradle`
 ```gradle
-implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta34'
+implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta36'
 ```
 Для maven
 ```asciidoc
 <dependency>
     <groupId>io.github.dankosik</groupId>
     <artifactId>invest-api-java-sdk-starter</artifactId>
-    <version>0.6.1-beta34</version>
+    <version>0.6.1-beta36</version>
     <type>pom</type>
 </dependency>
 ```
