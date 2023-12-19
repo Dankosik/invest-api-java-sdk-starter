@@ -1,37 +1,13 @@
 package io.github.dankosik.starter.invest.configuration
 
-import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
-import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
-import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
-import io.github.dankosik.starter.invest.annotation.marketdata.HandleTrade
-import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStatus
-import io.github.dankosik.starter.invest.annotation.marketdata.extractFigiToInstrumentTypeMap
-import io.github.dankosik.starter.invest.annotation.marketdata.extractTickerToInstrumentTypeMap
-import io.github.dankosik.starter.invest.annotation.marketdata.extractTickersWithoutInstrumentType
-import io.github.dankosik.starter.invest.annotation.marketdata.extractUidToInstrumentTypeMap
-import io.github.dankosik.starter.invest.annotation.order.HandleOrder
-import io.github.dankosik.starter.invest.annotation.order.extractFigiToInstrumentTypeMap
-import io.github.dankosik.starter.invest.annotation.order.extractTickerToInstrumentTypeMap
-import io.github.dankosik.starter.invest.annotation.order.extractTickersWithoutInstrumentType
-import io.github.dankosik.starter.invest.annotation.order.extractUidToInstrumentTypeMap
-import io.github.dankosik.starter.invest.contract.marketdata.candle.AsyncCandleHandler
-import io.github.dankosik.starter.invest.contract.marketdata.candle.BlockingCandleHandler
-import io.github.dankosik.starter.invest.contract.marketdata.candle.CoroutineCandleHandler
-import io.github.dankosik.starter.invest.contract.marketdata.lastprice.AsyncLastPriceHandler
-import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BlockingLastPriceHandler
-import io.github.dankosik.starter.invest.contract.marketdata.lastprice.CoroutineLastPriceHandler
-import io.github.dankosik.starter.invest.contract.marketdata.orderbook.AsyncOrderBookHandler
-import io.github.dankosik.starter.invest.contract.marketdata.orderbook.BlockingOrderBookHandler
-import io.github.dankosik.starter.invest.contract.marketdata.orderbook.CoroutineOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orders.AsyncOrderHandler
-import io.github.dankosik.starter.invest.contract.orders.BlockingOrderHandler
-import io.github.dankosik.starter.invest.contract.orders.CoroutineOrderHandler
-import io.github.dankosik.starter.invest.contract.marketdata.status.AsyncTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.marketdata.status.BlockingTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.marketdata.status.CoroutineTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.marketdata.trade.AsyncTradeHandler
-import io.github.dankosik.starter.invest.contract.marketdata.trade.BlockingTradeHandler
-import io.github.dankosik.starter.invest.contract.marketdata.trade.CoroutineTradeHandler
+import io.github.dankosik.starter.invest.annotation.marketdata.*
+import io.github.dankosik.starter.invest.annotation.order.*
+import io.github.dankosik.starter.invest.contract.marketdata.candle.getCandleHandlers
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.getLastPriceHandlers
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.getOrderBookHandlers
+import io.github.dankosik.starter.invest.contract.marketdata.status.getTradingStatusHandlers
+import io.github.dankosik.starter.invest.contract.marketdata.trade.getTradesHandlers
+import io.github.dankosik.starter.invest.contract.orders.getOrderHandlers
 import io.github.dankosik.starter.invest.exception.CommonException
 import io.github.dankosik.starter.invest.exception.ErrorCode
 import io.github.dankosik.starter.invest.extension.awaitSingle
@@ -59,32 +35,18 @@ class InstrumentsMapAutoConfiguration(
 
     @Bean
     fun tickerToUidMap(): Map<String, String> = runBlocking {
-        val beansWithHandleOrderBook = applicationContext.getBeansWithAnnotation(HandleOrderBook::class.java).values
-        val beansWithHandleTrade = applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values
-        val beansWithHandleLastPrice = applicationContext.getBeansWithAnnotation(HandleLastPrice::class.java).values
-        val beansWithHandleCandle = applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values
-        val beansWithHandleTradingStatus =
-            applicationContext.getBeansWithAnnotation(HandleTradingStatus::class.java).values
-        val beansWithHandleOrder = applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values
-
-        val orderBookHandlers = beansWithHandleOrderBook.filterIsInstance<CoroutineOrderBookHandler>() +
-                beansWithHandleOrderBook.filterIsInstance<AsyncOrderBookHandler>() +
-                beansWithHandleOrderBook.filterIsInstance<BlockingOrderBookHandler>()
-        val tradesHandlers = beansWithHandleTrade.filterIsInstance<CoroutineTradeHandler>() +
-                beansWithHandleTrade.filterIsInstance<BlockingTradeHandler>() +
-                beansWithHandleTrade.filterIsInstance<AsyncTradeHandler>()
-        val lastPriceHandlers = beansWithHandleLastPrice.filterIsInstance<CoroutineLastPriceHandler>() +
-                beansWithHandleLastPrice.filterIsInstance<BlockingLastPriceHandler>() +
-                beansWithHandleLastPrice.filterIsInstance<AsyncLastPriceHandler>()
-        val candleHandlers = beansWithHandleCandle.filterIsInstance<CoroutineCandleHandler>() +
-                beansWithHandleCandle.filterIsInstance<BlockingCandleHandler>() +
-                beansWithHandleCandle.filterIsInstance<AsyncCandleHandler>()
-        val tradingStatusHandlers = beansWithHandleTradingStatus.filterIsInstance<CoroutineTradingStatusHandler>() +
-                beansWithHandleTradingStatus.filterIsInstance<BlockingTradingStatusHandler>() +
-                beansWithHandleTradingStatus.filterIsInstance<AsyncTradingStatusHandler>()
-        val ordersHandlers = beansWithHandleOrder.filterIsInstance<CoroutineOrderHandler>() +
-                beansWithHandleOrder.filterIsInstance<BlockingOrderHandler>() +
-                beansWithHandleOrder.filterIsInstance<AsyncOrderHandler>()
+        val orderBookHandlers =
+            applicationContext.getBeansWithAnnotation(HandleOrderBook::class.java).values.getOrderBookHandlers()
+        val tradesHandlers =
+            applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values.getTradesHandlers()
+        val lastPriceHandlers =
+            applicationContext.getBeansWithAnnotation(HandleLastPrice::class.java).values.getLastPriceHandlers()
+        val candleHandlers =
+            applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
+        val tradingStatusHandlers =
+            applicationContext.getBeansWithAnnotation(HandleTradingStatus::class.java).values.getTradingStatusHandlers()
+        val ordersHandlers =
+            applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values.getOrderHandlers()
         val tradeHandlersWithInstrumentType = tradesHandlers.extractTickerToInstrumentTypeMap()
         val orderBookHandlersWithInstrumentType = orderBookHandlers.extractTickerToInstrumentTypeMap()
         val lastPriceHandlersWithInstrumentType = lastPriceHandlers.extractTickerToInstrumentTypeMap()
