@@ -36,7 +36,6 @@ inline fun BlockingTradeStreamProcessorAdapter(
     override var afterEachTradeHandler: Boolean = false
 }
 
-
 inline fun AsyncTradeStreamProcessorAdapter(
     crossinline block: (Trade) -> CompletableFuture<Void>
 ): AsyncTradeStreamProcessorAdapter = object : AsyncTradeStreamProcessorAdapter {
@@ -70,9 +69,7 @@ fun BaseTradeStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamProces
 
     is CoroutineTradeStreamProcessorAdapter -> this.toMarketDataProcessor()
 
-    else -> {
-        throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
-    }
+    else -> throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
 }
 
 fun BlockingTradeStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarketDataStreamProcessorAdapter =

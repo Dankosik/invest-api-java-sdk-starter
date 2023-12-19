@@ -15,11 +15,11 @@ internal class OrdersBeanPostProcessor : BeanPostProcessor {
         check(
             !(isHandleOrder
                     && (bean !is CoroutineOrderHandler && bean !is BlockingOrderHandler && bean !is AsyncOrderHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleOrder should be implements AsyncOrdersHandler or BlockingOrdersHandler or CoroutineOrdersHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandleOrder should implement AsyncOrdersHandler or BlockingOrdersHandler or CoroutineOrdersHandler" }
         check(
             !(isAllHandleOrders
                     && (bean !is CoroutineOrderHandler && bean !is BlockingOrderHandler && bean !is AsyncOrderHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleAllOrders should be implements AsyncOrdersHandler or BlockingOrdersHandler or CoroutineOrdersHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandleAllOrders should implement AsyncOrdersHandler or BlockingOrdersHandler or CoroutineOrdersHandler" }
         if (isHandleOrder) {
             val classNameInMessage = when (bean) {
                 is CoroutineOrderHandler -> "CoroutineOrdersHandler"

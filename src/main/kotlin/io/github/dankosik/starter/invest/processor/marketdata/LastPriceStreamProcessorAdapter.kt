@@ -36,7 +36,6 @@ inline fun BlockingLastPriceStreamProcessorAdapter(
     override var afterEachLastPriceHandler: Boolean = false
 }
 
-
 inline fun AsyncLastPriceStreamProcessorAdapter(
     crossinline block: (LastPrice) -> CompletableFuture<Void>
 ): AsyncLastPriceStreamProcessorAdapter = object : AsyncLastPriceStreamProcessorAdapter {
@@ -70,9 +69,7 @@ fun BaseLastPriceStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamPr
 
     is CoroutineLastPriceStreamProcessorAdapter -> this.toMarketDataProcessor()
 
-    else -> {
-        throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
-    }
+    else -> throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
 }
 
 fun BlockingLastPriceStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarketDataStreamProcessorAdapter =

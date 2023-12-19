@@ -26,15 +26,14 @@ internal class OrderBookHandlerRegistry(
         tradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
     }
 
-    fun getHandlers(orderBook: OrderBook) = getHandlersByUid(orderBook.instrumentUid) ?: getHandlersByFigi(orderBook.figi)
+    fun getHandlers(orderBook: OrderBook): MutableList<BaseOrderBookHandler>? =
+        getHandlersByUid(orderBook.instrumentUid) ?: getHandlersByFigi(orderBook.figi)
 
-    fun getHandlersByFigi(figi: String?) = handlersByFigi[figi]
+    private fun getHandlersByFigi(figi: String?) = handlersByFigi[figi]
 
-    fun getHandlersByUid(uId: String?) = handlersByInstrumentUid[uId]
+    private fun getHandlersByUid(uId: String?) = handlersByInstrumentUid[uId]
 
-
-    private fun BaseOrderBookHandler.addInstrumentIdToHandlerMap(
-    ) {
+    private fun BaseOrderBookHandler.addInstrumentIdToHandlerMap() {
         val annotation = this::class.java.getAnnotation(HandleOrderBook::class.java)
         val figi = annotation.figi
         val instrumentUid = annotation.instrumentUid
@@ -62,6 +61,4 @@ internal class OrderBookHandlerRegistry(
             }
         }
     }
-
-    private companion object : KLogging()
 }

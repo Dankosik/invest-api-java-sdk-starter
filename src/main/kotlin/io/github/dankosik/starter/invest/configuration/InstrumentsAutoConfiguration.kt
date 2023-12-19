@@ -47,116 +47,91 @@ class InstrumentsAutoConfiguration(
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
-    fun instrumentsOrderBook(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun instrumentsOrderBook(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrderBook::class.java).values
         val orderBookHandlers = annotatedBeans.filterIsInstance<CoroutineOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<AsyncOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<BlockingOrderBookHandler>()
-
-        orderBookHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleOrderBook::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleOrderBook())
-            }
-        }
-        return result
+        return orderBookHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleOrderBook::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.extractInstrumentFromHandleOrderBook()
+        }.toSet()
     }
-
 
     @Bean("instrumentsOrderBook")
     @ConditionalOnMissingBean(name = ["instrumentsOrderBook"])
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
-    fun instrumentsOrderBookReadonly(): MutableSet<String> {
-        val result = mutableSetOf<String>()
-
+    fun instrumentsOrderBookReadonly(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrderBook::class.java).values
         val orderBookHandlers = annotatedBeans.filterIsInstance<CoroutineOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<AsyncOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<BlockingOrderBookHandler>()
-        orderBookHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleOrderBook::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleOrderBook())
-            }
-        }
-        return result
+        return orderBookHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleOrderBook::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.extractInstrumentFromHandleOrderBook()
+        }.toSet()
     }
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
-    fun instrumentsTradingStatus(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun instrumentsTradingStatus(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTradingStatus::class.java).values
         val tradingStatusHandlers = annotatedBeans.filterIsInstance<CoroutineTradingStatusHandler>() +
                 annotatedBeans.filterIsInstance<AsyncTradingStatusHandler>() +
                 annotatedBeans.filterIsInstance<BlockingTradingStatusHandler>()
-
-        tradingStatusHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleTradingStatus::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleTradingStatus())
-            }
-        }
-        return result
+        return tradingStatusHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleTradingStatus::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.extractInstrumentFromHandleTradingStatus()
+        }.toSet()
     }
 
 
     @Bean("instrumentsTradingStatus")
     @ConditionalOnMissingBean(name = ["instrumentsTradingStatus"])
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
-    fun instrumentsTradingStatusReadonly(): MutableSet<String> {
-        val result = mutableSetOf<String>()
-
+    fun instrumentsTradingStatusReadonly(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTradingStatus::class.java).values
         val tradingStatusHandlers = annotatedBeans.filterIsInstance<CoroutineTradingStatusHandler>() +
                 annotatedBeans.filterIsInstance<AsyncTradingStatusHandler>() +
                 annotatedBeans.filterIsInstance<BlockingTradingStatusHandler>()
-        tradingStatusHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleTradingStatus::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleTradingStatus())
-            }
-        }
-        return result
+        return tradingStatusHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleTradingStatus::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.extractInstrumentFromHandleTradingStatus()
+        }.toSet()
     }
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
-    fun instrumentsLastPrice(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun instrumentsLastPrice(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleLastPrice::class.java).values
         val lastPriceBookHandlers = annotatedBeans.filterIsInstance<CoroutineLastPriceHandler>() +
                 annotatedBeans.filterIsInstance<AsyncLastPriceHandler>() +
                 annotatedBeans.filterIsInstance<BlockingLastPriceHandler>()
-
-        lastPriceBookHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleLastPrice::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleLastPrice())
-            }
-        }
-        return result
+        return lastPriceBookHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleLastPrice::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.extractInstrumentFromHandleLastPrice()
+        }.toSet()
     }
 
 
     @Bean("instrumentsLastPrice")
     @ConditionalOnMissingBean(name = ["instrumentsLastPrice"])
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
-    fun instrumentsLastPriceReadonly(): MutableSet<String> {
-        val result = mutableSetOf<String>()
-
+    fun instrumentsLastPriceReadonly(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleLastPrice::class.java).values
         val lastPriceBookHandlers = annotatedBeans.filterIsInstance<CoroutineLastPriceHandler>() +
                 annotatedBeans.filterIsInstance<AsyncLastPriceHandler>() +
                 annotatedBeans.filterIsInstance<BlockingLastPriceHandler>()
-        lastPriceBookHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleLastPrice::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleLastPrice())
-            }
-        }
-        return result
+        return lastPriceBookHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleLastPrice::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.extractInstrumentFromHandleLastPrice()
+        }.toSet()
     }
 
     @Bean
@@ -167,7 +142,6 @@ class InstrumentsAutoConfiguration(
         val candleBookHandlers = annotatedBeans.filterIsInstance<CoroutineCandleHandler>() +
                 annotatedBeans.filterIsInstance<AsyncCandleHandler>() +
                 annotatedBeans.filterIsInstance<BlockingCandleHandler>()
-
         candleBookHandlers.forEach { bean ->
             val annotation = bean.javaClass.getAnnotation(HandleCandle::class.java)
             if (!annotation.sandboxOnly) {
@@ -207,213 +181,176 @@ class InstrumentsAutoConfiguration(
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
-    fun instrumentsTrades(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun instrumentsTrades(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values
         val tradesHandlers = annotatedBeans.filterIsInstance<AsyncTradeHandler>() +
                 annotatedBeans.filterIsInstance<CoroutineTradeHandler>() +
                 annotatedBeans.filterIsInstance<BlockingTradeHandler>()
-        tradesHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleTrade::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleTrades())
-            }
-        }
-        return result
+        return tradesHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleTrade::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.extractInstrumentFromHandleTrades()
+        }.toSet()
     }
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
-    fun accountsPortfolio(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun accountsPortfolio(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePortfolio::class.java).values
         val portfolioHandlers = annotatedBeans.filterIsInstance<CoroutinePortfolioHandler>() +
                 annotatedBeans.filterIsInstance<AsyncPortfolioHandler>() +
                 annotatedBeans.filterIsInstance<BlockingPortfolioHandler>()
-        portfolioHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandlePortfolio::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.account)
-            }
-        }
-        return result
+        return portfolioHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandlePortfolio::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.account
+        }.toSet()
     }
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
-    fun accountsPositions(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun accountsPositions(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePosition::class.java).values
         val positionsHandlers = annotatedBeans.filterIsInstance<CoroutinePositionHandler>() +
                 annotatedBeans.filterIsInstance<AsyncPositionHandler>() +
                 annotatedBeans.filterIsInstance<BlockingPositionHandler>()
-        positionsHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandlePosition::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.account)
-            }
-        }
-        return result
+        return positionsHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandlePosition::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.account
+        }.toSet()
     }
 
     @Bean("instrumentsTrades")
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
     @ConditionalOnMissingBean(name = ["instrumentsTrades"])
-    fun instrumentsTradesReadonly(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun instrumentsTradesReadonly(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values
         val tradesHandlers = annotatedBeans.filterIsInstance<AsyncTradeHandler>() +
                 annotatedBeans.filterIsInstance<CoroutineTradeHandler>() +
                 annotatedBeans.filterIsInstance<BlockingTradeHandler>()
-        tradesHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleTrade::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleTrades())
-            }
-        }
-        return result
+        return tradesHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleTrade::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.extractInstrumentFromHandleTrades()
+        }.toSet()
     }
 
     @Bean("accountsPortfolio")
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
     @ConditionalOnMissingBean(name = ["accountsPortfolio"])
-    fun accountsPortfolioReadonly(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun accountsPortfolioReadonly(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePortfolio::class.java).values
         val portfolioHandlers = annotatedBeans.filterIsInstance<CoroutinePortfolioHandler>() +
                 annotatedBeans.filterIsInstance<AsyncPortfolioHandler>() +
                 annotatedBeans.filterIsInstance<BlockingPortfolioHandler>()
-        portfolioHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandlePortfolio::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.account)
-            }
-        }
-        return result
+        return portfolioHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandlePortfolio::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.account
+        }.toSet()
     }
 
     @Bean("accountsPositions")
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
     @ConditionalOnMissingBean(name = ["accountsPositions"])
-    fun accountsPositionsReadonly(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun accountsPositionsReadonly(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePosition::class.java).values
         val positionsHandlers = annotatedBeans.filterIsInstance<CoroutinePositionHandler>() +
                 annotatedBeans.filterIsInstance<AsyncPositionHandler>() +
                 annotatedBeans.filterIsInstance<BlockingPositionHandler>()
-        positionsHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandlePosition::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.account)
-            }
-        }
-        return result
+        return positionsHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandlePosition::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.account
+        }.toSet()
     }
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
-    fun accountsOrders(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun accountsOrders(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values
         val ordersHandlers = annotatedBeans.filterIsInstance<CoroutineOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<AsyncOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<BlockingOrderBookHandler>()
-        ordersHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleOrder::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.account)
-            }
-        }
-        return result
+        return ordersHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleOrder::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.account
+        }.toSet()
     }
 
     @Bean("accountsOrders")
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
     @ConditionalOnMissingBean(name = ["accountsOrders"])
-    fun accountsOrdersReadonly(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun accountsOrdersReadonly(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values
         val ordersHandlers = annotatedBeans.filterIsInstance<CoroutineOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<AsyncOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<BlockingOrderBookHandler>()
-        ordersHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleOrder::class.java)
-            if (!annotation.sandboxOnly) {
-                result.add(annotation.account)
-            }
-        }
-        return result
+        return ordersHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleOrder::class.java)?.takeIf { annotation ->
+                !annotation.sandboxOnly
+            }?.account
+        }.toSet()
     }
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
-    fun instrumentsTradesSandbox(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun instrumentsTradesSandbox(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values
         val tradesHandlers = annotatedBeans.filterIsInstance<AsyncTradeHandler>() +
                 annotatedBeans.filterIsInstance<CoroutineTradeHandler>() +
                 annotatedBeans.filterIsInstance<BlockingTradeHandler>()
-        tradesHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleTrade::class.java)
-            if (annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleTrades())
-            }
-        }
-
-        return result
+        return tradesHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleTrade::class.java)?.takeIf { annotation ->
+                annotation.sandboxOnly
+            }?.extractInstrumentFromHandleTrades()
+        }.toSet()
     }
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
-    fun instrumentsTradingStatusSandbox(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun instrumentsTradingStatusSandbox(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTradingStatus::class.java).values
         val tradingStatusHandlers = annotatedBeans.filterIsInstance<CoroutineTradingStatusHandler>() +
                 annotatedBeans.filterIsInstance<AsyncTradingStatusHandler>() +
                 annotatedBeans.filterIsInstance<BlockingTradingStatusHandler>()
-        tradingStatusHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleTradingStatus::class.java)
-            if (annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleTradingStatus())
-            }
-        }
-        return result
+        return tradingStatusHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleTradingStatus::class.java)?.takeIf { annotation ->
+                annotation.sandboxOnly
+            }?.extractInstrumentFromHandleTradingStatus()
+        }.toSet()
     }
 
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
-    fun instrumentsOrderBookSandbox(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun instrumentsOrderBookSandbox(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrderBook::class.java).values
         val orderBookHandlers = annotatedBeans.filterIsInstance<CoroutineOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<AsyncOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<BlockingOrderBookHandler>()
-        orderBookHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleOrderBook::class.java)
-            if (annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleOrderBook())
-            }
-        }
-        return result
+        return orderBookHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleOrderBook::class.java)?.takeIf { annotation ->
+                annotation.sandboxOnly
+            }?.extractInstrumentFromHandleOrderBook()
+        }.toSet()
     }
 
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
-    fun instrumentsLastPriceSandbox(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun instrumentsLastPriceSandbox(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleLastPrice::class.java).values
         val lastPriceBookHandlers = annotatedBeans.filterIsInstance<CoroutineLastPriceHandler>() +
                 annotatedBeans.filterIsInstance<AsyncLastPriceHandler>() +
                 annotatedBeans.filterIsInstance<BlockingLastPriceHandler>()
-        lastPriceBookHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleLastPrice::class.java)
-            if (annotation.sandboxOnly) {
-                result.add(annotation.extractInstrumentFromHandleLastPrice())
-            }
-        }
-        return result
+        return lastPriceBookHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleLastPrice::class.java)?.takeIf { annotation ->
+                annotation.sandboxOnly
+            }?.extractInstrumentFromHandleLastPrice()
+        }.toSet()
     }
 
     @Bean
@@ -439,53 +376,44 @@ class InstrumentsAutoConfiguration(
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
-    fun accountsPortfolioSandbox(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun accountsPortfolioSandbox(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePortfolio::class.java).values
         val portfolioHandlers = annotatedBeans.filterIsInstance<CoroutinePortfolioHandler>() +
                 annotatedBeans.filterIsInstance<AsyncPortfolioHandler>() +
                 annotatedBeans.filterIsInstance<BlockingPortfolioHandler>()
-        portfolioHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandlePortfolio::class.java)
-            if (annotation.sandboxOnly) {
-                result.add(annotation.account)
-            }
-        }
-        return result
+        return portfolioHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandlePortfolio::class.java)?.takeIf { annotation ->
+                annotation.sandboxOnly
+            }?.account
+        }.toSet()
     }
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
-    fun accountsPositionsSandbox(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun accountsPositionsSandbox(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePosition::class.java).values
         val positionsHandlers = annotatedBeans.filterIsInstance<CoroutinePositionHandler>() +
                 annotatedBeans.filterIsInstance<AsyncPositionHandler>() +
                 annotatedBeans.filterIsInstance<BlockingPositionHandler>()
-        positionsHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandlePosition::class.java)
-            if (annotation.sandboxOnly) {
-                result.add(annotation.account)
-            }
-        }
-        return result
+        return positionsHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandlePosition::class.java)?.takeIf { annotation ->
+                annotation.sandboxOnly
+            }?.account
+        }.toSet()
     }
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
-    fun accountsOrdersSandbox(): MutableSet<String> {
-        val result = mutableSetOf<String>()
+    fun accountsOrdersSandbox(): Set<String> {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values
         val ordersHandlers = annotatedBeans.filterIsInstance<CoroutineOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<AsyncOrderBookHandler>() +
                 annotatedBeans.filterIsInstance<BlockingOrderBookHandler>()
-        ordersHandlers.forEach { bean ->
-            val annotation = bean.javaClass.getAnnotation(HandleOrder::class.java)
-            if (annotation.sandboxOnly) {
-                result.add(annotation.account)
-            }
-        }
-        return result
+        return ordersHandlers.mapNotNull {
+            it.javaClass.getAnnotation(HandleOrder::class.java)?.takeIf { annotation ->
+                annotation.sandboxOnly
+            }?.account
+        }.toSet()
     }
 
 
@@ -518,7 +446,7 @@ class InstrumentsAutoConfiguration(
     }
 
     private fun HandleCandle.extractInstrumentFromCandle(): Pair<SubscriptionInterval, InstrumentIdToWaitingClose> {
-        if (subscriptionInterval != SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE && waitClose){
+        if (subscriptionInterval != SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE && waitClose) {
             logger.warn { "\'subscriptionInterval\':$subscriptionInterval and \'waitClose\': true not supported" }
         }
         return when {
@@ -537,5 +465,5 @@ class InstrumentsAutoConfiguration(
         val waitingClose: Boolean
     )
 
-    private companion object: KLogging()
+    private companion object : KLogging()
 }

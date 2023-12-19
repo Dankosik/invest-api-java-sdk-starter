@@ -16,24 +16,28 @@ annotation class HandleLastPrice(
 )
 
 fun List<BaseLastPriceHandler>.extractTickersWithoutInstrumentType() =
-    this.map { it.javaClass.getAnnotation(HandleLastPrice::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleLastPrice::class.java) }
         .filter { it.instrumentType == InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .map { it.ticker }
 
 fun List<BaseLastPriceHandler>.extractTickerToInstrumentTypeMap() =
-    this.map { it.javaClass.getAnnotation(HandleLastPrice::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleLastPrice::class.java) }
         .filter { it.ticker.isNotBlank() }
         .filter { it.instrumentType != InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .associateBy(keySelector = { it.ticker }, valueTransform = { it.instrumentType })
 
 fun List<BaseLastPriceHandler>.extractFigiToInstrumentTypeMap() =
-    this.map { it.javaClass.getAnnotation(HandleLastPrice::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleLastPrice::class.java) }
         .filter { it.figi.isNotBlank() }
         .filter { it.instrumentType != InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .associateBy(keySelector = { it.figi }, valueTransform = { it.instrumentType })
 
 fun List<BaseLastPriceHandler>.extractUidToInstrumentTypeMap() =
-    this.map { it.javaClass.getAnnotation(HandleLastPrice::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleLastPrice::class.java) }
         .filter { it.instrumentUid.isNotBlank() }
         .filter { it.instrumentType != InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .associateBy(keySelector = { it.instrumentUid }, valueTransform = { it.instrumentType })

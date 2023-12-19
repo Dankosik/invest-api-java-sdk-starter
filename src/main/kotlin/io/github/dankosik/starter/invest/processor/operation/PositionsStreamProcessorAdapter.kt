@@ -28,7 +28,6 @@ inline fun BlockingPositionsStreamProcessorAdapter(
     override var afterEachPositionHandler = false
 }
 
-
 inline fun AsyncPositionsStreamProcessorAdapter(
     crossinline block: (PositionsStreamResponse) -> CompletableFuture<Void>
 ): AsyncPositionsStreamProcessorAdapter = object : AsyncPositionsStreamProcessorAdapter {

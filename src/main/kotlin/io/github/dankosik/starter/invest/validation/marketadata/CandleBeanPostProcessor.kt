@@ -17,11 +17,11 @@ internal class CandleBeanPostProcessor : BeanPostProcessor {
         check(
             !(isHandleCandle
                     && (bean !is CoroutineCandleHandler && bean !is BlockingCandleHandler && bean !is AsyncCandleHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleCandle should be implements AsyncCandleHandler or BlockingCandleHandler or CoroutineCandleHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandleCandle should implement AsyncCandleHandler or BlockingCandleHandler or CoroutineCandleHandler" }
         check(
             !(isAllHandleCandles
                     && (bean !is CoroutineCandleHandler && bean !is BlockingCandleHandler && bean !is AsyncCandleHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleAllCandles should be implements AsyncCandleHandler or BlockingCandleHandler or CoroutineCandleHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandleCandle should implement AsyncCandleHandler or BlockingCandleHandler or CoroutineCandleHandler" }
         if (isHandleCandle) {
             val classNameInMessage = when (bean) {
                 is CoroutineCandleHandler -> "CoroutineCandleHandler"

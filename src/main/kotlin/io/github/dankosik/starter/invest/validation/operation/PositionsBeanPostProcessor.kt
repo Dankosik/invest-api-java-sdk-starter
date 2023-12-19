@@ -16,11 +16,11 @@ internal class PositionsBeanPostProcessor : BeanPostProcessor {
         check(
             !(isHandlePosition
                     && (bean !is CoroutinePositionHandler && bean !is BlockingPositionHandler && bean !is AsyncPositionHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandlePosition should be implements AsyncPositionsHandler or BlockingPositionsHandler or CoroutinePositionsHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandlePosition should implement AsyncPositionsHandler or BlockingPositionsHandler or CoroutinePositionsHandler" }
         check(
             !(isAllHandlePosition
                     && (bean !is CoroutinePositionHandler && bean !is BlockingPositionHandler && bean !is AsyncPositionHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleAllPositions should be implements AsyncPositionsHandler or BlockingPositionsHandler or CoroutinePositionsHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandleAllPositions should implement AsyncPositionsHandler or BlockingPositionsHandler or CoroutinePositionsHandler" }
         if (isHandlePosition) {
             val classNameInMessage = when (bean) {
                 is CoroutinePositionHandler -> "CoroutinePositionsHandler"

@@ -28,7 +28,6 @@ inline fun BlockingOrdersStreamProcessorAdapter(
     override var afterEachOrdersHandler = false
 }
 
-
 inline fun AsyncOrdersStreamProcessorAdapter(
     crossinline block: (TradesStreamResponse) -> CompletableFuture<Void>
 ): AsyncOrdersStreamProcessorAdapter = object : AsyncOrdersStreamProcessorAdapter {

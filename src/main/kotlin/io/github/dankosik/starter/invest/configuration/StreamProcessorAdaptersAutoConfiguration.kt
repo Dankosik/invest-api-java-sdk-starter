@@ -115,9 +115,7 @@ class StreamProcessorAdaptersAutoConfiguration(
                         }.toMarketDataProcessor()
                     }
 
-                    else -> {
-                        throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
-                    }
+                    else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
                 }
             }
 
@@ -152,9 +150,7 @@ class StreamProcessorAdaptersAutoConfiguration(
                         }.toMarketDataProcessor()
                     }
 
-                    else -> {
-                        throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
-                    }
+                    else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
                 }
             }
 
@@ -189,9 +185,7 @@ class StreamProcessorAdaptersAutoConfiguration(
                         }.toMarketDataProcessor()
                     }
 
-                    else -> {
-                        throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
-                    }
+                    else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
                 }
             }
 
@@ -229,9 +223,7 @@ class StreamProcessorAdaptersAutoConfiguration(
                         }.toMarketDataProcessor()
                     }
 
-                    else -> {
-                        throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
-                    }
+                    else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
                 }
             }
 

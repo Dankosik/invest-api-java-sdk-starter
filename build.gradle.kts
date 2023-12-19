@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "io.github.dankosik"
-version = "0.6.1-beta36"
+version = "0.6.1-beta37"
 
 extra["tinkoffSdkVersion"] = "1.6"
 extra["kotlinLoggingVersion"] = "3.0.5"
@@ -29,6 +29,7 @@ repositories {
 }
 
 dependencies {
+    //spring
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-configuration-processor")
     implementation("org.springframework.boot:spring-boot-autoconfigure")
@@ -43,6 +44,7 @@ dependencies {
     //tinkoff-sdk
     api("ru.tinkoff.piapi:java-sdk-core:${property("tinkoffSdkVersion")}")
 
+    //test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 

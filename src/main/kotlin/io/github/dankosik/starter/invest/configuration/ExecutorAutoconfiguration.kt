@@ -11,7 +11,6 @@ class ExecutorAutoconfiguration {
 
     @Bean
     @ConditionalOnJava(JavaVersion.TWENTY_ONE, range = ConditionalOnJava.Range.EQUAL_OR_NEWER)
-    fun executor() =
-        SimpleAsyncTaskExecutor("virtualThreadExecutor-")
-            .also { it.setVirtualThreads(true) }
+    fun executor() = SimpleAsyncTaskExecutor("virtualThreadExecutor-")
+        .also { it.setVirtualThreads(true) }
 }

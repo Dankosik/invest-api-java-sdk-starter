@@ -16,11 +16,11 @@ internal class PortfolioBeanPostProcessor : BeanPostProcessor {
         check(
             !(isHandlePortfolio
                     && (bean !is CoroutinePortfolioHandler && bean !is BlockingPortfolioHandler && bean !is AsyncPortfolioHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandlePortfolio should be implements AsyncPortfolioHandler or BlockingPortfolioHandler or CoroutinePortfolioHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandlePortfolio should implement AsyncPortfolioHandler or BlockingPortfolioHandler or CoroutinePortfolioHandler" }
         check(
             !(isAllHandlePortfolio
                     && (bean !is CoroutinePortfolioHandler && bean !is BlockingPortfolioHandler && bean !is AsyncPortfolioHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleAllPortfolios should be implements AsyncPortfolioHandler or BlockingPortfolioHandler or CoroutinePortfolioHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandleAllPortfolios should implement AsyncPortfolioHandler or BlockingPortfolioHandler or CoroutinePortfolioHandler" }
         if (isHandlePortfolio) {
             val classNameInMessage = when (bean) {
                 is CoroutinePortfolioHandler -> "CoroutinePortfolioHandler"

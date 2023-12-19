@@ -28,7 +28,6 @@ inline fun BlockingPortfolioStreamProcessorAdapter(
     override var afterEachPortfolioHandler = false
 }
 
-
 inline fun AsyncPortfolioStreamProcessorAdapter(
     crossinline block: (PortfolioStreamResponse) -> CompletableFuture<Void>
 ): AsyncPortfolioStreamProcessorAdapter = object : AsyncPortfolioStreamProcessorAdapter {

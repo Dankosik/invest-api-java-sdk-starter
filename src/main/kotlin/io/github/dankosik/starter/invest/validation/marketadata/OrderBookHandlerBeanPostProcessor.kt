@@ -5,7 +5,6 @@ import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
 import io.github.dankosik.starter.invest.contract.marketdata.orderbook.AsyncOrderBookHandler
 import io.github.dankosik.starter.invest.contract.marketdata.orderbook.BlockingOrderBookHandler
 import io.github.dankosik.starter.invest.contract.marketdata.orderbook.CoroutineOrderBookHandler
-import io.github.dankosik.starter.invest.extension.addAllNotBlank
 import mu.KLogging
 import org.springframework.beans.factory.config.BeanPostProcessor
 
@@ -19,13 +18,13 @@ internal class OrderBookHandlerBeanPostProcessor : BeanPostProcessor {
             !(isHandleOrderBook
                     && (bean !is CoroutineOrderBookHandler && bean !is BlockingOrderBookHandler && bean !is AsyncOrderBookHandler))
         ) {
-            "Class: ${bean.javaClass.name} that annotated of HandleOrderBook should be implements AsyncOrderBookHandler or BlockingOrderBookHandler or CoroutineOrderBookHandler"
+            "Class: ${bean.javaClass.name} annotated with HandleOrderBook should implement AsyncOrderBookHandler or BlockingOrderBookHandler or CoroutineOrderBookHandler"
         }
         check(
             !(isAllHandleOrderBook
                     && (bean !is CoroutineOrderBookHandler && bean !is BlockingOrderBookHandler && bean !is AsyncOrderBookHandler))
         ) {
-            "Class: ${bean.javaClass.name} that annotated of HandleAllOrderBooks should be implements AsyncOrderBookHandler or BlockingOrderBookHandler or CoroutineOrderBookHandler"
+            "Class: ${bean.javaClass.name} annotated with HandleAllOrderBooks should implement AsyncOrderBookHandler or BlockingOrderBookHandler or CoroutineOrderBookHandler"
         }
         if (isHandleOrderBook) {
             val classNameInMessage = when (bean) {

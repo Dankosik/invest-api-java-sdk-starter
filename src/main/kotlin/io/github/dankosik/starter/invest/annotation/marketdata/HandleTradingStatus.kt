@@ -16,24 +16,28 @@ annotation class HandleTradingStatus(
 )
 
 fun List<BaseTradingStatusHandler>.extractTickersWithoutInstrumentType() =
-    this.map { it.javaClass.getAnnotation(HandleTradingStatus::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleTradingStatus::class.java) }
         .filter { it.instrumentType == InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .map { it.ticker }
 
 fun List<BaseTradingStatusHandler>.extractTickerToInstrumentTypeMap() =
-    this.map { it.javaClass.getAnnotation(HandleTradingStatus::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleTradingStatus::class.java) }
         .filter { it.ticker.isNotBlank() }
         .filter { it.instrumentType != InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .associateBy(keySelector = { it.ticker }, valueTransform = { it.instrumentType })
 
 fun List<BaseTradingStatusHandler>.extractFigiToInstrumentTypeMap() =
-    this.map { it.javaClass.getAnnotation(HandleTradingStatus::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleTradingStatus::class.java) }
         .filter { it.figi.isNotBlank() }
         .filter { it.instrumentType != InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .associateBy(keySelector = { it.figi }, valueTransform = { it.instrumentType })
 
 fun List<BaseTradingStatusHandler>.extractUidToInstrumentTypeMap() =
-    this.map { it.javaClass.getAnnotation(HandleTradingStatus::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleTradingStatus::class.java) }
         .filter { it.instrumentUid.isNotBlank() }
         .filter { it.instrumentType != InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .associateBy(keySelector = { it.instrumentUid }, valueTransform = { it.instrumentType })

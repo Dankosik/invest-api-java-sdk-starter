@@ -5,7 +5,6 @@ import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
 import io.github.dankosik.starter.invest.contract.marketdata.lastprice.AsyncLastPriceHandler
 import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BlockingLastPriceHandler
 import io.github.dankosik.starter.invest.contract.marketdata.lastprice.CoroutineLastPriceHandler
-import io.github.dankosik.starter.invest.extension.addAllNotBlank
 import mu.KLogging
 import org.springframework.beans.factory.config.BeanPostProcessor
 
@@ -19,11 +18,11 @@ internal class LastPriceBeanPostProcessor : BeanPostProcessor {
         check(
             !(isHandleLastPrice
                     && (bean !is CoroutineLastPriceHandler && bean !is BlockingLastPriceHandler && bean !is AsyncLastPriceHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleLastPrice should be implements AsyncLastPriceHandler or BlockingLastPriceHandler or CoroutineLastPriceHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandleLastPrice should implement AsyncLastPriceHandler or BlockingLastPriceHandler or CoroutineLastPriceHandler" }
         check(
             !(isAllHandleLastPrice
                     && (bean !is CoroutineLastPriceHandler && bean !is BlockingLastPriceHandler && bean !is AsyncLastPriceHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleAllLastPrices should be implements AsyncLastPriceHandler or BlockingLastPriceHandler or CoroutineLastPriceHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandleAllLastPrices should implement AsyncLastPriceHandler or BlockingLastPriceHandler or CoroutineLastPriceHandler" }
         if (isHandleLastPrice) {
             val classNameInMessage = when (bean) {
                 is CoroutineLastPriceHandler -> "CoroutineLastPriceHandler"

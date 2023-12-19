@@ -44,7 +44,6 @@ inline fun BlockingMarketDataStreamProcessorAdapter(
     override var afterEachTradingStatusHandler: Boolean = false
 }
 
-
 inline fun AsyncMarketDataStreamProcessorAdapter(
     crossinline block: (MarketDataResponse) -> CompletableFuture<Void>
 ): AsyncMarketDataStreamProcessorAdapter = object : AsyncMarketDataStreamProcessorAdapter {

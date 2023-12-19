@@ -5,7 +5,6 @@ import io.github.dankosik.starter.invest.contract.marketdata.lastprice.AsyncLast
 import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BaseLastPriceHandler
 import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BlockingLastPriceHandler
 import io.github.dankosik.starter.invest.contract.marketdata.lastprice.CoroutineLastPriceHandler
-import mu.KLogging
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.LastPrice
 
@@ -15,7 +14,6 @@ internal class LastPriceHandlerRegistry(
 ) {
     private val handlersByFigi = HashMap<String, MutableList<BaseLastPriceHandler>>()
     private val handlersByInstrumentUid = HashMap<String, MutableList<BaseLastPriceHandler>>()
-
 
     init {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleLastPrice::class.java).values
@@ -27,13 +25,12 @@ internal class LastPriceHandlerRegistry(
         asyncHandlers.forEach { it.addInstrumentIdToHandlerMap() }
     }
 
-    fun getHandlers(lastPrice: LastPrice) =
+    fun getHandlers(lastPrice: LastPrice): MutableList<BaseLastPriceHandler>? =
         getHandlersByUid(lastPrice.instrumentUid) ?: getHandlersByFigi(lastPrice.figi)
 
-    fun getHandlersByUid(uId: String?) = handlersByInstrumentUid[uId]
+    private fun getHandlersByUid(uId: String?) = handlersByInstrumentUid[uId]
 
-    fun getHandlersByFigi(figi: String?) = handlersByFigi[figi]
-
+    private fun getHandlersByFigi(figi: String?) = handlersByFigi[figi]
 
     private fun BaseLastPriceHandler.addInstrumentIdToHandlerMap() {
         val annotation = this::class.java.getAnnotation(HandleLastPrice::class.java)
@@ -63,6 +60,4 @@ internal class LastPriceHandlerRegistry(
             }
         }
     }
-
-    private companion object : KLogging()
 }

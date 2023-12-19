@@ -5,7 +5,6 @@ import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStat
 import io.github.dankosik.starter.invest.contract.marketdata.status.AsyncTradingStatusHandler
 import io.github.dankosik.starter.invest.contract.marketdata.status.BlockingTradingStatusHandler
 import io.github.dankosik.starter.invest.contract.marketdata.status.CoroutineTradingStatusHandler
-import io.github.dankosik.starter.invest.extension.addAllNotBlank
 import mu.KLogging
 import org.springframework.beans.factory.config.BeanPostProcessor
 
@@ -19,11 +18,11 @@ internal class TradingStatusBeanPostProcessor : BeanPostProcessor {
         check(
             !(isHandleTradingStatus
                     && (bean !is CoroutineTradingStatusHandler && bean !is BlockingTradingStatusHandler && bean !is AsyncTradingStatusHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleTradingStatus should be implements AsyncTradingStatusHandler or BlockingTradingStatusHandler or CoroutineTradingStatusHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with HandleTradingStatus should implement AsyncTradingStatusHandler or BlockingTradingStatusHandler or CoroutineTradingStatusHandler" }
         check(
             !(isAllHandleTradingStatus
                     && (bean !is CoroutineTradingStatusHandler && bean !is BlockingTradingStatusHandler && bean !is AsyncTradingStatusHandler))
-        ) { "Class: ${bean.javaClass.name} that annotated of HandleAllTradingStatuses should be implements AsyncTradingStatusHandler or BlockingTradingStatusHandler or CoroutineTradingStatusHandler" }
+        ) { "Class: ${bean.javaClass.name} annotated with of HandleAllTradingStatuses should implement AsyncTradingStatusHandler or BlockingTradingStatusHandler or CoroutineTradingStatusHandler" }
         if (isHandleTradingStatus) {
             val classNameInMessage = when (bean) {
                 is CoroutineTradingStatusHandler -> "CoroutineTradingStatusHandler"

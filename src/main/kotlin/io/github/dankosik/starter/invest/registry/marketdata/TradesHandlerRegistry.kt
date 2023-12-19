@@ -16,7 +16,6 @@ internal class TradesHandlerRegistry(
     private val handlersByFigi = HashMap<String, MutableList<BaseTradeHandler>>()
     private val handlersByInstrumentUid = HashMap<String, MutableList<BaseTradeHandler>>()
 
-
     init {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values
         val coroutineTradesHandlers = annotatedBeans.filterIsInstance<CoroutineTradeHandler>()
@@ -27,12 +26,12 @@ internal class TradesHandlerRegistry(
         asyncTradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
     }
 
-    fun getHandlers(trade: Trade) = getHandlersByUid(trade.instrumentUid) ?: getHandlersByFigi(trade.figi)
+    fun getHandlers(trade: Trade): MutableList<BaseTradeHandler>? =
+        getHandlersByUid(trade.instrumentUid) ?: getHandlersByFigi(trade.figi)
 
-    fun getHandlersByUid(uId: String?) = handlersByInstrumentUid[uId]
+    private fun getHandlersByUid(uId: String?) = handlersByInstrumentUid[uId]
 
-    fun getHandlersByFigi(figi: String?) = handlersByFigi[figi]
-
+    private fun getHandlersByFigi(figi: String?) = handlersByFigi[figi]
 
     private fun BaseTradeHandler.addInstrumentIdToHandlerMap() {
         val annotation = this::class.java.getAnnotation(HandleTrade::class.java)
@@ -62,6 +61,4 @@ internal class TradesHandlerRegistry(
             }
         }
     }
-
-    private companion object : KLogging()
 }

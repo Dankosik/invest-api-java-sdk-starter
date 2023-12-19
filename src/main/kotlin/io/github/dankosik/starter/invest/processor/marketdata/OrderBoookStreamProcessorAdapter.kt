@@ -36,7 +36,6 @@ inline fun BlockingOrderBookStreamProcessorAdapter(
     override var afterEachOrderBookHandler: Boolean = false
 }
 
-
 inline fun AsyncOrderBookStreamProcessorAdapter(
     crossinline block: (OrderBook) -> CompletableFuture<Void>
 ): AsyncOrderBookStreamProcessorAdapter = object : AsyncOrderBookStreamProcessorAdapter {
@@ -70,9 +69,7 @@ fun BaseOrderBookStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamPr
 
     is CoroutineOrderBookStreamProcessorAdapter -> this.toMarketDataProcessor()
 
-    else -> {
-        throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
-    }
+    else -> throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
 }
 
 fun BlockingOrderBookStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarketDataStreamProcessorAdapter =

@@ -57,55 +57,55 @@ class StreamStartAutoconfiguration(
     private val ordersStreamServiceSandbox: OrdersStreamService? = null
 
     @Autowired(required = false)
-    private val instrumentsTradesSandbox: MutableSet<String>? = null
+    private val instrumentsTradesSandbox: Set<String>? = null
 
     @Autowired(required = false)
-    private val instrumentsTrades: MutableSet<String>? = null
+    private val instrumentsTrades: Set<String>? = null
 
     @Autowired(required = false)
-    private val instrumentsOrderBook: MutableSet<String>? = null
+    private val instrumentsOrderBook: Set<String>? = null
 
     @Autowired(required = false)
-    private val instrumentsLastPrice: MutableSet<String>? = null
+    private val instrumentsLastPrice: Set<String>? = null
 
     @Autowired(required = false)
-    private val instrumentsTradingStatus: MutableSet<String>? = null
+    private val instrumentsTradingStatus: Set<String>? = null
 
     @Autowired(required = false)
     private val instrumentsCandle: MutableMap<SubscriptionInterval, MutableList<InstrumentsAutoConfiguration.InstrumentIdToWaitingClose>>? =
         null
 
     @Autowired(required = false)
-    private val instrumentsLastPriceSandbox: MutableSet<String>? = null
+    private val instrumentsLastPriceSandbox: Set<String>? = null
 
     @Autowired(required = false)
-    private val instrumentsOrderBookSandbox: MutableSet<String>? = null
+    private val instrumentsOrderBookSandbox: Set<String>? = null
 
     @Autowired(required = false)
     private val instrumentsCandleSandbox: MutableMap<SubscriptionInterval, MutableList<InstrumentsAutoConfiguration.InstrumentIdToWaitingClose>>? =
         null
 
     @Autowired(required = false)
-    private val instrumentsTradingStatusSandbox: MutableSet<String>? = null
+    private val instrumentsTradingStatusSandbox: Set<String>? = null
 
     @Autowired(required = false)
-    private val accountsPositions: MutableSet<String>? = null
+    private val accountsPositions: Set<String>? = null
 
     @Autowired(required = false)
-    private val accountsPositionsSandbox: MutableSet<String>? = null
+    private val accountsPositionsSandbox: Set<String>? = null
 
     @Autowired(required = false)
-    private val accountsPortfolio: MutableSet<String>? = null
+    private val accountsPortfolio: Set<String>? = null
 
     @Autowired(required = false)
-    private val accountsPortfolioSandbox: MutableSet<String>? = null
+    private val accountsPortfolioSandbox: Set<String>? = null
 
 
     @Autowired(required = false)
-    private val accountsOrders: MutableSet<String>? = null
+    private val accountsOrders: Set<String>? = null
 
     @Autowired(required = false)
-    private val accountsOrdersSandbox: MutableSet<String>? = null
+    private val accountsOrdersSandbox: Set<String>? = null
 
 
     @PostConstruct
@@ -122,7 +122,10 @@ class StreamStartAutoconfiguration(
     }
 
     private fun subscribeOrdersSandbox() {
-        ordersStreamServiceSandbox?.subscribeTrades(ordersStreamProcessor, accountsOrdersSandbox!!.toList())
+        accountsOrdersSandbox.takeIf { !it.isNullOrEmpty() }?.toList()
+            ?.let {
+                ordersStreamServiceSandbox?.subscribeTrades(ordersStreamProcessor, it)
+            }
     }
 
     private fun subscribeOrders() {

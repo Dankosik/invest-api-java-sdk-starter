@@ -19,24 +19,28 @@ annotation class HandleCandle(
 )
 
 fun List<BaseCandleHandler>.extractTickersWithoutInstrumentType() =
-    this.map { it.javaClass.getAnnotation(HandleCandle::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleCandle::class.java) }
         .filter { it.instrumentType == InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .map { it.ticker }
 
 fun List<BaseCandleHandler>.extractTickerToInstrumentTypeMap() =
-    this.map { it.javaClass.getAnnotation(HandleCandle::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleCandle::class.java) }
         .filter { it.ticker.isNotBlank() }
         .filter { it.instrumentType != InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .associateBy(keySelector = { it.ticker }, valueTransform = { it.instrumentType })
 
 fun List<BaseCandleHandler>.extractFigiToInstrumentTypeMap() =
-    this.map { it.javaClass.getAnnotation(HandleCandle::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleCandle::class.java) }
         .filter { it.figi.isNotBlank() }
         .filter { it.instrumentType != InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .associateBy(keySelector = { it.figi }, valueTransform = { it.instrumentType })
 
 fun List<BaseCandleHandler>.extractUidToInstrumentTypeMap() =
-    this.map { it.javaClass.getAnnotation(HandleCandle::class.java) }
+    asSequence()
+        .map { it.javaClass.getAnnotation(HandleCandle::class.java) }
         .filter { it.instrumentUid.isNotBlank() }
         .filter { it.instrumentType != InstrumentType.INSTRUMENT_TYPE_UNSPECIFIED }
         .associateBy(keySelector = { it.instrumentUid }, valueTransform = { it.instrumentType })

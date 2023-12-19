@@ -36,7 +36,6 @@ inline fun BlockingCandleStreamProcessorAdapter(
     override var afterEachCandleHandler: Boolean = false
 }
 
-
 inline fun AsyncCandleStreamProcessorAdapter(
     crossinline block: (Candle) -> CompletableFuture<Void>
 ): AsyncCandleStreamProcessorAdapter = object : AsyncCandleStreamProcessorAdapter {
@@ -70,9 +69,7 @@ fun BaseCandleStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamProce
 
     is CoroutineCandleStreamProcessorAdapter -> this.toMarketDataProcessor()
 
-    else -> {
-        throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
-    }
+    else -> throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
 }
 
 fun BlockingCandleStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarketDataStreamProcessorAdapter =

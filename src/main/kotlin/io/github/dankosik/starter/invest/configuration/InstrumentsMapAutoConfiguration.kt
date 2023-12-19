@@ -32,6 +32,8 @@ import io.github.dankosik.starter.invest.contract.marketdata.status.CoroutineTra
 import io.github.dankosik.starter.invest.contract.marketdata.trade.AsyncTradeHandler
 import io.github.dankosik.starter.invest.contract.marketdata.trade.BlockingTradeHandler
 import io.github.dankosik.starter.invest.contract.marketdata.trade.CoroutineTradeHandler
+import io.github.dankosik.starter.invest.exception.CommonException
+import io.github.dankosik.starter.invest.exception.ErrorCode
 import io.github.dankosik.starter.invest.extension.awaitSingle
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -153,7 +155,7 @@ class InstrumentsMapAutoConfiguration(
                     tickerToUidMap[ticker] = uId
                 }
             }.awaitAll().toSet()
-        tickerToUidMap.also { logger.info { "Tickers getting from requests ${it.keys}" } }
+        tickerToUidMap
     }
 
     private suspend fun getUidByTicker(ticker: String): String =
@@ -169,49 +171,51 @@ class InstrumentsMapAutoConfiguration(
                 .find { it.ticker == ticker }?.uid
             ?: instrumentsService.getOptions(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                 .find { it.ticker == ticker }?.uid
-            ?: throw IllegalArgumentException("Instrument by ticker: $ticker is not found")
+            ?: throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { "Instrument by ticker: $ticker is not found" } }
 
-    private suspend fun getUidByTicker(ticker: String, instrumentType: InstrumentType): String =
-        when (instrumentType) {
+    private suspend fun getUidByTicker(ticker: String, instrumentType: InstrumentType): String {
+        val commonNotFoundMessage = "Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found"
+        return when (instrumentType) {
             InstrumentType.INSTRUMENT_TYPE_FUTURES -> {
                 instrumentsService.getFutures(InstrumentStatus.INSTRUMENT_STATUS_BASE)
                     .awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
             InstrumentType.INSTRUMENT_TYPE_SHARE -> {
                 instrumentsService.getShares(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
             InstrumentType.INSTRUMENT_TYPE_BOND -> {
                 instrumentsService.getBonds(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
             InstrumentType.INSTRUMENT_TYPE_OPTION -> {
                 instrumentsService.getOptions(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
             InstrumentType.INSTRUMENT_TYPE_CURRENCY -> {
                 instrumentsService.getCurrencies(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
             InstrumentType.INSTRUMENT_TYPE_ETF -> {
                 instrumentsService.getEtfs(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
-            else -> throw IllegalArgumentException("InstrumentType: $instrumentType not supported")
+            else -> throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
         }
+    }
 
     private fun Map<String, InstrumentType>.replaceKeysAndValues(): Map<InstrumentType, List<String>> {
         val transformedMap = mutableMapOf<InstrumentType, MutableList<String>>()
@@ -225,10 +229,10 @@ class InstrumentsMapAutoConfiguration(
         warnMessage: String? = null,
         instrumentIdentifier: String
     ) {
-        val tickersCount = values.flatten().groupingBy { it }.eachCount()
+        val tickersCount: Map<String, Int> = values.flatten().groupingBy { it }.eachCount()
         tickersCount.forEach { (instrument, countOfTypes) ->
             require(countOfTypes == 1) {
-                "$instrumentIdentifier: $instrument any InstrumentType found, check your handlers. InstrumentType should be the same"
+                "$instrumentIdentifier: $instrument different InstrumentType found, check your handlers. InstrumentType should be the same"
             }.also { warnMessage?.let { logger.warn { it } } }
         }
     }

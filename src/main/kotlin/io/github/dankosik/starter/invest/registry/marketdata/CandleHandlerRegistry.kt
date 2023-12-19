@@ -6,7 +6,6 @@ import io.github.dankosik.starter.invest.contract.marketdata.candle.AsyncCandleH
 import io.github.dankosik.starter.invest.contract.marketdata.candle.BaseCandleHandler
 import io.github.dankosik.starter.invest.contract.marketdata.candle.BlockingCandleHandler
 import io.github.dankosik.starter.invest.contract.marketdata.candle.CoroutineCandleHandler
-import mu.KLogging
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.Candle
 import ru.tinkoff.piapi.contract.v1.SubscriptionInterval
@@ -18,8 +17,7 @@ internal class CandleHandlerRegistry(
     private val handlersByFigi = HashMap<SubscriptionInterval, MutableMap<String, MutableList<BaseCandleHandler>>>()
     private val handlersByInstrumentUid =
         HashMap<SubscriptionInterval, MutableMap<String, MutableList<BaseCandleHandler>>>()
-    val allHandlersBySubscription = HashMap<SubscriptionInterval, MutableList<BaseCandleHandler>>()
-
+    val commonHandlersBySubscription = HashMap<SubscriptionInterval, MutableList<BaseCandleHandler>>()
 
     init {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values
@@ -39,18 +37,20 @@ internal class CandleHandlerRegistry(
         asyncHandlersAll.forEach { it.addIntervalToAllHandlerMap() }
     }
 
-    fun getHandlers(candle: Candle) = getHandlersByUidAndInterval(candle.instrumentUid, candle.interval)
-        ?: getHandlersByFigiAndInterval(candle.figi, candle.interval)
+    fun getHandlers(candle: Candle): MutableList<BaseCandleHandler>? =
+        getHandlersByUidAndInterval(candle.instrumentUid, candle.interval)
+            ?: getHandlersByFigiAndInterval(candle.figi, candle.interval)
 
-    fun getCommonHandlers(candle: Candle) = allHandlersBySubscription[candle.interval]
+    fun getCommonHandlers(candle: Candle): MutableList<BaseCandleHandler>? =
+        commonHandlersBySubscription[candle.interval]
 
-    fun getHandlersByUidAndInterval(uId: String?, subscriptionInterval: SubscriptionInterval) =
+    private fun getHandlersByUidAndInterval(uId: String?, subscriptionInterval: SubscriptionInterval) =
         handlersByInstrumentUid[subscriptionInterval]?.get(uId)
 
-    fun getHandlersByFigiAndInterval(figi: String?, subscriptionInterval: SubscriptionInterval) =
+    private fun getHandlersByFigiAndInterval(figi: String?, subscriptionInterval: SubscriptionInterval) =
         handlersByFigi[subscriptionInterval]?.get(figi)
 
-    fun BaseCandleHandler.addIntervalToHandlerMap() {
+    private fun BaseCandleHandler.addIntervalToHandlerMap() {
         val annotation = this::class.java.getAnnotation(HandleCandle::class.java)
         val figi = annotation.figi
         val instrumentUid = annotation.instrumentUid
@@ -95,12 +95,10 @@ internal class CandleHandlerRegistry(
     private fun BaseCandleHandler.addIntervalToAllHandlerMap() {
         val annotation = this::class.java.getAnnotation(HandleAllCandles::class.java)
         val subscriptionInterval = annotation.subscriptionInterval
-        if (allHandlersBySubscription[subscriptionInterval] == null) {
-            allHandlersBySubscription[subscriptionInterval] = mutableListOf(this)
+        if (commonHandlersBySubscription[subscriptionInterval] == null) {
+            commonHandlersBySubscription[subscriptionInterval] = mutableListOf(this)
         } else {
-            allHandlersBySubscription[subscriptionInterval]?.add(this)
+            commonHandlersBySubscription[subscriptionInterval]?.add(this)
         }
     }
-
-    private companion object : KLogging()
 }

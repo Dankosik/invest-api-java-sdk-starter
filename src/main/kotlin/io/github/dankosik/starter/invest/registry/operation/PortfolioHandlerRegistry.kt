@@ -1,20 +1,18 @@
 package io.github.dankosik.starter.invest.registry.operation
 
 import io.github.dankosik.starter.invest.annotation.operation.HandleAllPortfolios
-import io.github.dankosik.starter.invest.annotation.operation.HandleAllPositions
 import io.github.dankosik.starter.invest.annotation.operation.HandlePortfolio
 import io.github.dankosik.starter.invest.contract.operation.portfolio.AsyncPortfolioHandler
 import io.github.dankosik.starter.invest.contract.operation.portfolio.BasePortfolioHandler
 import io.github.dankosik.starter.invest.contract.operation.portfolio.BlockingPortfolioHandler
 import io.github.dankosik.starter.invest.contract.operation.portfolio.CoroutinePortfolioHandler
-import mu.KLogging
 import org.springframework.context.ApplicationContext
 
 internal class PortfolioHandlerRegistry(
     private val applicationContext: ApplicationContext,
 ) {
     private val handlersByAccount = HashMap<String, MutableList<BasePortfolioHandler>>()
-    val allHandlersByAccount = HashMap<String, MutableList<BasePortfolioHandler>>()
+    val commonHandlersByAccount = HashMap<String, MutableList<BasePortfolioHandler>>()
 
     init {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePortfolio::class.java).values
@@ -34,8 +32,11 @@ internal class PortfolioHandlerRegistry(
         asyncHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
     }
 
-    fun getHandlersByAccountId(accountId: String?) = handlersByAccount[accountId]
-    fun getCommonHandlersByAccountId(accountId: String?) = allHandlersByAccount[accountId]
+    fun getHandlersByAccountId(accountId: String?): MutableList<BasePortfolioHandler>? =
+        handlersByAccount[accountId]
+
+    fun getCommonHandlersByAccountId(accountId: String?): MutableList<BasePortfolioHandler>? =
+        commonHandlersByAccount[accountId]
 
     private fun BasePortfolioHandler.addAccountIdToHandlerMap() {
         val account = this::class.java.getAnnotation(HandlePortfolio::class.java).account
@@ -48,12 +49,10 @@ internal class PortfolioHandlerRegistry(
 
     private fun BasePortfolioHandler.addAccountIdToAllHandlerMap() =
         this::class.java.getAnnotation(HandleAllPortfolios::class.java).accounts.forEach { account ->
-            if (allHandlersByAccount[account] == null) {
-                allHandlersByAccount[account] = mutableListOf(this)
+            if (commonHandlersByAccount[account] == null) {
+                commonHandlersByAccount[account] = mutableListOf(this)
             } else {
-                allHandlersByAccount[account]?.add(this)
+                commonHandlersByAccount[account]?.add(this)
             }
         }
-
-    private companion object : KLogging()
 }

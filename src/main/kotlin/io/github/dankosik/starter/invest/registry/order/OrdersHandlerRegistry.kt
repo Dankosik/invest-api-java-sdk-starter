@@ -6,7 +6,6 @@ import io.github.dankosik.starter.invest.contract.orders.AsyncOrderHandler
 import io.github.dankosik.starter.invest.contract.orders.BaseOrderHandler
 import io.github.dankosik.starter.invest.contract.orders.BlockingOrderHandler
 import io.github.dankosik.starter.invest.contract.orders.CoroutineOrderHandler
-import mu.KLogging
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.OrderTrades
 
@@ -17,7 +16,7 @@ internal class OrdersHandlerRegistry(
     private val handlersByFigi = HashMap<String, MutableMap<String, MutableList<BaseOrderHandler>>>()
     private val handlersByInstrumentUid = HashMap<String, MutableMap<String, MutableList<BaseOrderHandler>>>()
 
-    val allHandlersByAccount = HashMap<String, MutableList<BaseOrderHandler>>()
+    val commonHandlersByAccount = HashMap<String, MutableList<BaseOrderHandler>>()
 
     init {
         val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values
@@ -37,16 +36,17 @@ internal class OrdersHandlerRegistry(
         asyncHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
     }
 
-    fun getHandlers(orderTrades: OrderTrades) =
+    fun getHandlers(orderTrades: OrderTrades): MutableList<BaseOrderHandler>? =
         getHandlersByUidAndAccountId(orderTrades.instrumentUid, orderTrades.accountId)
             ?: getHandlersByFigiAndAccountId(orderTrades.figi, orderTrades.accountId)
 
-    fun getCommonHandlersByAccountId(orderTrades: OrderTrades) = allHandlersByAccount[orderTrades.accountId]
+    fun getCommonHandlersByAccountId(orderTrades: OrderTrades): MutableList<BaseOrderHandler>? =
+        commonHandlersByAccount[orderTrades.accountId]
 
-    fun getHandlersByUidAndAccountId(uId: String?, accountId: String) =
+    private fun getHandlersByUidAndAccountId(uId: String?, accountId: String) =
         handlersByInstrumentUid[accountId]?.get(uId)
 
-    fun getHandlersByFigiAndAccountId(figi: String?, accountId: String) =
+    private fun getHandlersByFigiAndAccountId(figi: String?, accountId: String) =
         handlersByFigi[accountId]?.get(figi)
 
     private fun BaseOrderHandler.addAccountIdToHandlerMap() {
@@ -93,12 +93,10 @@ internal class OrdersHandlerRegistry(
 
     private fun BaseOrderHandler.addAccountIdToAllHandlerMap() =
         this::class.java.getAnnotation(HandleAllOrders::class.java).accounts.forEach { account ->
-            if (allHandlersByAccount[account] == null) {
-                allHandlersByAccount[account] = mutableListOf(this)
+            if (commonHandlersByAccount[account] == null) {
+                commonHandlersByAccount[account] = mutableListOf(this)
             } else {
-                allHandlersByAccount[account]?.add(this)
+                commonHandlersByAccount[account]?.add(this)
             }
         }
-
-    private companion object : KLogging()
 }
