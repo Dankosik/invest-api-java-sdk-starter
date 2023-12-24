@@ -620,13 +620,13 @@ class StreamProcessorsAutoConfiguration {
         }
 
         streamProcessors.isNotEmpty() && positionsHandlerRegistry.commonHandlersByAccount.isNotEmpty() -> {
-            val beforeLastPriceHandlers =
+            val beforePositionHandlers =
                 streamProcessors.filter { it.beforeEachPositionHandler }.takeIf { it.isNotEmpty() }
-            val afterLastPriceHandlers =
+            val afterPositionHandlers =
                 streamProcessors.filter { it.afterEachPositionHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<PositionsStreamResponse> { response ->
                 if (response.hasPosition()) {
-                    beforeLastPriceHandlers?.runProcessors(response)
+                    beforePositionHandlers?.runProcessors(response)
                     val positionData = response.position
                     DEFAULT_SCOPE.launch {
                         val handlers = positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)
@@ -647,19 +647,19 @@ class StreamProcessorsAutoConfiguration {
                             }
                         }
                     }
-                    afterLastPriceHandlers?.runProcessors(response)
+                    afterPositionHandlers?.runProcessors(response)
                 }
             }
         }
 
         else -> {
-            val beforeLastPriceHandlers =
+            val beforePositionHandlers =
                 streamProcessors.filter { it.beforeEachPositionHandler }.takeIf { it.isNotEmpty() }
-            val afterLastPriceHandlers =
+            val afterPositionHandlers =
                 streamProcessors.filter { it.afterEachPositionHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<PositionsStreamResponse> { response ->
                 if (response.hasPosition()) {
-                    beforeLastPriceHandlers?.runProcessors(response)
+                    beforePositionHandlers?.runProcessors(response)
                     val positionData = response.position
                     val handlers = positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)
                     if (handlers != null && handlers.size == 1) {
@@ -671,7 +671,7 @@ class StreamProcessorsAutoConfiguration {
                             }
                         }
                     }
-                    afterLastPriceHandlers?.runProcessors(response)
+                    afterPositionHandlers?.runProcessors(response)
                 }
             }
         }
@@ -728,13 +728,13 @@ class StreamProcessorsAutoConfiguration {
         }
 
         streamProcessors.isNotEmpty() && ordersHandlerRegistry.commonHandlersByAccount.isEmpty() -> {
-            val beforeLastPriceHandlers =
+            val beforeOrdersHandlers =
                 streamProcessors.filter { it.beforeEachOrdersHandler }.takeIf { it.isNotEmpty() }
-            val afterLastPriceHandlers =
+            val afterOrdersHandlers =
                 streamProcessors.filter { it.afterEachOrdersHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<TradesStreamResponse> { response ->
                 if (response.hasOrderTrades()) {
-                    beforeLastPriceHandlers?.runProcessors(response)
+                    beforeOrdersHandlers?.runProcessors(response)
                     val orderTrades = response.orderTrades
                     DEFAULT_SCOPE.launch {
                         val handlers = ordersHandlerRegistry.getHandlers(orderTrades)
@@ -755,19 +755,19 @@ class StreamProcessorsAutoConfiguration {
                             }
                         }
                     }
-                    afterLastPriceHandlers?.runProcessors(response)
+                    afterOrdersHandlers?.runProcessors(response)
                 }
             }
         }
 
         else -> {
-            val beforeLastPriceHandlers =
+            val beforeOrdersHandlers =
                 streamProcessors.filter { it.beforeEachOrdersHandler }.takeIf { it.isNotEmpty() }
-            val afterLastPriceHandlers =
+            val afterOrdersHandlers =
                 streamProcessors.filter { it.afterEachOrdersHandler }.takeIf { it.isNotEmpty() }
             StreamProcessor<TradesStreamResponse> { response ->
                 if (response.hasOrderTrades()) {
-                    beforeLastPriceHandlers?.runProcessors(response)
+                    beforeOrdersHandlers?.runProcessors(response)
                     val orderTrades = response.orderTrades
                     DEFAULT_SCOPE.launch {
                         val handlers = ordersHandlerRegistry.getHandlers(orderTrades)
@@ -786,7 +786,7 @@ class StreamProcessorsAutoConfiguration {
                             launch { it.handleOrders(orderTrades) }
                         }
                     }
-                    afterLastPriceHandlers?.runProcessors(response)
+                    afterOrdersHandlers?.runProcessors(response)
                 }
             }
         }
@@ -855,13 +855,13 @@ class StreamProcessorsAutoConfiguration {
     }
 
     private fun BaseTradingStatusHandler.createFunctionForHandler(): (TradingStatus) -> Unit = { tradingStatus ->
-        when (val baseLastPriceHandler = this) {
+        when (val baseTradingStatusHandler = this) {
             is BlockingTradingStatusHandler -> executor?.submit {
-                baseLastPriceHandler.handleBlocking(tradingStatus)
-            } ?: BLOCKING_SCOPE.launch { baseLastPriceHandler.handleBlocking(tradingStatus) }
+                baseTradingStatusHandler.handleBlocking(tradingStatus)
+            } ?: BLOCKING_SCOPE.launch { baseTradingStatusHandler.handleBlocking(tradingStatus) }
 
-            is CoroutineTradingStatusHandler -> DEFAULT_SCOPE.launch { baseLastPriceHandler.handle(tradingStatus) }
-            is AsyncTradingStatusHandler -> baseLastPriceHandler.handleAsync(tradingStatus)
+            is CoroutineTradingStatusHandler -> DEFAULT_SCOPE.launch { baseTradingStatusHandler.handle(tradingStatus) }
+            is AsyncTradingStatusHandler -> baseTradingStatusHandler.handleAsync(tradingStatus)
         }
     }
 
@@ -889,35 +889,35 @@ class StreamProcessorsAutoConfiguration {
     }
 
     private fun BasePortfolioHandler.createFunctionForHandler(): (PortfolioResponse) -> Unit = { portfolio ->
-        when (val baseOrderBookHandler = this) {
+        when (val basePortfolioHandler = this) {
             is BlockingPortfolioHandler -> executor?.submit {
-                baseOrderBookHandler.handleBlocking(portfolio)
-            } ?: BLOCKING_SCOPE.launch { baseOrderBookHandler.handleBlocking(portfolio) }
+                basePortfolioHandler.handleBlocking(portfolio)
+            } ?: BLOCKING_SCOPE.launch { basePortfolioHandler.handleBlocking(portfolio) }
 
-            is CoroutinePortfolioHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(portfolio) }
-            is AsyncPortfolioHandler -> baseOrderBookHandler.handleAsync(portfolio)
+            is CoroutinePortfolioHandler -> DEFAULT_SCOPE.launch { basePortfolioHandler.handle(portfolio) }
+            is AsyncPortfolioHandler -> basePortfolioHandler.handleAsync(portfolio)
         }
     }
 
     private fun BasePositionHandler.createFunctionForHandler(): (PositionData) -> Unit = { positions ->
-        when (val baseOrderBookHandler = this) {
+        when (val basePositionHandler = this) {
             is BlockingPositionHandler -> executor?.submit {
-                baseOrderBookHandler.handleBlocking(positions)
-            } ?: BLOCKING_SCOPE.launch { baseOrderBookHandler.handleBlocking(positions) }
+                basePositionHandler.handleBlocking(positions)
+            } ?: BLOCKING_SCOPE.launch { basePositionHandler.handleBlocking(positions) }
 
-            is CoroutinePositionHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(positions) }
-            is AsyncPositionHandler -> baseOrderBookHandler.handleAsync(positions)
+            is CoroutinePositionHandler -> DEFAULT_SCOPE.launch { basePositionHandler.handle(positions) }
+            is AsyncPositionHandler -> basePositionHandler.handleAsync(positions)
         }
     }
 
     private fun BaseOrderHandler.createFunctionForHandler(): (OrderTrades) -> Unit = { orders ->
-        when (val baseOrderBookHandler = this) {
+        when (val baseOrderHandler = this) {
             is BlockingOrderHandler -> executor?.submit {
-                baseOrderBookHandler.handleBlocking(orders)
-            } ?: BLOCKING_SCOPE.launch { baseOrderBookHandler.handleBlocking(orders) }
+                baseOrderHandler.handleBlocking(orders)
+            } ?: BLOCKING_SCOPE.launch { baseOrderHandler.handleBlocking(orders) }
 
-            is CoroutineOrderHandler -> DEFAULT_SCOPE.launch { baseOrderBookHandler.handle(orders) }
-            is AsyncOrderHandler -> baseOrderBookHandler.handleAsync(orders)
+            is CoroutineOrderHandler -> DEFAULT_SCOPE.launch { baseOrderHandler.handle(orders) }
+            is AsyncOrderHandler -> baseOrderHandler.handleAsync(orders)
         }
     }
 

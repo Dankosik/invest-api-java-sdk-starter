@@ -12,11 +12,11 @@ plugins {
 }
 
 group = "io.github.dankosik"
-version = "0.6.1-beta37"
+version = "0.6.1-beta40"
 
 extra["tinkoffSdkVersion"] = "1.6"
 extra["kotlinLoggingVersion"] = "3.0.5"
-extra["kotlinCoroutinesVersion"] = "1.8.0-RC"
+extra["kotlinCoroutinesVersion"] = "1.8.0-RC2"
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(17))
@@ -74,13 +74,11 @@ nexusPublishing {
     }
 }
 
-
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             artifactId = "invest-api-java-sdk-starter"
             from(components["java"])
-
             pom {
                 name.set("Invest API java sdk starter")
                 url.set("https://github.com/Dankosik/invest-api-java-sdk-starter")
