@@ -100,15 +100,15 @@ class DollarCandleHandler(
 ## Добавить зависимость в свой проект
 
 Для `build.gradle.kts`
-```gradle
+```groovy
 implementation("io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta40")
 ```
 Для `build.gradle`
-```gradle
+```groovy
 implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta40'
 ```
 Для `maven`
-```asciidoc
+```xml
 <dependency>
     <groupId>io.github.dankosik</groupId>
     <artifactId>invest-api-java-sdk-starter</artifactId>
@@ -117,14 +117,28 @@ implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta40'
 </dependency>
 ```
 
-Также необходимо добавить зависимость 
-
-```
+Также необходимо добавить зависимость <br>
+#### Для `gradle:`
+```groovy
 implementation("org.springframework.boot:spring-boot-starter-web")
 ```
 Или
-```asciidoc
+```groovy
 implementation("org.springframework.boot:spring-boot-starter-webflux")
+```
+#### Для `maven:`
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+```
+или
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
 ```
 ## О версиях
 Версии будут совпадать как в самой [sdk](https://github.com/RussianInvestments/invest-api-java-sdk/tags)
