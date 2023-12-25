@@ -45,7 +45,7 @@ class BlockingDollarCandleHandler implements BlockingCandleHandler {
     }
 }
 ```
-Для kotlin
+Для `kotlin`:
 ```kotlin
 @HandleCandle(
     ticker = "SiH4",
