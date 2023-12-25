@@ -18,7 +18,7 @@ tinkoff:
 Вместо `fullAccess` можно использовать `readonly` или `sandbox`. Все ваши запросы к api будут использовать определенный вами токен.
 ### Возможности:
 
-Обработка минутных свечей по Фьючерсу на доллар:
+Три способа обработать минутные свечи по Фьючерсу на доллар:
 ```java
 @HandleCandle(
         ticker = "SiH4",
@@ -40,12 +40,12 @@ class DollarCandleHandler implements AsyncCandleHandler {
 class BlockingDollarCandleHandler implements BlockingCandleHandler {
 
     @Override
-    public void handleBlocking(@NotNull Candle candle) {
+    public void handleBlocking(Candle candle) {
         System.out.println(candle);
     }
 }
 ```
-
+Для kotlin
 ```kotlin
 @HandleCandle(
     ticker = "SiH4",
@@ -65,7 +65,7 @@ class DollarCandleHandler : CoroutineCandleHandler {
 `LastPrice`, `Trade`, `OrderBook`, `Porfolio` и остальные события доступные в стримах `invest-api-java-sdk` можно будет обрабатывать также как и в примерах выше используя другие аннотации и интерфейсы. Подробнее можно посмотреть примеры:
 
 ### Примеры
-[На котлине + gradle.kts](
+[На kotlin + gradle.kts](
 https://github.com/Dankosik/invest-starter-demo/blob/main/src/main/kotlin/io/github/dankosik/investstarterdemo/InvestStarterDemoApplication.kt#L65) <br>
 [На java + maven](
 https://github.com/Dankosik/invest-starter-demo-java/blob/main/src/main/java/io/github/dankosik/investstarterdemojava/InvestStarterDemoJavaApplication.java#L44)
