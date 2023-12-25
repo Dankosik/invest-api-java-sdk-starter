@@ -63,26 +63,28 @@ class DollarCandleHandler(
 
 Подробные гайды, статьи и примеры скоро появятся - ждите
 ### Примеры
-[На котлине](
-https://github.com/Dankosik/invest-starter-demo/blob/main/src/main/kotlin/io/github/dankosik/investstarterdemo/InvestStarterDemoApplication.kt)
+[На котлине + gradle.kts](
+https://github.com/Dankosik/invest-starter-demo/blob/main/src/main/kotlin/io/github/dankosik/investstarterdemo/InvestStarterDemoApplication.kt#L65) <br>
+[На java + maven](
+https://github.com/Dankosik/invest-starter-demo-java/blob/main/src/main/java/io/github/dankosik/investstarterdemojava/InvestStarterDemoJavaApplication.java#L44)
 
 ### Добавить зависимость в свой проект
 
-Для build.`gradle.kts`
+Для `build.gradle.kts`
 ```gradle
-implementation("io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta36")
+implementation("io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta40")
 ```
 Для `build.gradle`
 ```gradle
-implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta36'
+implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta40'
 ```
-Для maven
+Для `maven`
 ```asciidoc
 <dependency>
     <groupId>io.github.dankosik</groupId>
     <artifactId>invest-api-java-sdk-starter</artifactId>
-    <version>0.6.1-beta36</version>
-    <type>pom</type>
+    <version>0.6.1-beta40</version>
+    <classifier>plain</classifier>
 </dependency>
 ```
 
@@ -95,7 +97,3 @@ implementation("org.springframework.boot:spring-boot-starter-web")
 ```asciidoc
 implementation("org.springframework.boot:spring-boot-starter-webflux")
 ```
-
-### Pull Requests
-
-На все ваши пулл реквесты будет приходить chatGPT, не пугайтесь, возможно он посоветует что-то хорошее  или найдет очепятку)
