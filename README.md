@@ -6,6 +6,7 @@
 ### Пререквизиты
 - `jdk17+` 
 - `Maven 3+` либо `Gradle 8.5+` (если `jdk21+`) и `Gradle 7.3+` (если `jdk17+`)
+- `SpringBoot 3.0+`
 - Также добавьте в `aplication.yml`
 
 ```yml
