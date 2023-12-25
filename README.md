@@ -3,7 +3,7 @@
 
 Стартер доступен в бета версии, сейчас активно дорабатывается. По вопросам или предложениям пишите https://t.me/KorytoDaniil или в `issues`
 
-### Пререквизиты
+## Пререквизиты
 - `jdk17+` 
 - `Maven 3+` либо `Gradle 8.5+` (если `jdk21+`) и `Gradle 7.3+` (если `jdk17+`)
 - `SpringBoot 3.0+`
@@ -17,7 +17,7 @@ tinkoff:
         "ваш токен"
 ```
 Вместо `fullAccess` можно использовать `readonly` или `sandbox`. Все ваши запросы к api будут использовать определенный вами токен.
-### Возможности:
+## Возможности:
 
 Три способа обработать минутные свечи по Фьючерсу на доллар:
 ```java
@@ -66,7 +66,7 @@ class DollarCandleHandler : CoroutineCandleHandler {
 Обрабатывак сделки, стаканы, последние цены, обновление портфеля и т.д. можно аналогично.
 `LastPrice`, `Trade`, `OrderBook`, `Porfolio` и остальные события доступные в стримах `invest-api-java-sdk` можно будет обрабатывать также как и в примерах выше используя другие аннотации и интерфейсы. Подробнее можно посмотреть примеры:
 
-### Примеры
+## Примеры
 [На kotlin + gradle.kts](
 https://github.com/Dankosik/invest-starter-demo/blob/main/src/main/kotlin/io/github/dankosik/investstarterdemo/InvestStarterDemoApplication.kt#L65) <br>
 [На java + maven](
@@ -97,7 +97,7 @@ class DollarCandleHandler(
 
 Подробные гайды и статьи скоро появятся - ждите
 
-### Добавить зависимость в свой проект
+## Добавить зависимость в свой проект
 
 Для `build.gradle.kts`
 ```gradle
@@ -126,8 +126,23 @@ implementation("org.springframework.boot:spring-boot-starter-web")
 ```asciidoc
 implementation("org.springframework.boot:spring-boot-starter-webflux")
 ```
+## О версиях
+Версии будут совпадать как в самой [sdk](https://github.com/RussianInvestments/invest-api-java-sdk/tags)
 
-# Сообщество API Тинькофф Инвестиций
+Тоесть при подключении
+```
+implementation("io.github.dankosik:invest-api-java-sdk-starter:1.6.0")
+```
+Будет использоваться версия sdk 1.6
+
+Стартер поддерживает минимальную версию skd - 1.6
+
+При появлении новых версий skd будет подниматься мажорная версия стартера, но старые будут оставаться на поддержке
+
+
+P.S. На момент беты версия стартера начинается с 0, при релизе будет повышена до 1
+
+## Сообщество API Тинькофф Инвестиций
 
 * [Основной репозиторий](https://github.com/RussianInvestments/investAPI)
 * [Telegram-канал](https://t.me/tinkoffinvestopenapi)
