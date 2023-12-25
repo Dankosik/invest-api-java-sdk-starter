@@ -3,13 +3,52 @@
 
 Пока в работе - следите за обновлениями, если есть вопросы пишите https://t.me/KorytoDaniil
 
-### Небольшое фича превью:
-Писать можно будет на java/kotlin (другие jvm не тестил) + spring boot. Для использования необходима jdk17+.
+### Пререквизиты
+- `jdk17+` 
+- `Maven 3+` либо `Gradle 8.5+` (если `jdk21+`) и `Gradle 7.3+` (если `jdk17+`)
+- Также добавьте в `aplication.yml`
 
-Ниже пример обработки минутных свечей по Фьючерсу на доллар
+```yml
+tinkoff:
+  starter:
+    apiToken:
+      fullAccess:
+        "ваш токен"
+```
+Вместо `fullAccess` можно использовать `readonly` или `sandbox`. Все ваши запросы к api будут использовать определенный вами токен.
+### Возможности:
+
+Обработка минутных свечей по Фьючерсу на доллар:
+```java
+@HandleCandle(
+        ticker = "SiH4",
+        subscriptionInterval = SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE
+)
+class DollarCandleHandler implements AsyncCandleHandler {
+
+    @Override
+    public CompletableFuture<Void> handleAsync(Candle candle) {
+        return CompletableFuture.runAsync(() -> System.out.println(candle));
+    }
+}
+```
+```java
+@HandleCandle(
+        ticker = "SiH4",
+        subscriptionInterval = SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE
+)
+class BlockingDollarCandleHandler implements BlockingCandleHandler {
+
+    @Override
+    public void handleBlocking(@NotNull Candle candle) {
+        System.out.println(candle);
+    }
+}
+```
+
 ```kotlin
 @HandleCandle(
-    ticker = "SiZ3",
+    ticker = "SiH4",
     subscriptionInterval = SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE
 )
 class DollarCandleHandler : CoroutineCandleHandler {
@@ -19,24 +58,17 @@ class DollarCandleHandler : CoroutineCandleHandler {
     }
 }
 ```
+Вместо тикера можно использовать `figi` или `instrumentUid`
 
-Помимо использования интерфейса `CoroutineCandleHandler` есть еще `BlockingCandleHandler` и `AsyncCandleHandler` используйте то что вам удобно. Вместо тикера можно использовать figi или instrumentUid
+Если у вас `jdk 21+` то все ваши `BlockingCandleHandler` будут запущены в виртульных потоках, поэтому смело используйте блокирующий код без проблем 
 
-Если у вас `jdk 21+` то все ваши блокирующие хендеры будут запущены в виртульных потоках, поэтому смело используйте блокирующий код без проблем 
+`LastPrice`, `Trade`, `OrderBook`, `Porfolio` и остальные события доступные в стримах `invest-api-java-sdk` можно будет обрабатывать также как и в примерах выше используя другие аннотации и интерфейсы. Подробнее можно посмотреть примеры:
 
-`LastPrice`, `Trade`, `OrderBook`, `Porfolio` и остальные события доступные в стримах invest-api-java-sdk можно будет обрабатывать также как и в примере выше используя другие аннотации и интерфейсы
-
-Также добавьте в aplication.yml
-
-```yml
-tinkoff:
-  starter:
-    apiToken:
-      fullAccess:
-        "ваш токен"
-```
-
-Вместо `fullAccess` можно использовать `readonly` или `sandbox`. Все ваши запросы к api будут использовать определенный вами токен. 
+### Примеры
+[На котлине + gradle.kts](
+https://github.com/Dankosik/invest-starter-demo/blob/main/src/main/kotlin/io/github/dankosik/investstarterdemo/InvestStarterDemoApplication.kt#L65) <br>
+[На java + maven](
+https://github.com/Dankosik/invest-starter-demo-java/blob/main/src/main/java/io/github/dankosik/investstarterdemojava/InvestStarterDemoJavaApplication.java#L44)
 
 Все сервисы api, такие как: `MarketDataService`, `InstrumentsService`, `OrdersService` и т.д.  будут созданы как компоненты spring. Поэтому вы можете использвать их в ваших хендлерах например вот так:
 
@@ -61,12 +93,7 @@ class DollarCandleHandler(
 }
 ```
 
-Подробные гайды, статьи и примеры скоро появятся - ждите
-### Примеры
-[На котлине + gradle.kts](
-https://github.com/Dankosik/invest-starter-demo/blob/main/src/main/kotlin/io/github/dankosik/investstarterdemo/InvestStarterDemoApplication.kt#L65) <br>
-[На java + maven](
-https://github.com/Dankosik/invest-starter-demo-java/blob/main/src/main/java/io/github/dankosik/investstarterdemojava/InvestStarterDemoJavaApplication.java#L44)
+Подробные гайды и статьи скоро появятся - ждите
 
 ### Добавить зависимость в свой проект
 
