@@ -1,7 +1,7 @@
 # Spring Boot стартер для [invest-api-java-sdk](https://github.com/RussianInvestments/invest-api-java-sdk)
 ### Простота написания кода + высокая производительность из коробки. В стартере упор сделан на стриминг данных - пишите только логику обработки, а за создание стримов и выбор нужных хендлеров стартер позаботится за вас.
 
-Пока в работе - следите за обновлениями, если есть вопросы пишите https://t.me/KorytoDaniil
+Стартер доступен в бета версии, сейчас активно дорабатывается. По вопросам или предложениям пишите https://t.me/KorytoDaniil или в `issues`
 
 ### Пререквизиты
 - `jdk17+` 
@@ -126,3 +126,10 @@ implementation("org.springframework.boot:spring-boot-starter-web")
 ```asciidoc
 implementation("org.springframework.boot:spring-boot-starter-webflux")
 ```
+
+# Сообщество API Тинькофф Инвестиций
+
+* [Основной репозиторий](https://github.com/RussianInvestments/investAPI)
+* [Telegram-канал](https://t.me/tinkoffinvestopenapi)
+* [Telegram-чат по общим вопросам](https://t.me/joinchat/VaW05CDzcSdsPULM)
+* [Telegram-чат для заказчиков и разработчиков торговых роботов](https://t.me/tinkoff_invest_robot_development)
