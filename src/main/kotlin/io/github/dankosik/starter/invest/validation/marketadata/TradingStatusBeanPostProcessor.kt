@@ -5,7 +5,6 @@ import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStat
 import io.github.dankosik.starter.invest.contract.marketdata.status.AsyncTradingStatusHandler
 import io.github.dankosik.starter.invest.contract.marketdata.status.BlockingTradingStatusHandler
 import io.github.dankosik.starter.invest.contract.marketdata.status.CoroutineTradingStatusHandler
-import mu.KLogging
 import org.springframework.beans.factory.config.BeanPostProcessor
 
 internal class TradingStatusBeanPostProcessor : BeanPostProcessor {
@@ -15,14 +14,15 @@ internal class TradingStatusBeanPostProcessor : BeanPostProcessor {
             bean.javaClass.declaredAnnotations.filterIsInstance<HandleTradingStatus>().isNotEmpty()
         val isAllHandleTradingStatus =
             bean.javaClass.declaredAnnotations.filterIsInstance<HandleAllTradingStatuses>().isNotEmpty()
+        val javaClassName = bean.javaClass.name
         check(
             !(isHandleTradingStatus
                     && (bean !is CoroutineTradingStatusHandler && bean !is BlockingTradingStatusHandler && bean !is AsyncTradingStatusHandler))
-        ) { "Class: ${bean.javaClass.name} annotated with HandleTradingStatus should implement AsyncTradingStatusHandler or BlockingTradingStatusHandler or CoroutineTradingStatusHandler" }
+        ) { "Class: $javaClassName annotated with HandleTradingStatus should implement AsyncTradingStatusHandler or BlockingTradingStatusHandler or CoroutineTradingStatusHandler" }
         check(
             !(isAllHandleTradingStatus
                     && (bean !is CoroutineTradingStatusHandler && bean !is BlockingTradingStatusHandler && bean !is AsyncTradingStatusHandler))
-        ) { "Class: ${bean.javaClass.name} annotated with of HandleAllTradingStatuses should implement AsyncTradingStatusHandler or BlockingTradingStatusHandler or CoroutineTradingStatusHandler" }
+        ) { "Class: $javaClassName annotated with of HandleAllTradingStatuses should implement AsyncTradingStatusHandler or BlockingTradingStatusHandler or CoroutineTradingStatusHandler" }
         if (isHandleTradingStatus) {
             val classNameInMessage = when (bean) {
                 is CoroutineTradingStatusHandler -> "CoroutineTradingStatusHandler"
@@ -30,27 +30,37 @@ internal class TradingStatusBeanPostProcessor : BeanPostProcessor {
                 else -> "AsyncTradingStatusHandler"
             }
             check(isHandleTradingStatus) {
-                "$classNameInMessage: ${bean.javaClass.name} must have an annotated of HandleTradingStatus"
+                "$classNameInMessage: $javaClassName must have an annotated of HandleTradingStatus"
             }
             val annotation = bean.javaClass.getAnnotation(HandleTradingStatus::class.java)
             val tickerValue = annotation.ticker
             val figiValue = annotation.figi
             val instrumentIdValue = annotation.instrumentUid
             check(tickerValue.isNotBlank() || figiValue.isNotBlank() || instrumentIdValue.isNotBlank()) {
-                "At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided in ${bean.javaClass.name}"
+                "At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided in $javaClassName"
             }
         }
 
         if (isAllHandleTradingStatus) {
             val annotation = bean.javaClass.getAnnotation(HandleAllTradingStatuses::class.java)
-            if (annotation.beforeEachTradingStatusHandler && annotation.afterEachTradingStatusHandler) {
-                logger.warn { "${bean.javaClass.name} any parameters of annotation 'HandleAllTradingStatuses' should be true, your handler will be ignored" }
+            annotation.figies.takeIf { it.isNotEmpty() }?.forEach { figi ->
+                check(figi.isNotBlank()) {
+                    "$javaClassName: Figi should be not blank"
+                }
+            }
+            annotation.tickers.takeIf { it.isNotEmpty() }?.forEach { ticker ->
+                check(ticker.isNotBlank()) {
+                    "$javaClassName: Ticker should be not blank"
+                }
+            }
+            annotation.instrumentsUids.takeIf { it.isNotEmpty() }?.forEach { uId ->
+                check(uId.isNotBlank()) {
+                    "$javaClassName: InstrumentsUid should be not blank"
+                }
             }
         }
         return bean
     }
 
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any = bean
-
-    private companion object : KLogging()
 }

@@ -24,7 +24,6 @@ import io.github.dankosik.starter.invest.exception.CommonException
 import io.github.dankosik.starter.invest.exception.ErrorCode
 import io.github.dankosik.starter.invest.processor.marketdata.AsyncLastPriceStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.AsyncOrderBookStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.AsyncTradeStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.AsyncTradingStatusStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.BaseCandleStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.BaseLastPriceStreamProcessor
@@ -33,23 +32,20 @@ import io.github.dankosik.starter.invest.processor.marketdata.BaseTradeStreamPro
 import io.github.dankosik.starter.invest.processor.marketdata.BaseTradingStatusStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.BlockingLastPriceStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.BlockingOrderBookStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.BlockingTradeStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.BlockingTradingStatusStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.CoroutineLastPriceStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.CoroutineOrderBookStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.CoroutineTradeStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.CoroutineTradingStatusStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.TradeStreamProcessorAdapterFactory
 import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.runAfterEachLastPriceBookHandler
 import io.github.dankosik.starter.invest.processor.marketdata.runAfterEachOrderBookHandler
-import io.github.dankosik.starter.invest.processor.marketdata.runAfterEachTradeHandler
 import io.github.dankosik.starter.invest.processor.marketdata.runAfterEachTradingStatusHandler
 import io.github.dankosik.starter.invest.processor.marketdata.runBeforeEachLastPriceHandler
 import io.github.dankosik.starter.invest.processor.marketdata.runBeforeEachOrderBookHandler
-import io.github.dankosik.starter.invest.processor.marketdata.runBeforeEachTradeHandler
 import io.github.dankosik.starter.invest.processor.marketdata.runBeforeEachTradingStatusHandler
 import io.github.dankosik.starter.invest.processor.marketdata.toMarketDataProcessor
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
@@ -60,7 +56,8 @@ import org.springframework.context.annotation.Configuration
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureBefore(StreamProcessorsAutoConfiguration::class)
 class StreamProcessorAdaptersAutoConfiguration(
-    private val applicationContext: ApplicationContext
+    private val applicationContext: ApplicationContext,
+    private val tickerToUidMap: Map<String, String>
 ) {
 
     @Bean
@@ -90,32 +87,36 @@ class StreamProcessorAdaptersAutoConfiguration(
     private fun createAllOrderBooksStreamProcessors(): List<BaseMarketDataStreamProcessor> =
         applicationContext.getBeansWithAnnotation(HandleAllOrderBooks::class.java).values
             .filterIsInstance<BaseOrderBookHandler>()
-            .map { handler ->
+            .mapNotNull { handler ->
                 val annotation =
                     handler.javaClass.declaredAnnotations.filterIsInstance<HandleAllOrderBooks>().first()
-                when (handler) {
-                    is BlockingOrderBookHandler -> {
-                        BlockingOrderBookStreamProcessorAdapter { handler.handleBlocking(it) }.apply {
-                            if (annotation.afterEachOrderBookHandler) runAfterEachOrderBookHandler()
-                            if (annotation.beforeEachOrderBookHandler) runBeforeEachOrderBookHandler()
-                        }.toMarketDataProcessor()
-                    }
+                if (annotation.instrumentsUids.isEmpty() && annotation.tickers.isEmpty() && annotation.figies.isEmpty()) {
+                    when (handler) {
+                        is BlockingOrderBookHandler -> {
+                            BlockingOrderBookStreamProcessorAdapter { handler.handleBlocking(it) }.apply {
+                                if (annotation.afterEachOrderBookHandler) runAfterEachOrderBookHandler()
+                                if (annotation.beforeEachOrderBookHandler) runBeforeEachOrderBookHandler()
+                            }.toMarketDataProcessor()
+                        }
 
-                    is AsyncOrderBookHandler -> {
-                        AsyncOrderBookStreamProcessorAdapter { handler.handleAsync(it) }.apply {
-                            if (annotation.afterEachOrderBookHandler) runAfterEachOrderBookHandler()
-                            if (annotation.beforeEachOrderBookHandler) runBeforeEachOrderBookHandler()
-                        }.toMarketDataProcessor()
-                    }
+                        is AsyncOrderBookHandler -> {
+                            AsyncOrderBookStreamProcessorAdapter { handler.handleAsync(it) }.apply {
+                                if (annotation.afterEachOrderBookHandler) runAfterEachOrderBookHandler()
+                                if (annotation.beforeEachOrderBookHandler) runBeforeEachOrderBookHandler()
+                            }.toMarketDataProcessor()
+                        }
 
-                    is CoroutineOrderBookHandler -> {
-                        CoroutineOrderBookStreamProcessorAdapter { handler.handle(it) }.apply {
-                            if (annotation.afterEachOrderBookHandler) runAfterEachOrderBookHandler()
-                            if (annotation.beforeEachOrderBookHandler) runBeforeEachOrderBookHandler()
-                        }.toMarketDataProcessor()
-                    }
+                        is CoroutineOrderBookHandler -> {
+                            CoroutineOrderBookStreamProcessorAdapter { handler.handle(it) }.apply {
+                                if (annotation.afterEachOrderBookHandler) runAfterEachOrderBookHandler()
+                                if (annotation.beforeEachOrderBookHandler) runBeforeEachOrderBookHandler()
+                            }.toMarketDataProcessor()
+                        }
 
-                    else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
+                        else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
+                    }
+                } else {
+                    null
                 }
             }
 
@@ -125,32 +126,39 @@ class StreamProcessorAdaptersAutoConfiguration(
     private fun createAllTradeStreamProcessors() =
         applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values
             .filterIsInstance<BaseTradeHandler>()
-            .map { handler ->
+            .mapNotNull { handler ->
                 val annotation =
                     handler.javaClass.declaredAnnotations.filterIsInstance<HandleAllTrades>().first()
-                when (handler) {
-                    is BlockingTradeHandler -> {
-                        BlockingTradeStreamProcessorAdapter { handler.handleBlocking(it) }.apply {
-                            if (annotation.afterEachTradesHandler) runAfterEachTradeHandler()
-                            if (annotation.beforeEachTradesHandler) runBeforeEachTradeHandler()
-                        }.toMarketDataProcessor()
-                    }
+                if (annotation.instrumentsUids.isEmpty() && annotation.tickers.isEmpty() && annotation.figies.isEmpty()) {
+                    when (handler) {
+                        is BlockingTradeHandler -> {
+                            TradeStreamProcessorAdapterFactory
+                                .runAfterEachCandleHandler(annotation.afterEachTradesHandler)
+                                .runBeforeEachCandleHandler(annotation.beforeEachTradesHandler)
+                                .createBlockingHandler { handler.handleBlocking(it) }
+                                .toMarketDataProcessor()
+                        }
 
-                    is AsyncTradeHandler -> {
-                        AsyncTradeStreamProcessorAdapter { handler.handleAsync(it) }.apply {
-                            if (annotation.afterEachTradesHandler) runAfterEachTradeHandler()
-                            if (annotation.beforeEachTradesHandler) runBeforeEachTradeHandler()
-                        }.toMarketDataProcessor()
-                    }
+                        is AsyncTradeHandler -> {
+                            TradeStreamProcessorAdapterFactory
+                                .runAfterEachCandleHandler(annotation.afterEachTradesHandler)
+                                .runBeforeEachCandleHandler(annotation.beforeEachTradesHandler)
+                                .createAsyncHandler { handler.handleAsync(it) }
+                                .toMarketDataProcessor()
+                        }
 
-                    is CoroutineTradeHandler -> {
-                        CoroutineTradeStreamProcessorAdapter { handler.handle(it) }.apply {
-                            if (annotation.afterEachTradesHandler) runAfterEachTradeHandler()
-                            if (annotation.beforeEachTradesHandler) runBeforeEachTradeHandler()
-                        }.toMarketDataProcessor()
-                    }
+                        is CoroutineTradeHandler -> {
+                            TradeStreamProcessorAdapterFactory
+                                .runAfterEachCandleHandler(annotation.afterEachTradesHandler)
+                                .runBeforeEachCandleHandler(annotation.beforeEachTradesHandler)
+                                .createCoroutineHandler { handler.handle(it) }
+                                .toMarketDataProcessor()
+                        }
 
-                    else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
+                        else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
+                    }
+                } else {
+                    null
                 }
             }
 
@@ -160,32 +168,38 @@ class StreamProcessorAdaptersAutoConfiguration(
     private fun createAllLastPriceStreamProcessors() =
         applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values
             .filterIsInstance<BaseLastPriceHandler>()
-            .map { handler ->
+            .mapNotNull { handler ->
                 val annotation =
                     handler.javaClass.declaredAnnotations.filterIsInstance<HandleAllLastPrices>().first()
-                when (handler) {
-                    is BlockingLastPriceHandler -> {
-                        BlockingLastPriceStreamProcessorAdapter { handler.handleBlocking(it) }.apply {
-                            if (annotation.afterEachLastPriceHandler) runAfterEachLastPriceBookHandler()
-                            if (annotation.beforeEachLastPriceHandler) runBeforeEachLastPriceHandler()
-                        }.toMarketDataProcessor()
-                    }
+                if (annotation.instrumentsUids.isEmpty() && annotation.tickers.isEmpty() && annotation.figies.isEmpty()) {
+                    when (handler) {
+                        is BlockingLastPriceHandler -> {
+                            BlockingLastPriceStreamProcessorAdapter {
+                                handler.handleBlocking(it)
+                            }.apply {
+                                if (annotation.afterEachLastPriceHandler) runAfterEachLastPriceBookHandler()
+                                if (annotation.beforeEachLastPriceHandler) runBeforeEachLastPriceHandler()
+                            }.toMarketDataProcessor()
+                        }
 
-                    is AsyncLastPriceHandler -> {
-                        AsyncLastPriceStreamProcessorAdapter { handler.handleAsync(it) }.apply {
-                            if (annotation.afterEachLastPriceHandler) runAfterEachLastPriceBookHandler()
-                            if (annotation.beforeEachLastPriceHandler) runBeforeEachLastPriceHandler()
-                        }.toMarketDataProcessor()
-                    }
+                        is AsyncLastPriceHandler -> {
+                            AsyncLastPriceStreamProcessorAdapter { handler.handleAsync(it) }.apply {
+                                if (annotation.afterEachLastPriceHandler) runAfterEachLastPriceBookHandler()
+                                if (annotation.beforeEachLastPriceHandler) runBeforeEachLastPriceHandler()
+                            }.toMarketDataProcessor()
+                        }
 
-                    is CoroutineLastPriceHandler -> {
-                        CoroutineLastPriceStreamProcessorAdapter { handler.handle(it) }.apply {
-                            if (annotation.afterEachLastPriceHandler) runAfterEachLastPriceBookHandler()
-                            if (annotation.beforeEachLastPriceHandler) runBeforeEachLastPriceHandler()
-                        }.toMarketDataProcessor()
-                    }
+                        is CoroutineLastPriceHandler -> {
+                            CoroutineLastPriceStreamProcessorAdapter { handler.handle(it) }.apply {
+                                if (annotation.afterEachLastPriceHandler) runAfterEachLastPriceBookHandler()
+                                if (annotation.beforeEachLastPriceHandler) runBeforeEachLastPriceHandler()
+                            }.toMarketDataProcessor()
+                        }
 
-                    else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
+                        else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
+                    }
+                } else {
+                    null
                 }
             }
 
@@ -198,32 +212,36 @@ class StreamProcessorAdaptersAutoConfiguration(
     private fun createAllTradingStatusStreamProcessors() =
         applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values
             .filterIsInstance<BaseTradingStatusHandler>()
-            .map { handler ->
+            .mapNotNull { handler ->
                 val annotation =
                     handler.javaClass.declaredAnnotations.filterIsInstance<HandleAllTradingStatuses>().first()
-                when (handler) {
-                    is BlockingTradingStatusHandler -> {
-                        BlockingTradingStatusStreamProcessorAdapter { handler.handleBlocking(it) }.apply {
-                            if (annotation.afterEachTradingStatusHandler) runAfterEachTradingStatusHandler()
-                            if (annotation.beforeEachTradingStatusHandler) runBeforeEachTradingStatusHandler()
-                        }.toMarketDataProcessor()
-                    }
+                if (annotation.instrumentsUids.isEmpty() && annotation.tickers.isEmpty() && annotation.figies.isEmpty()) {
+                    when (handler) {
+                        is BlockingTradingStatusHandler -> {
+                            BlockingTradingStatusStreamProcessorAdapter { handler.handleBlocking(it) }.apply {
+                                if (annotation.afterEachTradingStatusHandler) runAfterEachTradingStatusHandler()
+                                if (annotation.beforeEachTradingStatusHandler) runBeforeEachTradingStatusHandler()
+                            }.toMarketDataProcessor()
+                        }
 
-                    is AsyncTradingStatusHandler -> {
-                        AsyncTradingStatusStreamProcessorAdapter { handler.handleAsync(it) }.apply {
-                            if (annotation.afterEachTradingStatusHandler) runAfterEachTradingStatusHandler()
-                            if (annotation.beforeEachTradingStatusHandler) runBeforeEachTradingStatusHandler()
-                        }.toMarketDataProcessor()
-                    }
+                        is AsyncTradingStatusHandler -> {
+                            AsyncTradingStatusStreamProcessorAdapter { handler.handleAsync(it) }.apply {
+                                if (annotation.afterEachTradingStatusHandler) runAfterEachTradingStatusHandler()
+                                if (annotation.beforeEachTradingStatusHandler) runBeforeEachTradingStatusHandler()
+                            }.toMarketDataProcessor()
+                        }
 
-                    is CoroutineTradingStatusHandler -> {
-                        CoroutineTradingStatusStreamProcessorAdapter { handler.handle(it) }.apply {
-                            if (annotation.afterEachTradingStatusHandler) runAfterEachTradingStatusHandler()
-                            if (annotation.beforeEachTradingStatusHandler) runBeforeEachTradingStatusHandler()
-                        }.toMarketDataProcessor()
-                    }
+                        is CoroutineTradingStatusHandler -> {
+                            CoroutineTradingStatusStreamProcessorAdapter { handler.handle(it) }.apply {
+                                if (annotation.afterEachTradingStatusHandler) runAfterEachTradingStatusHandler()
+                                if (annotation.beforeEachTradingStatusHandler) runBeforeEachTradingStatusHandler()
+                            }.toMarketDataProcessor()
+                        }
 
-                    else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
+                        else -> throw CommonException(ErrorCode.HANDLER_NOT_FOUND)
+                    }
+                } else {
+                    null
                 }
             }
 

@@ -1,7 +1,27 @@
 package io.github.dankosik.starter.invest.configuration
 
-import io.github.dankosik.starter.invest.annotation.marketdata.*
-import io.github.dankosik.starter.invest.annotation.order.*
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllCandles
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllLastPrices
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllOrderBooks
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllTrades
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllTradingStatuses
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTrade
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStatus
+import io.github.dankosik.starter.invest.annotation.marketdata.extractFigiToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.marketdata.extractTickerToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.marketdata.extractTickersFromAll
+import io.github.dankosik.starter.invest.annotation.marketdata.extractTickersWithoutInstrumentType
+import io.github.dankosik.starter.invest.annotation.marketdata.extractUidToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.order.HandleAllOrders
+import io.github.dankosik.starter.invest.annotation.order.HandleOrder
+import io.github.dankosik.starter.invest.annotation.order.extractFigiToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.order.extractTickerToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.order.extractTickersFromAll
+import io.github.dankosik.starter.invest.annotation.order.extractTickersWithoutInstrumentType
+import io.github.dankosik.starter.invest.annotation.order.extractUidToInstrumentTypeMap
 import io.github.dankosik.starter.invest.contract.marketdata.candle.getCandleHandlers
 import io.github.dankosik.starter.invest.contract.marketdata.lastprice.getLastPriceHandlers
 import io.github.dankosik.starter.invest.contract.marketdata.orderbook.getOrderBookHandlers
@@ -35,6 +55,19 @@ class InstrumentsMapAutoConfiguration(
 
     @Bean
     fun tickerToUidMap(): Map<String, String> = runBlocking {
+        val lastPriceAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getLastPriceHandlers()
+        val orderBookAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllOrderBooks::class.java).values.getOrderBookHandlers()
+        val tradesAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getTradesHandlers()
+        val tradingStatusAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getTradingStatusHandlers()
+        val candleAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllCandles::class.java).values.getCandleHandlers()
+        val ordersAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderHandlers()
+
         val orderBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleOrderBook::class.java).values.getOrderBookHandlers()
         val tradesHandlers =
@@ -98,12 +131,20 @@ class InstrumentsMapAutoConfiguration(
                 }
             }.awaitAll()
 
-        val tickerWithoutInstrumentType = (orderBookHandlers.extractTickersWithoutInstrumentType() +
-                tradesHandlers.extractTickersWithoutInstrumentType() +
-                lastPriceHandlers.extractTickersWithoutInstrumentType() +
-                candleHandlers.extractTickersWithoutInstrumentType() +
-                tradingStatusHandlers.extractTickersWithoutInstrumentType() +
-                ordersHandlers.extractTickersWithoutInstrumentType()).toSet()
+        val tickerWithoutInstrumentType = (
+                lastPriceAllHandlers.extractTickersFromAll() +
+                        orderBookAllHandlers.extractTickersFromAll() +
+                        ordersAllHandlers.extractTickersFromAll() +
+                        tradesAllHandlers.extractTickersFromAll() +
+                        tradingStatusAllHandlers.extractTickersFromAll() +
+                        candleAllHandlers.extractTickersFromAll() +
+                        tradesHandlers.extractTickersWithoutInstrumentType() +
+                        orderBookHandlers.extractTickersWithoutInstrumentType() +
+                        lastPriceHandlers.extractTickersWithoutInstrumentType() +
+                        candleHandlers.extractTickersWithoutInstrumentType() +
+                        tradingStatusHandlers.extractTickersWithoutInstrumentType() +
+                        ordersHandlers.extractTickersWithoutInstrumentType()
+                ).toSet()
         val tickerWithInstrumentType = tradeHandlersWithInstrumentType.keys + orderBookHandlersWithInstrumentType.keys +
                 lastPriceHandlersWithInstrumentType.keys + candleHandlersWithInstrumentType.keys +
                 tradingStatusHandlersWithInstrumentType.keys + ordersHandlersWithInstrumentType.keys

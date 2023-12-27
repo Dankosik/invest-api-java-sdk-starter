@@ -2,10 +2,8 @@ package io.github.dankosik.starter.invest.registry.operation
 
 import io.github.dankosik.starter.invest.annotation.operation.HandleAllPositions
 import io.github.dankosik.starter.invest.annotation.operation.HandlePosition
-import io.github.dankosik.starter.invest.contract.operation.positions.AsyncPositionHandler
 import io.github.dankosik.starter.invest.contract.operation.positions.BasePositionHandler
-import io.github.dankosik.starter.invest.contract.operation.positions.BlockingPositionHandler
-import io.github.dankosik.starter.invest.contract.operation.positions.CoroutinePositionHandler
+import io.github.dankosik.starter.invest.contract.operation.positions.getPositionHandlers
 import org.springframework.context.ApplicationContext
 
 internal class PositionsHandlerRegistry(
@@ -15,21 +13,14 @@ internal class PositionsHandlerRegistry(
     val commonHandlersByAccount = HashMap<String, MutableList<BasePositionHandler>>()
 
     init {
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePosition::class.java).values
-        val coroutineHandlers = annotatedBeans.filterIsInstance<CoroutinePositionHandler>()
-        val blockingHandlers = annotatedBeans.filterIsInstance<BlockingPositionHandler>()
-        val asyncHandlers = annotatedBeans.filterIsInstance<AsyncPositionHandler>()
-        blockingHandlers.forEach { it.addAccountIdToHandlerMap() }
-        coroutineHandlers.forEach { it.addAccountIdToHandlerMap() }
-        asyncHandlers.forEach { it.addAccountIdToHandlerMap() }
-
-        val annotatedBeansAll = applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values
-        val coroutineHandlersAll = annotatedBeansAll.filterIsInstance<CoroutinePositionHandler>()
-        val blockingHandlersAll = annotatedBeansAll.filterIsInstance<BlockingPositionHandler>()
-        val asyncHandlersAll = annotatedBeansAll.filterIsInstance<AsyncPositionHandler>()
-        coroutineHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
-        blockingHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
-        asyncHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
+        applicationContext.getBeansWithAnnotation(HandlePosition::class.java).values.getPositionHandlers()
+            .forEach {
+                it.addAccountIdToHandlerMap()
+            }
+        applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getPositionHandlers()
+            .forEach {
+                it.addAccountIdToAllHandlerMap()
+            }
     }
 
     fun getHandlersByAccountId(accountId: String?): MutableList<BasePositionHandler>? =

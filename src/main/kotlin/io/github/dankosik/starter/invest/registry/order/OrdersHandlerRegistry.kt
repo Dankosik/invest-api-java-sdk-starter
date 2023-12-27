@@ -2,10 +2,8 @@ package io.github.dankosik.starter.invest.registry.order
 
 import io.github.dankosik.starter.invest.annotation.order.HandleAllOrders
 import io.github.dankosik.starter.invest.annotation.order.HandleOrder
-import io.github.dankosik.starter.invest.contract.orders.AsyncOrderHandler
 import io.github.dankosik.starter.invest.contract.orders.BaseOrderHandler
-import io.github.dankosik.starter.invest.contract.orders.BlockingOrderHandler
-import io.github.dankosik.starter.invest.contract.orders.CoroutineOrderHandler
+import io.github.dankosik.starter.invest.contract.orders.getOrderHandlers
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.OrderTrades
 
@@ -19,21 +17,14 @@ internal class OrdersHandlerRegistry(
     val commonHandlersByAccount = HashMap<String, MutableList<BaseOrderHandler>>()
 
     init {
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values
-        val coroutineHandlers = annotatedBeans.filterIsInstance<CoroutineOrderHandler>()
-        val blockingHandlers = annotatedBeans.filterIsInstance<BlockingOrderHandler>()
-        val asyncHandlers = annotatedBeans.filterIsInstance<AsyncOrderHandler>()
-        blockingHandlers.forEach { it.addAccountIdToHandlerMap() }
-        coroutineHandlers.forEach { it.addAccountIdToHandlerMap() }
-        asyncHandlers.forEach { it.addAccountIdToHandlerMap() }
-
-        val annotatedBeansAll = applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values
-        val coroutineHandlersAll = annotatedBeansAll.filterIsInstance<CoroutineOrderHandler>()
-        val blockingHandlersAll = annotatedBeansAll.filterIsInstance<BlockingOrderHandler>()
-        val asyncHandlersAll = annotatedBeansAll.filterIsInstance<AsyncOrderHandler>()
-        blockingHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
-        coroutineHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
-        asyncHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
+        applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values.getOrderHandlers()
+            .forEach {
+                it.addAccountIdToHandlerMap()
+            }
+        applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderHandlers()
+            .forEach {
+                it.addAccountIdToAllHandlerMap()
+            }
     }
 
     fun getHandlers(orderTrades: OrderTrades): MutableList<BaseOrderHandler>? =
@@ -91,12 +82,59 @@ internal class OrdersHandlerRegistry(
         }
     }
 
-    private fun BaseOrderHandler.addAccountIdToAllHandlerMap() =
-        this::class.java.getAnnotation(HandleAllOrders::class.java).accounts.forEach { account ->
-            if (commonHandlersByAccount[account] == null) {
-                commonHandlersByAccount[account] = mutableListOf(this)
-            } else {
-                commonHandlersByAccount[account]?.add(this)
+    private fun BaseOrderHandler.addInstrumentIdToAllHandlerMap() {
+        val annotation = this::class.java.getAnnotation(HandleAllOrders::class.java)
+        val accounts = annotation.accounts
+        accounts.takeIf { it.isNotEmpty() }?.forEach { account ->
+            annotation.figies.takeIf { it.isNotEmpty() }?.forEach { figi ->
+                if (handlersByFigi[account] == null) {
+                    handlersByFigi[account] = mutableMapOf(figi to mutableListOf(this))
+                } else {
+                    if (handlersByFigi[account]!![figi] != null) {
+                        handlersByFigi[account]!![figi]!!.add(this)
+                    } else {
+                        handlersByFigi[account]!![figi] = mutableListOf(this)
+                    }
+                }
+            }
+            annotation.instrumentsUids.takeIf { it.isNotEmpty() }?.forEach { instrumentUid ->
+                if (handlersByInstrumentUid[account] == null) {
+                    handlersByInstrumentUid[account] = mutableMapOf(instrumentUid to mutableListOf(this))
+                } else {
+                    if (handlersByInstrumentUid[account]!![instrumentUid] != null) {
+                        handlersByInstrumentUid[account]!![instrumentUid]!!.add(this)
+                    } else {
+                        handlersByInstrumentUid[account]!![instrumentUid] = mutableListOf(this)
+                    }
+                }
+            }
+            annotation.tickers.takeIf { it.isNotEmpty() }?.forEach { ticker ->
+                val uId = tickerToUidMap[ticker]!!
+                if (handlersByInstrumentUid[account] == null) {
+                    handlersByInstrumentUid[account] = mutableMapOf(uId to mutableListOf(this))
+                } else {
+                    if (handlersByInstrumentUid[account]!![uId] != null) {
+                        handlersByInstrumentUid[account]!![uId]!!.add(this)
+                    } else {
+                        handlersByInstrumentUid[account]!![uId] = mutableListOf(this)
+                    }
+                }
             }
         }
+    }
+
+    private fun BaseOrderHandler.addAccountIdToAllHandlerMap() {
+        val annotation = this::class.java.getAnnotation(HandleAllOrders::class.java)
+        if (annotation.instrumentsUids.isEmpty() && annotation.tickers.isEmpty() && annotation.figies.isEmpty()) {
+            annotation.accounts.forEach { account ->
+                if (commonHandlersByAccount[account] == null) {
+                    commonHandlersByAccount[account] = mutableListOf(this)
+                } else {
+                    commonHandlersByAccount[account]?.add(this)
+                }
+            }
+        } else {
+            addInstrumentIdToAllHandlerMap()
+        }
+    }
 }

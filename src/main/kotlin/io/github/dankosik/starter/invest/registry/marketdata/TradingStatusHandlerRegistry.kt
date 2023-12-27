@@ -1,11 +1,9 @@
 package io.github.dankosik.starter.invest.registry.marketdata
 
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllTradingStatuses
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStatus
-import io.github.dankosik.starter.invest.contract.marketdata.status.AsyncTradingStatusHandler
 import io.github.dankosik.starter.invest.contract.marketdata.status.BaseTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.marketdata.status.BlockingTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.marketdata.status.CoroutineTradingStatusHandler
-import mu.KLogging
+import io.github.dankosik.starter.invest.contract.marketdata.status.getTradingStatusHandlers
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.TradingStatus
 
@@ -17,13 +15,14 @@ internal class TradingStatusHandlerRegistry(
     private val handlersByInstrumentUid = HashMap<String, MutableList<BaseTradingStatusHandler>>()
 
     init {
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTradingStatus::class.java).values
-        val coroutineHandlers = annotatedBeans.filterIsInstance<CoroutineTradingStatusHandler>()
-        val blockingHandlers = annotatedBeans.filterIsInstance<BlockingTradingStatusHandler>()
-        val asyncHandlers = annotatedBeans.filterIsInstance<AsyncTradingStatusHandler>()
-        blockingHandlers.forEach { it.addInstrumentIdToHandlerMap() }
-        coroutineHandlers.forEach { it.addInstrumentIdToHandlerMap() }
-        asyncHandlers.forEach { it.addInstrumentIdToHandlerMap() }
+        applicationContext.getBeansWithAnnotation(HandleTradingStatus::class.java).values.getTradingStatusHandlers()
+            .forEach {
+                it.addInstrumentIdToHandlerMap()
+            }
+        applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getTradingStatusHandlers()
+            .forEach {
+                it.addInstrumentIdToAllHandlerMap()
+            }
     }
 
     fun getHandlers(tradingStatus: TradingStatus): MutableList<BaseTradingStatusHandler>? =
@@ -58,6 +57,32 @@ internal class TradingStatusHandlerRegistry(
                 } else {
                     handlersByInstrumentUid[uId]!!.add(this)
                 }
+            }
+        }
+    }
+
+    private fun BaseTradingStatusHandler.addInstrumentIdToAllHandlerMap() {
+        val annotation = this::class.java.getAnnotation(HandleAllTradingStatuses::class.java)
+        annotation.figies.takeIf { it.isNotEmpty() }?.forEach { figi ->
+            if (handlersByFigi[figi] == null) {
+                handlersByFigi[figi] = mutableListOf(this)
+            } else {
+                handlersByFigi[figi]!!.add(this)
+            }
+        }
+        annotation.instrumentsUids.takeIf { it.isNotEmpty() }?.forEach { instrumentUid ->
+            if (handlersByInstrumentUid[instrumentUid] == null) {
+                handlersByInstrumentUid[instrumentUid] = mutableListOf(this)
+            } else {
+                handlersByInstrumentUid[instrumentUid]!!.add(this)
+            }
+        }
+        annotation.tickers.takeIf { it.isNotEmpty() }?.forEach { ticker ->
+            val instrumentUid = tickerToUidMap[ticker]!!
+            if (handlersByInstrumentUid[instrumentUid] == null) {
+                handlersByInstrumentUid[instrumentUid] = mutableListOf(this)
+            } else {
+                handlersByInstrumentUid[instrumentUid]!!.add(this)
             }
         }
     }

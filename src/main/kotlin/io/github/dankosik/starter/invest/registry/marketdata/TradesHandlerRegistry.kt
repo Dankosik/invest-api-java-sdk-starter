@@ -1,11 +1,9 @@
 package io.github.dankosik.starter.invest.registry.marketdata
 
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllTrades
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleTrade
-import io.github.dankosik.starter.invest.contract.marketdata.trade.AsyncTradeHandler
 import io.github.dankosik.starter.invest.contract.marketdata.trade.BaseTradeHandler
-import io.github.dankosik.starter.invest.contract.marketdata.trade.BlockingTradeHandler
-import io.github.dankosik.starter.invest.contract.marketdata.trade.CoroutineTradeHandler
-import mu.KLogging
+import io.github.dankosik.starter.invest.contract.marketdata.trade.getTradesHandlers
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.Trade
 
@@ -17,13 +15,14 @@ internal class TradesHandlerRegistry(
     private val handlersByInstrumentUid = HashMap<String, MutableList<BaseTradeHandler>>()
 
     init {
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values
-        val coroutineTradesHandlers = annotatedBeans.filterIsInstance<CoroutineTradeHandler>()
-        val blockingTradesHandlers = annotatedBeans.filterIsInstance<BlockingTradeHandler>()
-        val asyncTradesHandlers = annotatedBeans.filterIsInstance<AsyncTradeHandler>()
-        blockingTradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
-        coroutineTradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
-        asyncTradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
+        applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values.getTradesHandlers()
+            .forEach {
+                it.addInstrumentIdToHandlerMap()
+            }
+        applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getTradesHandlers()
+            .forEach {
+                it.addInstrumentIdToAllHandlerMap()
+            }
     }
 
     fun getHandlers(trade: Trade): MutableList<BaseTradeHandler>? =
@@ -58,6 +57,32 @@ internal class TradesHandlerRegistry(
                 } else {
                     handlersByInstrumentUid[uId]!!.add(this)
                 }
+            }
+        }
+    }
+
+    private fun BaseTradeHandler.addInstrumentIdToAllHandlerMap() {
+        val annotation = this::class.java.getAnnotation(HandleAllTrades::class.java)
+        annotation.figies.takeIf { it.isNotEmpty() }?.forEach { figi ->
+            if (handlersByFigi[figi] == null) {
+                handlersByFigi[figi] = mutableListOf(this)
+            } else {
+                handlersByFigi[figi]!!.add(this)
+            }
+        }
+        annotation.instrumentsUids.takeIf { it.isNotEmpty() }?.forEach { instrumentUid ->
+            if (handlersByInstrumentUid[instrumentUid] == null) {
+                handlersByInstrumentUid[instrumentUid] = mutableListOf(this)
+            } else {
+                handlersByInstrumentUid[instrumentUid]!!.add(this)
+            }
+        }
+        annotation.tickers.takeIf { it.isNotEmpty() }?.forEach { ticker ->
+            val instrumentUid = tickerToUidMap[ticker]!!
+            if (handlersByInstrumentUid[instrumentUid] == null) {
+                handlersByInstrumentUid[instrumentUid] = mutableListOf(this)
+            } else {
+                handlersByInstrumentUid[instrumentUid]!!.add(this)
             }
         }
     }

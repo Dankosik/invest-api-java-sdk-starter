@@ -2,10 +2,8 @@ package io.github.dankosik.starter.invest.registry.operation
 
 import io.github.dankosik.starter.invest.annotation.operation.HandleAllPortfolios
 import io.github.dankosik.starter.invest.annotation.operation.HandlePortfolio
-import io.github.dankosik.starter.invest.contract.operation.portfolio.AsyncPortfolioHandler
 import io.github.dankosik.starter.invest.contract.operation.portfolio.BasePortfolioHandler
-import io.github.dankosik.starter.invest.contract.operation.portfolio.BlockingPortfolioHandler
-import io.github.dankosik.starter.invest.contract.operation.portfolio.CoroutinePortfolioHandler
+import io.github.dankosik.starter.invest.contract.operation.portfolio.getPortfolioHandlers
 import org.springframework.context.ApplicationContext
 
 internal class PortfolioHandlerRegistry(
@@ -15,21 +13,15 @@ internal class PortfolioHandlerRegistry(
     val commonHandlersByAccount = HashMap<String, MutableList<BasePortfolioHandler>>()
 
     init {
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePortfolio::class.java).values
-        val coroutineHandlers = annotatedBeans.filterIsInstance<CoroutinePortfolioHandler>()
-        val blockingHandlers = annotatedBeans.filterIsInstance<BlockingPortfolioHandler>()
-        val asyncHandlers = annotatedBeans.filterIsInstance<AsyncPortfolioHandler>()
-        blockingHandlers.forEach { it.addAccountIdToHandlerMap() }
-        coroutineHandlers.forEach { it.addAccountIdToHandlerMap() }
-        asyncHandlers.forEach { it.addAccountIdToHandlerMap() }
+        applicationContext.getBeansWithAnnotation(HandlePortfolio::class.java).values.getPortfolioHandlers()
+            .forEach {
+                it.addAccountIdToHandlerMap()
+            }
 
-        val annotatedBeansAll = applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values
-        val coroutineHandlersAll = annotatedBeansAll.filterIsInstance<CoroutinePortfolioHandler>()
-        val blockingHandlersAll = annotatedBeansAll.filterIsInstance<BlockingPortfolioHandler>()
-        val asyncHandlersAll = annotatedBeansAll.filterIsInstance<AsyncPortfolioHandler>()
-        coroutineHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
-        blockingHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
-        asyncHandlersAll.forEach { it.addAccountIdToAllHandlerMap() }
+        applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values.getPortfolioHandlers()
+            .forEach {
+                it.addAccountIdToAllHandlerMap()
+            }
     }
 
     fun getHandlersByAccountId(accountId: String?): MutableList<BasePortfolioHandler>? =

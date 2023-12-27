@@ -1,10 +1,9 @@
 package io.github.dankosik.starter.invest.registry.marketdata
 
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllLastPrices
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
-import io.github.dankosik.starter.invest.contract.marketdata.lastprice.AsyncLastPriceHandler
 import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BaseLastPriceHandler
-import io.github.dankosik.starter.invest.contract.marketdata.lastprice.BlockingLastPriceHandler
-import io.github.dankosik.starter.invest.contract.marketdata.lastprice.CoroutineLastPriceHandler
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.getLastPriceHandlers
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.LastPrice
 
@@ -16,13 +15,14 @@ internal class LastPriceHandlerRegistry(
     private val handlersByInstrumentUid = HashMap<String, MutableList<BaseLastPriceHandler>>()
 
     init {
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleLastPrice::class.java).values
-        val coroutineHandlers = annotatedBeans.filterIsInstance<CoroutineLastPriceHandler>()
-        val blockingHandlers = annotatedBeans.filterIsInstance<BlockingLastPriceHandler>()
-        val asyncHandlers = annotatedBeans.filterIsInstance<AsyncLastPriceHandler>()
-        blockingHandlers.forEach { it.addInstrumentIdToHandlerMap() }
-        coroutineHandlers.forEach { it.addInstrumentIdToHandlerMap() }
-        asyncHandlers.forEach { it.addInstrumentIdToHandlerMap() }
+        applicationContext.getBeansWithAnnotation(HandleLastPrice::class.java).values.getLastPriceHandlers()
+            .forEach {
+                it.addInstrumentIdToHandlerMap()
+            }
+        applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getLastPriceHandlers()
+            .forEach {
+                it.addInstrumentIdToAllHandlerMap()
+            }
     }
 
     fun getHandlers(lastPrice: LastPrice): MutableList<BaseLastPriceHandler>? =
@@ -57,6 +57,32 @@ internal class LastPriceHandlerRegistry(
                 } else {
                     handlersByInstrumentUid[uId]!!.add(this)
                 }
+            }
+        }
+    }
+
+    private fun BaseLastPriceHandler.addInstrumentIdToAllHandlerMap() {
+        val annotation = this::class.java.getAnnotation(HandleAllLastPrices::class.java)
+        annotation.figies.takeIf { it.isNotEmpty() }?.forEach { figi ->
+            if (handlersByFigi[figi] == null) {
+                handlersByFigi[figi] = mutableListOf(this)
+            } else {
+                handlersByFigi[figi]!!.add(this)
+            }
+        }
+        annotation.instrumentsUids.takeIf { it.isNotEmpty() }?.forEach { instrumentUid ->
+            if (handlersByInstrumentUid[instrumentUid] == null) {
+                handlersByInstrumentUid[instrumentUid] = mutableListOf(this)
+            } else {
+                handlersByInstrumentUid[instrumentUid]!!.add(this)
+            }
+        }
+        annotation.tickers.takeIf { it.isNotEmpty() }?.forEach { ticker ->
+            val uId = tickerToUidMap[ticker]!!
+            if (handlersByInstrumentUid[uId] == null) {
+                handlersByInstrumentUid[uId] = mutableListOf(this)
+            } else {
+                handlersByInstrumentUid[uId]!!.add(this)
             }
         }
     }

@@ -32,10 +32,16 @@ import io.github.dankosik.starter.invest.contract.orders.AsyncOrderHandler
 import io.github.dankosik.starter.invest.contract.orders.BaseOrderHandler
 import io.github.dankosik.starter.invest.contract.orders.BlockingOrderHandler
 import io.github.dankosik.starter.invest.contract.orders.CoroutineOrderHandler
+import io.github.dankosik.starter.invest.exception.CommonException
+import io.github.dankosik.starter.invest.exception.ErrorCode
+import io.github.dankosik.starter.invest.extension.awaitSingle
 import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.common.toHandlersMapFromFigies
+import io.github.dankosik.starter.invest.processor.marketdata.common.toHandlersMapFromInstrumentUids
+import io.github.dankosik.starter.invest.processor.marketdata.common.toHandlersMapFromTickers
 import io.github.dankosik.starter.invest.processor.operation.AsyncPortfolioStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.operation.AsyncPositionsStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.operation.BasePortfolioStreamProcessor
@@ -59,6 +65,7 @@ import io.github.dankosik.starter.invest.registry.order.OrdersHandlerRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -70,6 +77,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.DependsOn
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import ru.tinkoff.piapi.contract.v1.Candle
+import ru.tinkoff.piapi.contract.v1.InstrumentStatus
 import ru.tinkoff.piapi.contract.v1.LastPrice
 import ru.tinkoff.piapi.contract.v1.MarketDataResponse
 import ru.tinkoff.piapi.contract.v1.OrderBook
@@ -81,13 +89,20 @@ import ru.tinkoff.piapi.contract.v1.PositionsStreamResponse
 import ru.tinkoff.piapi.contract.v1.Trade
 import ru.tinkoff.piapi.contract.v1.TradesStreamResponse
 import ru.tinkoff.piapi.contract.v1.TradingStatus
+import ru.tinkoff.piapi.core.InstrumentsService
 import ru.tinkoff.piapi.core.stream.MarketDataStreamService
 import ru.tinkoff.piapi.core.stream.MarketDataSubscriptionService
 import ru.tinkoff.piapi.core.stream.StreamProcessor
 
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureAfter(RegistryAutoConfiguration::class)
-class StreamProcessorsAutoConfiguration {
+class StreamProcessorsAutoConfiguration(
+    private val tickerToUidMap: Map<String, String>,
+    @Qualifier("baseMarketDataStreamProcessor")
+    streamProcessors: List<BaseMarketDataStreamProcessor>,
+    private val instrumentsServices: List<InstrumentsService>,
+) {
+    private val instrumentsService = instrumentsServices.first()
 
     val orderBookHandlerFunctionMap = mutableMapOf<BaseOrderBookHandler, (OrderBook) -> Unit>()
     val tradesHandlerFunctionMap = mutableMapOf<BaseTradeHandler, (Trade) -> Unit>()
@@ -105,6 +120,26 @@ class StreamProcessorsAutoConfiguration {
         mutableMapOf<BasePositionsStreamProcessor, (PositionsStreamResponse) -> Unit>()
     val baseOrdersStreamProcessorFunctionMap =
         mutableMapOf<BaseOrdersStreamProcessor, (TradesStreamResponse) -> Unit>()
+
+    val newTickerToUidMap = tickerToUidMap.toMutableMap()
+
+    init {
+        runBlocking {
+            streamProcessors.filter { it.tickers.isEmpty() }
+                .map { it.tickers }
+                .map { it.toTypedArray() }
+                .toTypedArray()
+                .flatten()
+                .forEach { ticker ->
+                    launch {
+                        if (newTickerToUidMap[ticker] == null) {
+                            val uId = getUidByTicker(ticker)
+                            newTickerToUidMap[ticker] = uId
+                        }
+                    }
+                }
+        }
+    }
 
     @Autowired(required = false)
     @Qualifier("executor")
@@ -185,25 +220,77 @@ class StreamProcessorsAutoConfiguration {
         }
 
         else -> {
-            val beforeTradesHandlers = streamProcessors.filter { it.beforeEachTradeHandler }.takeIf { it.isNotEmpty() }
-            val afterTradesHandlers = streamProcessors.filter { it.afterEachTradeHandler }.takeIf { it.isNotEmpty() }
+            val commonBeforeTradesHandlers = streamProcessors
+                .filter { it.beforeEachTradeHandler && it.tickers.isEmpty() && it.figies.isEmpty() && it.instruemntUids.isEmpty() }
+                .takeIf { it.isNotEmpty() }
+            val commonAfterTradesHandlers = streamProcessors
+                .filter { it.afterEachTradeHandler && it.tickers.isEmpty() && it.figies.isEmpty() && it.instruemntUids.isEmpty() }
+                .takeIf { it.isNotEmpty() }
+
+            val commonTradesHandlers = streamProcessors
+                .filter {
+                    !it.beforeEachTradeHandler && !it.afterEachTradeHandler
+                            && !it.beforeEachTradingStatusHandler && !it.afterEachTradingStatusHandler
+                            && !it.beforeEachCandleHandler && !it.afterEachCandleHandler
+                            && !it.beforeEachOrderBookHandler && !it.afterEachOrderBookHandler
+                            && !it.beforeEachLastPriceHandler && !it.afterEachLastPriceHandler
+                            && it.tickers.isEmpty() && it.figies.isEmpty() && it.instruemntUids.isEmpty()
+                }
+                .takeIf { it.isNotEmpty() }
+
+            val beforeHandlersMapFromTickers = streamProcessors
+                .filter { it.beforeEachTradeHandler && it.tickers.isNotEmpty() }
+                .takeIf { it.isNotEmpty() }
+                ?.toHandlersMapFromTickers(newTickerToUidMap)
+            val afterHandlersMapFromTickers = streamProcessors
+                .filter { it.afterEachTradeHandler && it.tickers.isNotEmpty() }
+                .takeIf { it.isNotEmpty() }
+                ?.toHandlersMapFromTickers(newTickerToUidMap)
+
+            val beforeHandlersMapFromFigies = streamProcessors
+                .filter { it.beforeEachTradeHandler && it.figies.isNotEmpty() }
+                .takeIf { it.isNotEmpty() }
+                ?.toHandlersMapFromFigies()
+            val afterHandlersMapFromFigies = streamProcessors
+                .filter { it.afterEachTradeHandler && it.figies.isNotEmpty() }
+                .takeIf { it.isNotEmpty() }
+                ?.toHandlersMapFromFigies()
+            val beforeHandlersMapFromInstruemntUids = streamProcessors
+                .filter { it.beforeEachTradeHandler && it.instruemntUids.isNotEmpty() }
+                .takeIf { it.isNotEmpty() }
+                ?.toHandlersMapFromInstrumentUids()
+            val afterHandlersMapFromInstruemntUids = streamProcessors
+                .filter { it.afterEachTradeHandler && it.instruemntUids.isNotEmpty() }
+                .takeIf { it.isNotEmpty() }
+                ?.toHandlersMapFromInstrumentUids()
+
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasTrade()) {
-                    beforeTradesHandlers?.runProcessors(response)
+                    commonBeforeTradesHandlers?.runProcessors(response)
                     val trade = response.trade
+                    beforeHandlersMapFromTickers?.get(trade.instrumentUid)?.runProcessors(response)
+                    beforeHandlersMapFromInstruemntUids?.get(trade.instrumentUid)?.runProcessors(response)
+                    beforeHandlersMapFromFigies?.get(trade.figi)?.runProcessors(response)
                     val handlers = tradesHandlerRegistry.getHandlers(trade)
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleTrade(trade)
                     } else {
+                        if (!commonTradesHandlers.isNullOrEmpty()) {
+                            DEFAULT_SCOPE.launch {
+                                commonTradesHandlers.runProcessors(response)
+                            }
+                        }
                         handlers?.forEach {
                             DEFAULT_SCOPE.launch {
                                 it.handleTrade(trade)
                             }
                         }
                     }
-                    afterTradesHandlers?.runProcessors(response)
+                    commonAfterTradesHandlers?.runProcessors(response)
+                    afterHandlersMapFromTickers?.get(trade.instrumentUid)?.runProcessors(response)
+                    afterHandlersMapFromFigies?.get(trade.figi)?.runProcessors(response)
+                    afterHandlersMapFromInstruemntUids?.get(trade.instrumentUid)?.runProcessors(response)
                 }
-
             }
         }
     }
@@ -1028,6 +1115,22 @@ class StreamProcessorsAutoConfiguration {
                 streamProcessor.createFunctionForProcessor().also { it.invoke(response) }
         }
     }
+
+
+    private suspend fun getUidByTicker(ticker: String): String =
+        instrumentsService.getFutures(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+            .find { it.ticker == ticker }?.uid
+            ?: instrumentsService.getShares(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+                .find { it.ticker == ticker }?.uid
+            ?: instrumentsService.getCurrencies(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+                .find { it.ticker == ticker }?.uid
+            ?: instrumentsService.getBonds(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+                .find { it.ticker == ticker }?.uid
+            ?: instrumentsService.getEtfs(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+                .find { it.ticker == ticker }?.uid
+            ?: instrumentsService.getOptions(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+                .find { it.ticker == ticker }?.uid
+            ?: throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { "Instrument by ticker: $ticker is not found" } }
 
     private companion object : KLogging() {
         val DEFAULT_SCOPE = CoroutineScope(Dispatchers.Default)

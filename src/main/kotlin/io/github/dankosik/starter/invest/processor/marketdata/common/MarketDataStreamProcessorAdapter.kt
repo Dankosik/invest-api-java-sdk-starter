@@ -14,7 +14,38 @@ interface BaseMarketDataStreamProcessor {
     var afterEachCandleHandler: Boolean
     var beforeEachTradingStatusHandler: Boolean
     var afterEachTradingStatusHandler: Boolean
+    var tickers: List<String>
+    var figies: List<String>
+    var instruemntUids: List<String>
 }
+
+fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromTickers(sourceTickerToInstrumentMap: Map<String, String>) =
+    associateBy(
+        keySelector = { it.tickers },
+        valueTransform = { it }
+    ).transformMap(sourceTickerToInstrumentMap)
+
+fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromFigies() =
+    associateBy(
+        keySelector = { it.figies },
+        valueTransform = { it }
+    ).transformMap()
+
+fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromInstrumentUids() =
+    associateBy(
+        keySelector = { it.instruemntUids },
+        valueTransform = { it }
+    ).transformMap()
+
+private fun Map<List<String>, BaseMarketDataStreamProcessor>.transformMap(sourceTickerToInstrumentMap: Map<String, String>): Map<String, List<BaseMarketDataStreamProcessor>> =
+    flatMap { (keys, value) ->
+        keys.map { key -> sourceTickerToInstrumentMap[key]!! to value }
+    }.groupBy({ it.first }, { it.second })
+
+private fun Map<List<String>, BaseMarketDataStreamProcessor>.transformMap(): Map<String, List<BaseMarketDataStreamProcessor>> =
+    flatMap { (keys, value) ->
+        keys.map { key -> key to value }
+    }.groupBy({ it.first }, { it.second })
 
 interface BlockingMarketDataStreamProcessorAdapter : BaseMarketDataStreamProcessor {
     fun process(marketDataResponse: MarketDataResponse)
@@ -42,6 +73,9 @@ inline fun BlockingMarketDataStreamProcessorAdapter(
     override var afterEachCandleHandler: Boolean = false
     override var beforeEachTradingStatusHandler: Boolean = false
     override var afterEachTradingStatusHandler: Boolean = false
+    override var tickers: List<String> = emptyList()
+    override var figies: List<String> = emptyList()
+    override var instruemntUids: List<String> = emptyList()
 }
 
 inline fun AsyncMarketDataStreamProcessorAdapter(
@@ -58,6 +92,9 @@ inline fun AsyncMarketDataStreamProcessorAdapter(
     override var afterEachCandleHandler: Boolean = false
     override var beforeEachTradingStatusHandler: Boolean = false
     override var afterEachTradingStatusHandler: Boolean = false
+    override var tickers: List<String> = emptyList()
+    override var figies: List<String> = emptyList()
+    override var instruemntUids: List<String> = emptyList()
 }
 
 inline fun CoroutineMarketDataStreamProcessorAdapter(
@@ -74,6 +111,9 @@ inline fun CoroutineMarketDataStreamProcessorAdapter(
     override var afterEachCandleHandler: Boolean = false
     override var beforeEachTradingStatusHandler: Boolean = false
     override var afterEachTradingStatusHandler: Boolean = false
+    override var tickers: List<String> = emptyList()
+    override var figies: List<String> = emptyList()
+    override var instruemntUids: List<String> = emptyList()
 }
 
 fun <T : BaseMarketDataStreamProcessor> T.runBeforeEachLastPriceHandler(): T {

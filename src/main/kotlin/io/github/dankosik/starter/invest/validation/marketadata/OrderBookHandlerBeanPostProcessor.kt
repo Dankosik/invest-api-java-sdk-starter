@@ -5,7 +5,6 @@ import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
 import io.github.dankosik.starter.invest.contract.marketdata.orderbook.AsyncOrderBookHandler
 import io.github.dankosik.starter.invest.contract.marketdata.orderbook.BlockingOrderBookHandler
 import io.github.dankosik.starter.invest.contract.marketdata.orderbook.CoroutineOrderBookHandler
-import mu.KLogging
 import org.springframework.beans.factory.config.BeanPostProcessor
 
 internal class OrderBookHandlerBeanPostProcessor : BeanPostProcessor {
@@ -14,17 +13,18 @@ internal class OrderBookHandlerBeanPostProcessor : BeanPostProcessor {
         val isHandleOrderBook = bean.javaClass.declaredAnnotations.filterIsInstance<HandleOrderBook>().isNotEmpty()
         val isAllHandleOrderBook =
             bean.javaClass.declaredAnnotations.filterIsInstance<HandleAllOrderBooks>().isNotEmpty()
+        val javaClassName = bean.javaClass.name
         check(
             !(isHandleOrderBook
                     && (bean !is CoroutineOrderBookHandler && bean !is BlockingOrderBookHandler && bean !is AsyncOrderBookHandler))
         ) {
-            "Class: ${bean.javaClass.name} annotated with HandleOrderBook should implement AsyncOrderBookHandler or BlockingOrderBookHandler or CoroutineOrderBookHandler"
+            "Class: $javaClassName annotated with HandleOrderBook should implement AsyncOrderBookHandler or BlockingOrderBookHandler or CoroutineOrderBookHandler"
         }
         check(
             !(isAllHandleOrderBook
                     && (bean !is CoroutineOrderBookHandler && bean !is BlockingOrderBookHandler && bean !is AsyncOrderBookHandler))
         ) {
-            "Class: ${bean.javaClass.name} annotated with HandleAllOrderBooks should implement AsyncOrderBookHandler or BlockingOrderBookHandler or CoroutineOrderBookHandler"
+            "Class: $javaClassName annotated with HandleAllOrderBooks should implement AsyncOrderBookHandler or BlockingOrderBookHandler or CoroutineOrderBookHandler"
         }
         if (isHandleOrderBook) {
             val classNameInMessage = when (bean) {
@@ -33,26 +33,36 @@ internal class OrderBookHandlerBeanPostProcessor : BeanPostProcessor {
                 else -> "BlockingOrderBookHandler"
             }
             check(isHandleOrderBook) {
-                "$classNameInMessage: ${bean.javaClass.name} must have an annotated of HandleOrderBook"
+                "$classNameInMessage: $javaClassName must have an annotated of HandleOrderBook"
             }
             val tickerValue = bean.javaClass.getAnnotation(HandleOrderBook::class.java).ticker
             val figiValue = bean.javaClass.getAnnotation(HandleOrderBook::class.java).figi
             val instrumentIdValue = bean.javaClass.getAnnotation(HandleOrderBook::class.java).instrumentUid
             check(tickerValue.isNotBlank() || figiValue.isNotBlank() || instrumentIdValue.isNotBlank()) {
-                "At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided in ${bean.javaClass.name}"
+                "At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided in $javaClassName"
             }
         }
 
         if (isAllHandleOrderBook) {
             val annotation = bean.javaClass.getAnnotation(HandleAllOrderBooks::class.java)
-            if (annotation.beforeEachOrderBookHandler && annotation.afterEachOrderBookHandler) {
-                logger.warn { "${bean.javaClass.name} any parameters of annotation 'HandleAllOrderBooks' should be true, your handler will be ignored" }
+            annotation.figies.takeIf { it.isNotEmpty() }?.forEach { figi ->
+                check(figi.isNotBlank()) {
+                    "$javaClassName: Figi should be not blank"
+                }
+            }
+            annotation.tickers.takeIf { it.isNotEmpty() }?.forEach { ticker ->
+                check(ticker.isNotBlank()) {
+                    "$javaClassName: Ticker should be not blank"
+                }
+            }
+            annotation.instrumentsUids.takeIf { it.isNotEmpty() }?.forEach { uId ->
+                check(uId.isNotBlank()) {
+                    "$javaClassName: InstrumentsUid should be not blank"
+                }
             }
         }
         return bean
     }
 
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any = bean
-
-    private companion object : KLogging()
 }
