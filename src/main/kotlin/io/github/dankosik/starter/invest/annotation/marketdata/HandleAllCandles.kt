@@ -18,6 +18,6 @@ annotation class HandleAllCandles(
 )
 
 fun List<BaseCandleHandler>.extractTickersFromAll() =
-    map { it.javaClass.getAnnotation(HandleAllLastPrices::class.java).tickers }
+    map { it.javaClass.getAnnotation(HandleAllCandles::class.java).tickers }
         .toTypedArray()
         .flatten()

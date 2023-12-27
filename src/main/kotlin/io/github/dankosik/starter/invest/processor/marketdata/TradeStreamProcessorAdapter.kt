@@ -2,12 +2,8 @@ package io.github.dankosik.starter.invest.processor.marketdata
 
 import io.github.dankosik.starter.invest.exception.CommonException
 import io.github.dankosik.starter.invest.exception.ErrorCode
-import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
-import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterEachTradeHandler
-import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeEachTradeHandler
+import io.github.dankosik.starter.invest.processor.marketdata.common.MarketDataStreamProcessorAdapterFactory
 import ru.tinkoff.piapi.contract.v1.Trade
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
@@ -95,7 +91,13 @@ class TradeStreamProcessorAdapterFactory {
             }
 
         @JvmStatic
-        fun runBeforeEachCandleHandler(value: Boolean): Companion {
+        fun runBeforeEachTradeHandler(value: Boolean): Companion {
+            this.beforeEachTradeHandlerCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
+        fun runAfterEachTradeHandler(value: Boolean): Companion {
             this.afterEachTradeHandlerCompanion = value
             return Companion
         }
@@ -117,23 +119,7 @@ class TradeStreamProcessorAdapterFactory {
             this.instrumentUidsCompanion = instrumentUids
             return Companion
         }
-
-        @JvmStatic
-        fun runAfterEachCandleHandler(value: Boolean): Companion {
-            this.beforeEachTradeHandlerCompanion = value
-            return Companion
-        }
     }
-}
-
-fun <T : BaseTradeStreamProcessor> T.runBeforeEachTradeHandler(): T {
-    this.beforeEachTradeHandler = true
-    return this
-}
-
-fun <T : BaseTradeStreamProcessor> T.runAfterEachTradeHandler(): T {
-    this.afterEachTradeHandler = true
-    return this
 }
 
 fun BaseTradeStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamProcessor = when (this) {
@@ -146,34 +132,43 @@ fun BaseTradeStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamProces
     else -> throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
 }
 
-fun BlockingTradeStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarketDataStreamProcessorAdapter =
-    BlockingMarketDataStreamProcessorAdapter {
-        if (it.hasTrade()) {
-            process(it.trade)
-        }
-    }.apply {
-        if (this@toMarketDataProcessor.afterEachTradeHandler) runAfterEachTradeHandler()
-        if (this@toMarketDataProcessor.beforeEachTradeHandler) runBeforeEachTradeHandler()
-    }
-
-fun AsyncTradeStreamProcessorAdapter.toMarketDataProcessor() =
-    AsyncMarketDataStreamProcessorAdapter {
-        CompletableFuture.runAsync {
+fun BlockingTradeStreamProcessorAdapter.toMarketDataProcessor() =
+    MarketDataStreamProcessorAdapterFactory
+        .runBeforeEachTradeHandler(this@toMarketDataProcessor.beforeEachTradeHandler)
+        .runAfterEachTradeHandler(this@toMarketDataProcessor.afterEachTradeHandler)
+        .withTickers(this@toMarketDataProcessor.tickers)
+        .withFigies(this@toMarketDataProcessor.figies)
+        .withInstrumentUids(this@toMarketDataProcessor.instruemntUids)
+        .createBlockingHandler {
             if (it.hasTrade()) {
                 process(it.trade)
             }
         }
-    }.apply {
-        if (this@toMarketDataProcessor.afterEachTradeHandler) runAfterEachTradeHandler()
-        if (this@toMarketDataProcessor.beforeEachTradeHandler) runBeforeEachTradeHandler()
-    }
+
+fun AsyncTradeStreamProcessorAdapter.toMarketDataProcessor() =
+    MarketDataStreamProcessorAdapterFactory
+        .runBeforeEachTradeHandler(this@toMarketDataProcessor.beforeEachTradeHandler)
+        .runAfterEachTradeHandler(this@toMarketDataProcessor.afterEachTradeHandler)
+        .withTickers(this@toMarketDataProcessor.tickers)
+        .withFigies(this@toMarketDataProcessor.figies)
+        .withInstrumentUids(this@toMarketDataProcessor.instruemntUids)
+        .createAsyncHandler {
+            CompletableFuture.runAsync {
+                if (it.hasTrade()) {
+                    process(it.trade)
+                }
+            }
+        }
 
 fun CoroutineTradeStreamProcessorAdapter.toMarketDataProcessor() =
-    CoroutineMarketDataStreamProcessorAdapter {
-        if (it.hasTrade()) {
-            process(it.trade)
+    MarketDataStreamProcessorAdapterFactory
+        .runBeforeEachTradeHandler(this@toMarketDataProcessor.beforeEachTradeHandler)
+        .runAfterEachTradeHandler(this@toMarketDataProcessor.afterEachTradeHandler)
+        .withTickers(this@toMarketDataProcessor.tickers)
+        .withFigies(this@toMarketDataProcessor.figies)
+        .withInstrumentUids(this@toMarketDataProcessor.instruemntUids)
+        .createCoroutineHandler {
+            if (it.hasTrade()) {
+                process(it.trade)
+            }
         }
-    }.apply {
-        if (this@toMarketDataProcessor.afterEachTradeHandler) runAfterEachTradeHandler()
-        if (this@toMarketDataProcessor.beforeEachTradeHandler) runBeforeEachTradeHandler()
-    }

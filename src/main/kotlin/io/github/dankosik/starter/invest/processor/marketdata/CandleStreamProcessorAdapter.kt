@@ -2,12 +2,9 @@ package io.github.dankosik.starter.invest.processor.marketdata
 
 import io.github.dankosik.starter.invest.exception.CommonException
 import io.github.dankosik.starter.invest.exception.ErrorCode
-import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterEachCandleHandler
-import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeEachCandleHandler
+import io.github.dankosik.starter.invest.processor.marketdata.common.MarketDataStreamProcessorAdapterFactory
 import ru.tinkoff.piapi.contract.v1.Candle
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
@@ -101,6 +98,12 @@ class CandleStreamProcessorAdapterFactory {
         }
 
         @JvmStatic
+        fun runAfterEachCandleHandler(value: Boolean): Companion {
+            this.afterEachCandleHandlerCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
         fun withTickers(tickers: List<String>): Companion {
             this.tickersCompanion = tickers
             return Companion
@@ -117,12 +120,6 @@ class CandleStreamProcessorAdapterFactory {
             this.instrumentUidsCompanion = instrumentUids
             return Companion
         }
-
-        @JvmStatic
-        fun runAfterEachCandleHandler(value: Boolean): Companion {
-            this.afterEachCandleHandlerCompanion = value
-            return Companion
-        }
     }
 }
 
@@ -137,42 +134,42 @@ fun BaseCandleStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamProce
 }
 
 fun BlockingCandleStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarketDataStreamProcessorAdapter =
-    BlockingMarketDataStreamProcessorAdapter {
-        if (it.hasCandle()) {
-            process(it.candle)
-        }
-    }.apply {
-        if (this@toMarketDataProcessor.afterEachCandleHandler) runAfterEachCandleHandler()
-        if (this@toMarketDataProcessor.beforeEachCandleHandler) runBeforeEachCandleHandler()
-        tickers = this@toMarketDataProcessor.tickers
-        figies = this@toMarketDataProcessor.figies
-        instruemntUids = this@toMarketDataProcessor.instruemntUids
-    }
-
-fun AsyncCandleStreamProcessorAdapter.toMarketDataProcessor() =
-    AsyncMarketDataStreamProcessorAdapter {
-        CompletableFuture.runAsync {
+    MarketDataStreamProcessorAdapterFactory
+        .runBeforeEachCandleHandler(this@toMarketDataProcessor.beforeEachCandleHandler)
+        .runAfterEachCandleHandler(this@toMarketDataProcessor.afterEachCandleHandler)
+        .withTickers(this@toMarketDataProcessor.tickers)
+        .withFigies(this@toMarketDataProcessor.figies)
+        .withInstrumentUids(this@toMarketDataProcessor.instruemntUids)
+        .createBlockingHandler {
             if (it.hasCandle()) {
                 process(it.candle)
             }
         }
-    }.apply {
-        if (this@toMarketDataProcessor.afterEachCandleHandler) runAfterEachCandleHandler()
-        if (this@toMarketDataProcessor.beforeEachCandleHandler) runBeforeEachCandleHandler()
-        tickers = this@toMarketDataProcessor.tickers
-        figies = this@toMarketDataProcessor.figies
-        instruemntUids = this@toMarketDataProcessor.instruemntUids
-    }
+
+fun AsyncCandleStreamProcessorAdapter.toMarketDataProcessor() =
+    MarketDataStreamProcessorAdapterFactory
+        .runBeforeEachCandleHandler(this@toMarketDataProcessor.beforeEachCandleHandler)
+        .runAfterEachCandleHandler(this@toMarketDataProcessor.afterEachCandleHandler)
+        .withTickers(this@toMarketDataProcessor.tickers)
+        .withFigies(this@toMarketDataProcessor.figies)
+        .withInstrumentUids(this@toMarketDataProcessor.instruemntUids)
+        .createAsyncHandler {
+            CompletableFuture.runAsync {
+                if (it.hasCandle()) {
+                    process(it.candle)
+                }
+            }
+        }
 
 fun CoroutineCandleStreamProcessorAdapter.toMarketDataProcessor() =
-    CoroutineMarketDataStreamProcessorAdapter {
-        if (it.hasCandle()) {
-            process(it.candle)
+    MarketDataStreamProcessorAdapterFactory
+        .runBeforeEachCandleHandler(this@toMarketDataProcessor.beforeEachCandleHandler)
+        .runAfterEachCandleHandler(this@toMarketDataProcessor.afterEachCandleHandler)
+        .withTickers(this@toMarketDataProcessor.tickers)
+        .withFigies(this@toMarketDataProcessor.figies)
+        .withInstrumentUids(this@toMarketDataProcessor.instruemntUids)
+        .createCoroutineHandler {
+            if (it.hasCandle()) {
+                process(it.candle)
+            }
         }
-    }.apply {
-        if (this@toMarketDataProcessor.afterEachCandleHandler) runAfterEachCandleHandler()
-        if (this@toMarketDataProcessor.beforeEachCandleHandler) runBeforeEachCandleHandler()
-        tickers = this@toMarketDataProcessor.tickers
-        figies = this@toMarketDataProcessor.figies
-        instruemntUids = this@toMarketDataProcessor.instruemntUids
-    }

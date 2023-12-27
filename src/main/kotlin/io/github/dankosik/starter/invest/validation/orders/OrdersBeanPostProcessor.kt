@@ -48,6 +48,11 @@ internal class OrdersBeanPostProcessor : BeanPostProcessor {
             check(annotation.accounts.isNotEmpty()) {
                 "$javaClassName: At least one element should be in 'accounts'"
             }
+            annotation.accounts.forEach { account ->
+                check(account.isNotBlank()) {
+                    "$javaClassName: Account should be not blank"
+                }
+            }
             annotation.figies.takeIf { it.isNotEmpty() }?.forEach { figi ->
                 check(figi.isNotBlank()) {
                     "$javaClassName: Figi should be not blank"

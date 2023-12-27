@@ -2,18 +2,19 @@ package io.github.dankosik.starter.invest.processor.marketdata
 
 import io.github.dankosik.starter.invest.exception.CommonException
 import io.github.dankosik.starter.invest.exception.ErrorCode
-import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
-import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.common.runAfterEachTradingStatusHandler
-import io.github.dankosik.starter.invest.processor.marketdata.common.runBeforeEachTradingStatusHandler
+import io.github.dankosik.starter.invest.processor.marketdata.common.MarketDataStreamProcessorAdapterFactory
 import ru.tinkoff.piapi.contract.v1.TradingStatus
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
+import java.util.function.Function
 
 interface BaseTradingStatusStreamProcessor {
     var beforeEachTradingStatusHandler: Boolean
     var afterEachTradingStatusHandler: Boolean
+    var tickers: List<String>
+    var figies: List<String>
+    var instruemntUids: List<String>
 }
 
 interface BlockingTradingStatusStreamProcessorAdapter : BaseTradingStatusStreamProcessor {
@@ -28,38 +29,97 @@ interface CoroutineTradingStatusStreamProcessorAdapter : BaseTradingStatusStream
     suspend fun process(tradingStatus: TradingStatus)
 }
 
-inline fun BlockingTradingStatusStreamProcessorAdapter(
-    crossinline block: (TradingStatus) -> Unit
-): BlockingTradingStatusStreamProcessorAdapter = object : BlockingTradingStatusStreamProcessorAdapter {
-    override fun process(tradingStatus: TradingStatus) = block(tradingStatus)
-    override var beforeEachTradingStatusHandler: Boolean = false
-    override var afterEachTradingStatusHandler: Boolean = false
-}
+class TradingStatusStreamProcessorAdapterFactory {
 
-inline fun AsyncTradingStatusStreamProcessorAdapter(
-    crossinline block: (TradingStatus) -> CompletableFuture<Void>
-): AsyncTradingStatusStreamProcessorAdapter = object : AsyncTradingStatusStreamProcessorAdapter {
-    override fun process(tradingStatus: TradingStatus): CompletableFuture<Void> = block(tradingStatus)
-    override var beforeEachTradingStatusHandler: Boolean = false
-    override var afterEachTradingStatusHandler: Boolean = false
-}
+    companion object {
+        private var beforeEachTradingStatusHandlerCompanion: Boolean = false
+        private var afterEachTradingStatusHandlerCompanion: Boolean = false
+        private var tickersCompanion: List<String> = emptyList()
+        private var figiesCompanion: List<String> = emptyList()
+        private var instrumentUidsCompanion: List<String> = emptyList()
 
-inline fun CoroutineTradingStatusStreamProcessorAdapter(
-    crossinline block: suspend (TradingStatus) -> Unit
-): CoroutineTradingStatusStreamProcessorAdapter = object : CoroutineTradingStatusStreamProcessorAdapter {
-    override suspend fun process(tradingStatus: TradingStatus): Unit = block(tradingStatus)
-    override var beforeEachTradingStatusHandler: Boolean = false
-    override var afterEachTradingStatusHandler: Boolean = false
-}
+        @JvmStatic
+        fun createBlockingHandler(consumer: Consumer<TradingStatus>): BlockingTradingStatusStreamProcessorAdapter =
+            object : BlockingTradingStatusStreamProcessorAdapter {
+                override fun process(tradingStatus: TradingStatus) = consumer.accept(tradingStatus)
+                override var beforeEachTradingStatusHandler: Boolean = beforeEachTradingStatusHandlerCompanion
+                override var afterEachTradingStatusHandler: Boolean = afterEachTradingStatusHandlerCompanion
+                override var tickers: List<String> = tickersCompanion
+                override var figies: List<String> = figiesCompanion
+                override var instruemntUids: List<String> = instrumentUidsCompanion
 
-fun <T : BaseTradingStatusStreamProcessor> T.runBeforeEachTradingStatusHandler(): T {
-    this.beforeEachTradingStatusHandler = true
-    return this
-}
+            }.also {
+                beforeEachTradingStatusHandlerCompanion = false
+                afterEachTradingStatusHandlerCompanion = false
+                tickersCompanion = emptyList()
+                figiesCompanion = emptyList()
+                instrumentUidsCompanion = emptyList()
+            }
 
-fun <T : BaseTradingStatusStreamProcessor> T.runAfterEachTradingStatusHandler(): T {
-    this.afterEachTradingStatusHandler = true
-    return this
+        @JvmStatic
+        fun createAsyncHandler(consumer: Function<TradingStatus, CompletableFuture<Void>>): AsyncTradingStatusStreamProcessorAdapter =
+            object : AsyncTradingStatusStreamProcessorAdapter {
+                override fun process(tradingStatus: TradingStatus) = consumer.apply(tradingStatus)
+                override var beforeEachTradingStatusHandler: Boolean = beforeEachTradingStatusHandlerCompanion
+                override var afterEachTradingStatusHandler: Boolean = afterEachTradingStatusHandlerCompanion
+                override var tickers: List<String> = tickersCompanion
+                override var figies: List<String> = figiesCompanion
+                override var instruemntUids: List<String> = instrumentUidsCompanion
+            }.also {
+                beforeEachTradingStatusHandlerCompanion = false
+                afterEachTradingStatusHandlerCompanion = false
+                tickersCompanion = emptyList()
+                figiesCompanion = emptyList()
+                instrumentUidsCompanion = emptyList()
+            }
+
+        @JvmStatic
+        fun createCoroutineHandler(block: suspend (TradingStatus) -> Unit): CoroutineTradingStatusStreamProcessorAdapter =
+            object : CoroutineTradingStatusStreamProcessorAdapter {
+                override suspend fun process(tradingStatus: TradingStatus): Unit = block(tradingStatus)
+                override var beforeEachTradingStatusHandler: Boolean = beforeEachTradingStatusHandlerCompanion
+                override var afterEachTradingStatusHandler: Boolean = afterEachTradingStatusHandlerCompanion
+                override var tickers: List<String> = tickersCompanion
+                override var figies: List<String> = figiesCompanion
+                override var instruemntUids: List<String> = instrumentUidsCompanion
+            }.also {
+                beforeEachTradingStatusHandlerCompanion = false
+                afterEachTradingStatusHandlerCompanion = false
+                tickersCompanion = emptyList()
+                figiesCompanion = emptyList()
+                instrumentUidsCompanion = emptyList()
+            }
+
+        @JvmStatic
+        fun runBeforeEachTradingStatusHandler(value: Boolean): Companion {
+            this.beforeEachTradingStatusHandlerCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
+        fun runAfterEachTradingStatusHandler(value: Boolean): Companion {
+            this.afterEachTradingStatusHandlerCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
+        fun withTickers(tickers: List<String>): Companion {
+            this.tickersCompanion = tickers
+            return Companion
+        }
+
+        @JvmStatic
+        fun withFigies(figies: List<String>): Companion {
+            this.figiesCompanion = figies
+            return Companion
+        }
+
+        @JvmStatic
+        fun withInstrumentUids(instrumentUids: List<String>): Companion {
+            this.instrumentUidsCompanion = instrumentUids
+            return Companion
+        }
+    }
 }
 
 fun BaseTradingStatusStreamProcessor.toMarketDataProcessor(): BaseMarketDataStreamProcessor = when (this) {
@@ -72,34 +132,43 @@ fun BaseTradingStatusStreamProcessor.toMarketDataProcessor(): BaseMarketDataStre
     else -> throw CommonException(ErrorCode.STREAM_PROCESSOR_ADAPTER_NOT_FOUND)
 }
 
-fun BlockingTradingStatusStreamProcessorAdapter.toMarketDataProcessor(): BlockingMarketDataStreamProcessorAdapter =
-    BlockingMarketDataStreamProcessorAdapter {
-        if (it.hasTradingStatus()) {
-            process(it.tradingStatus)
-        }
-    }.apply {
-        if (this@toMarketDataProcessor.afterEachTradingStatusHandler) runAfterEachTradingStatusHandler()
-        if (this@toMarketDataProcessor.beforeEachTradingStatusHandler) runBeforeEachTradingStatusHandler()
-    }
-
-fun AsyncTradingStatusStreamProcessorAdapter.toMarketDataProcessor() =
-    AsyncMarketDataStreamProcessorAdapter {
-        CompletableFuture.runAsync {
+fun BlockingTradingStatusStreamProcessorAdapter.toMarketDataProcessor() =
+    MarketDataStreamProcessorAdapterFactory
+        .runBeforeEachTradingStatusHandler(this@toMarketDataProcessor.beforeEachTradingStatusHandler)
+        .runAfterEachTradingStatusHandler(this@toMarketDataProcessor.afterEachTradingStatusHandler)
+        .withTickers(this@toMarketDataProcessor.tickers)
+        .withFigies(this@toMarketDataProcessor.figies)
+        .withInstrumentUids(this@toMarketDataProcessor.instruemntUids)
+        .createBlockingHandler {
             if (it.hasTradingStatus()) {
                 process(it.tradingStatus)
             }
         }
-    }.apply {
-        if (this@toMarketDataProcessor.afterEachTradingStatusHandler) runAfterEachTradingStatusHandler()
-        if (this@toMarketDataProcessor.beforeEachTradingStatusHandler) runBeforeEachTradingStatusHandler()
-    }
+
+fun AsyncTradingStatusStreamProcessorAdapter.toMarketDataProcessor() =
+    MarketDataStreamProcessorAdapterFactory
+        .runBeforeEachTradingStatusHandler(this@toMarketDataProcessor.beforeEachTradingStatusHandler)
+        .runAfterEachTradingStatusHandler(this@toMarketDataProcessor.afterEachTradingStatusHandler)
+        .withTickers(this@toMarketDataProcessor.tickers)
+        .withFigies(this@toMarketDataProcessor.figies)
+        .withInstrumentUids(this@toMarketDataProcessor.instruemntUids)
+        .createAsyncHandler {
+            CompletableFuture.runAsync {
+                if (it.hasTradingStatus()) {
+                    process(it.tradingStatus)
+                }
+            }
+        }
 
 fun CoroutineTradingStatusStreamProcessorAdapter.toMarketDataProcessor() =
-    CoroutineMarketDataStreamProcessorAdapter {
-        if (it.hasTradingStatus()) {
-            process(it.tradingStatus)
+    MarketDataStreamProcessorAdapterFactory
+        .runBeforeEachTradingStatusHandler(this@toMarketDataProcessor.beforeEachTradingStatusHandler)
+        .runAfterEachTradingStatusHandler(this@toMarketDataProcessor.afterEachTradingStatusHandler)
+        .withTickers(this@toMarketDataProcessor.tickers)
+        .withFigies(this@toMarketDataProcessor.figies)
+        .withInstrumentUids(this@toMarketDataProcessor.instruemntUids)
+        .createCoroutineHandler {
+            if (it.hasTradingStatus()) {
+                process(it.tradingStatus)
+            }
         }
-    }.apply {
-        if (this@toMarketDataProcessor.afterEachTradingStatusHandler) runAfterEachTradingStatusHandler()
-        if (this@toMarketDataProcessor.beforeEachTradingStatusHandler) runBeforeEachTradingStatusHandler()
-    }

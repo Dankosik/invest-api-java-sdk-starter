@@ -2,10 +2,13 @@ package io.github.dankosik.starter.invest.processor.operation
 
 import ru.tinkoff.piapi.contract.v1.PositionsStreamResponse
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
+import java.util.function.Function
 
 interface BasePositionsStreamProcessor {
     var beforeEachPositionHandler: Boolean
     var afterEachPositionHandler: Boolean
+    val accounts: List<String>
 }
 
 interface BlockingPositionsStreamProcessorAdapter : BasePositionsStreamProcessor {
@@ -20,40 +23,75 @@ interface CoroutinePositionsStreamProcessorAdapter : BasePositionsStreamProcesso
     suspend fun process(positionsStreamResponse: PositionsStreamResponse)
 }
 
-inline fun BlockingPositionsStreamProcessorAdapter(
-    crossinline block: (PositionsStreamResponse) -> Unit
-): BlockingPositionsStreamProcessorAdapter = object : BlockingPositionsStreamProcessorAdapter {
-    override fun process(positionsStreamResponse: PositionsStreamResponse) = block(positionsStreamResponse)
-    override var beforeEachPositionHandler = false
-    override var afterEachPositionHandler = false
-}
+class PositionsStreamProcessorAdapterFactory {
 
-inline fun AsyncPositionsStreamProcessorAdapter(
-    crossinline block: (PositionsStreamResponse) -> CompletableFuture<Void>
-): AsyncPositionsStreamProcessorAdapter = object : AsyncPositionsStreamProcessorAdapter {
-    override fun process(positionsStreamResponse: PositionsStreamResponse): CompletableFuture<Void> =
-        block(positionsStreamResponse)
+    companion object {
+        private var beforeEachPositionHandlerCompanion: Boolean = false
+        private var afterEachPositionHandlerCompanion: Boolean = false
+        private var accountsCompanion: List<String> = emptyList()
 
-    override var beforeEachPositionHandler = false
-    override var afterEachPositionHandler = false
-}
+        @JvmStatic
+        fun createBlockingHandler(consumer: Consumer<PositionsStreamResponse>): BlockingPositionsStreamProcessorAdapter =
+            object : BlockingPositionsStreamProcessorAdapter {
+                override fun process(positionsStreamResponse: PositionsStreamResponse) =
+                    consumer.accept(positionsStreamResponse)
 
-inline fun CoroutinePositionsStreamProcessorAdapter(
-    crossinline block: suspend (PositionsStreamResponse) -> Unit
-): CoroutinePositionsStreamProcessorAdapter = object : CoroutinePositionsStreamProcessorAdapter {
-    override suspend fun process(positionsStreamResponse: PositionsStreamResponse): Unit =
-        block(positionsStreamResponse)
+                override var beforeEachPositionHandler: Boolean = beforeEachPositionHandlerCompanion
+                override var afterEachPositionHandler: Boolean = afterEachPositionHandlerCompanion
+                override var accounts: List<String> = accountsCompanion
 
-    override var beforeEachPositionHandler = false
-    override var afterEachPositionHandler = false
-}
+            }.also {
+                beforeEachPositionHandlerCompanion = false
+                afterEachPositionHandlerCompanion = false
+                accountsCompanion = emptyList()
+            }
 
-fun <T : BasePositionsStreamProcessor> T.runBeforeEachPositionHandler(): T {
-    this.beforeEachPositionHandler = true
-    return this
-}
+        @JvmStatic
+        fun createAsyncHandler(consumer: Function<PositionsStreamResponse, CompletableFuture<Void>>): AsyncPositionsStreamProcessorAdapter =
+            object : AsyncPositionsStreamProcessorAdapter {
+                override fun process(positionsStreamResponse: PositionsStreamResponse) =
+                    consumer.apply(positionsStreamResponse)
 
-fun <T : BasePositionsStreamProcessor> T.runAfterEachPositionHandler(): T {
-    this.afterEachPositionHandler = true
-    return this
+                override var beforeEachPositionHandler: Boolean = beforeEachPositionHandlerCompanion
+                override var afterEachPositionHandler: Boolean = afterEachPositionHandlerCompanion
+                override var accounts: List<String> = accountsCompanion
+            }.also {
+                beforeEachPositionHandlerCompanion = false
+                afterEachPositionHandlerCompanion = false
+                accountsCompanion = emptyList()
+            }
+
+        @JvmStatic
+        fun createCoroutineHandler(block: suspend (PositionsStreamResponse) -> Unit): CoroutinePositionsStreamProcessorAdapter =
+            object : CoroutinePositionsStreamProcessorAdapter {
+                override suspend fun process(positionsStreamResponse: PositionsStreamResponse): Unit =
+                    block(positionsStreamResponse)
+
+                override var beforeEachPositionHandler: Boolean = beforeEachPositionHandlerCompanion
+                override var afterEachPositionHandler: Boolean = afterEachPositionHandlerCompanion
+                override var accounts: List<String> = accountsCompanion
+            }.also {
+                beforeEachPositionHandlerCompanion = false
+                afterEachPositionHandlerCompanion = false
+                accountsCompanion = emptyList()
+            }
+
+        @JvmStatic
+        fun runBeforeEachPositionHandler(value: Boolean): Companion {
+            this.beforeEachPositionHandlerCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
+        fun runAfterEachPositionHandler(value: Boolean): Companion {
+            this.afterEachPositionHandlerCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
+        fun withAccounts(accounts: List<String>): Companion {
+            this.accountsCompanion = accounts
+            return Companion
+        }
+    }
 }

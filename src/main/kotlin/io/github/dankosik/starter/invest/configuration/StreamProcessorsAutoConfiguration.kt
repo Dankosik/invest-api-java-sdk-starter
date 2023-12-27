@@ -35,13 +35,19 @@ import io.github.dankosik.starter.invest.contract.orders.CoroutineOrderHandler
 import io.github.dankosik.starter.invest.exception.CommonException
 import io.github.dankosik.starter.invest.exception.ErrorCode
 import io.github.dankosik.starter.invest.extension.awaitSingle
+import io.github.dankosik.starter.invest.extension.extractAfterTradesHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractAfterTradesHandlersByTicker
+import io.github.dankosik.starter.invest.extension.extractAfterTradesHandlersByUid
+import io.github.dankosik.starter.invest.extension.extractBeforeTradesHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractBeforeTradesHandlersByTicker
+import io.github.dankosik.starter.invest.extension.extractBeforeTradesHandlersByUid
+import io.github.dankosik.starter.invest.extension.extractCommonAfterTradesHandlers
+import io.github.dankosik.starter.invest.extension.extractCommonBeforeTradesHandlers
+import io.github.dankosik.starter.invest.extension.extractCommonHandlers
 import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
-import io.github.dankosik.starter.invest.processor.marketdata.common.toHandlersMapFromFigies
-import io.github.dankosik.starter.invest.processor.marketdata.common.toHandlersMapFromInstrumentUids
-import io.github.dankosik.starter.invest.processor.marketdata.common.toHandlersMapFromTickers
 import io.github.dankosik.starter.invest.processor.operation.AsyncPortfolioStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.operation.AsyncPositionsStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.operation.BasePortfolioStreamProcessor
@@ -220,57 +226,24 @@ class StreamProcessorsAutoConfiguration(
         }
 
         else -> {
-            val commonBeforeTradesHandlers = streamProcessors
-                .filter { it.beforeEachTradeHandler && it.tickers.isEmpty() && it.figies.isEmpty() && it.instruemntUids.isEmpty() }
-                .takeIf { it.isNotEmpty() }
-            val commonAfterTradesHandlers = streamProcessors
-                .filter { it.afterEachTradeHandler && it.tickers.isEmpty() && it.figies.isEmpty() && it.instruemntUids.isEmpty() }
-                .takeIf { it.isNotEmpty() }
+            val commonTradesHandlers = streamProcessors.extractCommonHandlers()
+            val commonBeforeTradesHandlers = streamProcessors.extractCommonBeforeTradesHandlers()
+            val commonAfterTradesHandlers = streamProcessors.extractCommonAfterTradesHandlers()
 
-            val commonTradesHandlers = streamProcessors
-                .filter {
-                    !it.beforeEachTradeHandler && !it.afterEachTradeHandler
-                            && !it.beforeEachTradingStatusHandler && !it.afterEachTradingStatusHandler
-                            && !it.beforeEachCandleHandler && !it.afterEachCandleHandler
-                            && !it.beforeEachOrderBookHandler && !it.afterEachOrderBookHandler
-                            && !it.beforeEachLastPriceHandler && !it.afterEachLastPriceHandler
-                            && it.tickers.isEmpty() && it.figies.isEmpty() && it.instruemntUids.isEmpty()
-                }
-                .takeIf { it.isNotEmpty() }
-
-            val beforeHandlersMapFromTickers = streamProcessors
-                .filter { it.beforeEachTradeHandler && it.tickers.isNotEmpty() }
-                .takeIf { it.isNotEmpty() }
-                ?.toHandlersMapFromTickers(newTickerToUidMap)
-            val afterHandlersMapFromTickers = streamProcessors
-                .filter { it.afterEachTradeHandler && it.tickers.isNotEmpty() }
-                .takeIf { it.isNotEmpty() }
-                ?.toHandlersMapFromTickers(newTickerToUidMap)
-
-            val beforeHandlersMapFromFigies = streamProcessors
-                .filter { it.beforeEachTradeHandler && it.figies.isNotEmpty() }
-                .takeIf { it.isNotEmpty() }
-                ?.toHandlersMapFromFigies()
-            val afterHandlersMapFromFigies = streamProcessors
-                .filter { it.afterEachTradeHandler && it.figies.isNotEmpty() }
-                .takeIf { it.isNotEmpty() }
-                ?.toHandlersMapFromFigies()
-            val beforeHandlersMapFromInstruemntUids = streamProcessors
-                .filter { it.beforeEachTradeHandler && it.instruemntUids.isNotEmpty() }
-                .takeIf { it.isNotEmpty() }
-                ?.toHandlersMapFromInstrumentUids()
-            val afterHandlersMapFromInstruemntUids = streamProcessors
-                .filter { it.afterEachTradeHandler && it.instruemntUids.isNotEmpty() }
-                .takeIf { it.isNotEmpty() }
-                ?.toHandlersMapFromInstrumentUids()
+            val beforeHandlersByTicker = streamProcessors.extractBeforeTradesHandlersByTicker(newTickerToUidMap)
+            val afterHandlersByTicker = streamProcessors.extractAfterTradesHandlersByTicker(newTickerToUidMap)
+            val beforeHandlersByFigi = streamProcessors.extractBeforeTradesHandlersByFigi()
+            val afterHandlersByFigi = streamProcessors.extractAfterTradesHandlersByFigi()
+            val beforeHandlersByUid = streamProcessors.extractBeforeTradesHandlersByUid()
+            val afterHandlersByUid = streamProcessors.extractAfterTradesHandlersByUid()
 
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasTrade()) {
                     commonBeforeTradesHandlers?.runProcessors(response)
                     val trade = response.trade
-                    beforeHandlersMapFromTickers?.get(trade.instrumentUid)?.runProcessors(response)
-                    beforeHandlersMapFromInstruemntUids?.get(trade.instrumentUid)?.runProcessors(response)
-                    beforeHandlersMapFromFigies?.get(trade.figi)?.runProcessors(response)
+                    beforeHandlersByTicker?.get(trade.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByUid?.get(trade.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByFigi?.get(trade.figi)?.runProcessors(response)
                     val handlers = tradesHandlerRegistry.getHandlers(trade)
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleTrade(trade)
@@ -287,9 +260,9 @@ class StreamProcessorsAutoConfiguration(
                         }
                     }
                     commonAfterTradesHandlers?.runProcessors(response)
-                    afterHandlersMapFromTickers?.get(trade.instrumentUid)?.runProcessors(response)
-                    afterHandlersMapFromFigies?.get(trade.figi)?.runProcessors(response)
-                    afterHandlersMapFromInstruemntUids?.get(trade.instrumentUid)?.runProcessors(response)
+                    afterHandlersByTicker?.get(trade.instrumentUid)?.runProcessors(response)
+                    afterHandlersByFigi?.get(trade.figi)?.runProcessors(response)
+                    afterHandlersByUid?.get(trade.instrumentUid)?.runProcessors(response)
                 }
             }
         }

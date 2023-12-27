@@ -13,14 +13,15 @@ internal class PortfolioBeanPostProcessor : BeanPostProcessor {
         val isHandlePortfolio = bean.javaClass.declaredAnnotations.filterIsInstance<HandlePortfolio>().isNotEmpty()
         val isAllHandlePortfolio =
             bean.javaClass.declaredAnnotations.filterIsInstance<HandleAllPortfolios>().isNotEmpty()
+        val javaClassName = bean.javaClass.name
         check(
             !(isHandlePortfolio
                     && (bean !is CoroutinePortfolioHandler && bean !is BlockingPortfolioHandler && bean !is AsyncPortfolioHandler))
-        ) { "Class: ${bean.javaClass.name} annotated with HandlePortfolio should implement AsyncPortfolioHandler or BlockingPortfolioHandler or CoroutinePortfolioHandler" }
+        ) { "Class: $javaClassName annotated with HandlePortfolio should implement AsyncPortfolioHandler or BlockingPortfolioHandler or CoroutinePortfolioHandler" }
         check(
             !(isAllHandlePortfolio
                     && (bean !is CoroutinePortfolioHandler && bean !is BlockingPortfolioHandler && bean !is AsyncPortfolioHandler))
-        ) { "Class: ${bean.javaClass.name} annotated with HandleAllPortfolios should implement AsyncPortfolioHandler or BlockingPortfolioHandler or CoroutinePortfolioHandler" }
+        ) { "Class: $javaClassName annotated with HandleAllPortfolios should implement AsyncPortfolioHandler or BlockingPortfolioHandler or CoroutinePortfolioHandler" }
         if (isHandlePortfolio) {
             val classNameInMessage = when (bean) {
                 is CoroutinePortfolioHandler -> "CoroutinePortfolioHandler"
@@ -28,17 +29,23 @@ internal class PortfolioBeanPostProcessor : BeanPostProcessor {
                 else -> "AsyncPortfolioHandler"
             }
             check(isHandlePortfolio) {
-                "$classNameInMessage: ${bean.javaClass.name} must have an annotated of HandlePortfolio"
+                "$classNameInMessage: $javaClassName must have an annotated of HandlePortfolio"
             }
             val account = bean.javaClass.getAnnotation(HandlePortfolio::class.java).account
             check(account.isNotBlank()) {
-                "Argument 'account' must be provided in ${bean.javaClass.name}"
+                "Argument 'account' must be provided in $javaClassName"
             }
         }
 
         if (isAllHandlePortfolio) {
-            check(bean.javaClass.getAnnotation(HandleAllPortfolios::class.java).accounts.isNotEmpty()) {
-                "${bean.javaClass.name}: At least one element should be in 'accounts'"
+            val annotation = bean.javaClass.getAnnotation(HandleAllPortfolios::class.java)
+            check(annotation.accounts.isNotEmpty()) {
+                "$javaClassName: At least one element should be in 'accounts'"
+            }
+            annotation.accounts.forEach { account ->
+                check(account.isNotBlank()) {
+                    "$javaClassName: Account should be not blank"
+                }
             }
         }
         return bean

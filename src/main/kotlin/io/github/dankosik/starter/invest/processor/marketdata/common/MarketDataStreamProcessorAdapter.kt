@@ -2,6 +2,8 @@ package io.github.dankosik.starter.invest.processor.marketdata.common
 
 import ru.tinkoff.piapi.contract.v1.MarketDataResponse
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
+import java.util.function.Function
 
 interface BaseMarketDataStreamProcessor {
     var beforeEachOrderBookHandler: Boolean
@@ -59,109 +61,198 @@ interface CoroutineMarketDataStreamProcessorAdapter : BaseMarketDataStreamProces
     suspend fun process(marketDataResponse: MarketDataResponse)
 }
 
-inline fun BlockingMarketDataStreamProcessorAdapter(
-    crossinline block: (MarketDataResponse) -> Unit
-): BlockingMarketDataStreamProcessorAdapter = object : BlockingMarketDataStreamProcessorAdapter {
-    override fun process(marketDataResponse: MarketDataResponse) = block(marketDataResponse)
-    override var beforeEachOrderBookHandler: Boolean = false
-    override var afterEachOrderBookHandler: Boolean = false
-    override var beforeEachTradeHandler: Boolean = false
-    override var afterEachTradeHandler: Boolean = false
-    override var beforeEachLastPriceHandler: Boolean = false
-    override var afterEachLastPriceHandler: Boolean = false
-    override var beforeEachCandleHandler: Boolean = false
-    override var afterEachCandleHandler: Boolean = false
-    override var beforeEachTradingStatusHandler: Boolean = false
-    override var afterEachTradingStatusHandler: Boolean = false
-    override var tickers: List<String> = emptyList()
-    override var figies: List<String> = emptyList()
-    override var instruemntUids: List<String> = emptyList()
-}
+class MarketDataStreamProcessorAdapterFactory {
 
-inline fun AsyncMarketDataStreamProcessorAdapter(
-    crossinline block: (MarketDataResponse) -> CompletableFuture<Void>
-): AsyncMarketDataStreamProcessorAdapter = object : AsyncMarketDataStreamProcessorAdapter {
-    override fun process(marketDataResponse: MarketDataResponse): CompletableFuture<Void> = block(marketDataResponse)
-    override var beforeEachOrderBookHandler: Boolean = false
-    override var afterEachOrderBookHandler: Boolean = false
-    override var beforeEachTradeHandler: Boolean = false
-    override var afterEachTradeHandler: Boolean = false
-    override var beforeEachLastPriceHandler: Boolean = false
-    override var afterEachLastPriceHandler: Boolean = false
-    override var beforeEachCandleHandler: Boolean = false
-    override var afterEachCandleHandler: Boolean = false
-    override var beforeEachTradingStatusHandler: Boolean = false
-    override var afterEachTradingStatusHandler: Boolean = false
-    override var tickers: List<String> = emptyList()
-    override var figies: List<String> = emptyList()
-    override var instruemntUids: List<String> = emptyList()
-}
+    companion object {
+        private var beforeEachLastPriceHandlerCompanion: Boolean = false
+        private var afterEachLastPriceHandlerCompanion: Boolean = false
+        private var afterEachCandleHandlerCompanion: Boolean = false
+        private var beforeEachCandleHandlerCompanion: Boolean = false
+        private var beforeEachOrderBookHandlerCompanion: Boolean = false
+        private var afterEachOrderBookHandlerCompanion: Boolean = false
+        private var beforeEachTradeHandlerCompanion: Boolean = false
+        private var afterEachTradeHandlerCompanion: Boolean = false
+        private var beforeEachTradingStatusHandlerCompanion: Boolean = false
+        private var afterEachTradingStatusHandlerCompanion: Boolean = false
+        private var tickersCompanion: List<String> = emptyList()
+        private var figiesCompanion: List<String> = emptyList()
+        private var instrumentUidsCompanion: List<String> = emptyList()
 
-inline fun CoroutineMarketDataStreamProcessorAdapter(
-    crossinline block: suspend (MarketDataResponse) -> Unit
-): CoroutineMarketDataStreamProcessorAdapter = object : CoroutineMarketDataStreamProcessorAdapter {
-    override suspend fun process(marketDataResponse: MarketDataResponse): Unit = block(marketDataResponse)
-    override var beforeEachOrderBookHandler: Boolean = false
-    override var afterEachOrderBookHandler: Boolean = false
-    override var beforeEachTradeHandler: Boolean = false
-    override var afterEachTradeHandler: Boolean = false
-    override var beforeEachLastPriceHandler: Boolean = false
-    override var afterEachLastPriceHandler: Boolean = false
-    override var beforeEachCandleHandler: Boolean = false
-    override var afterEachCandleHandler: Boolean = false
-    override var beforeEachTradingStatusHandler: Boolean = false
-    override var afterEachTradingStatusHandler: Boolean = false
-    override var tickers: List<String> = emptyList()
-    override var figies: List<String> = emptyList()
-    override var instruemntUids: List<String> = emptyList()
-}
+        @JvmStatic
+        fun createBlockingHandler(consumer: Consumer<MarketDataResponse>): BlockingMarketDataStreamProcessorAdapter =
+            object : BlockingMarketDataStreamProcessorAdapter {
+                override fun process(marketDataResponse: MarketDataResponse) = consumer.accept(marketDataResponse)
+                override var beforeEachLastPriceHandler: Boolean = beforeEachLastPriceHandlerCompanion
+                override var afterEachLastPriceHandler: Boolean = afterEachLastPriceHandlerCompanion
+                override var beforeEachOrderBookHandler: Boolean = beforeEachOrderBookHandlerCompanion
+                override var afterEachOrderBookHandler: Boolean = afterEachOrderBookHandlerCompanion
+                override var beforeEachTradeHandler: Boolean = beforeEachTradeHandlerCompanion
+                override var afterEachTradeHandler: Boolean = afterEachTradeHandlerCompanion
+                override var beforeEachTradingStatusHandler: Boolean = beforeEachTradingStatusHandlerCompanion
+                override var afterEachTradingStatusHandler: Boolean = afterEachTradingStatusHandlerCompanion
+                override var beforeEachCandleHandler: Boolean = beforeEachCandleHandlerCompanion
+                override var afterEachCandleHandler: Boolean = afterEachCandleHandlerCompanion
+                override var tickers: List<String> = tickersCompanion
+                override var figies: List<String> = figiesCompanion
+                override var instruemntUids: List<String> = instrumentUidsCompanion
+            }.also {
+                beforeEachLastPriceHandlerCompanion = false
+                afterEachLastPriceHandlerCompanion = false
+                beforeEachOrderBookHandlerCompanion = false
+                afterEachOrderBookHandlerCompanion = false
+                beforeEachTradeHandlerCompanion = false
+                afterEachTradeHandlerCompanion = false
+                beforeEachTradingStatusHandlerCompanion = false
+                afterEachTradingStatusHandlerCompanion = false
+                beforeEachCandleHandlerCompanion = false
+                afterEachCandleHandlerCompanion = false
+                tickersCompanion = emptyList()
+                figiesCompanion = emptyList()
+                instrumentUidsCompanion = emptyList()
+            }
 
-fun <T : BaseMarketDataStreamProcessor> T.runBeforeEachLastPriceHandler(): T {
-    this.beforeEachLastPriceHandler = true
-    return this
-}
+        @JvmStatic
+        fun createAsyncHandler(consumer: Function<MarketDataResponse, CompletableFuture<Void>>): AsyncMarketDataStreamProcessorAdapter =
+            object : AsyncMarketDataStreamProcessorAdapter {
+                override fun process(marketDataResponse: MarketDataResponse) = consumer.apply(marketDataResponse)
+                override var beforeEachLastPriceHandler: Boolean = beforeEachLastPriceHandlerCompanion
+                override var afterEachLastPriceHandler: Boolean = afterEachLastPriceHandlerCompanion
+                override var beforeEachOrderBookHandler: Boolean = beforeEachOrderBookHandlerCompanion
+                override var afterEachOrderBookHandler: Boolean = afterEachOrderBookHandlerCompanion
+                override var beforeEachTradeHandler: Boolean = beforeEachTradeHandlerCompanion
+                override var afterEachTradeHandler: Boolean = afterEachTradeHandlerCompanion
+                override var beforeEachTradingStatusHandler: Boolean = beforeEachTradingStatusHandlerCompanion
+                override var afterEachTradingStatusHandler: Boolean = afterEachTradingStatusHandlerCompanion
+                override var beforeEachCandleHandler: Boolean = beforeEachCandleHandlerCompanion
+                override var afterEachCandleHandler: Boolean = afterEachCandleHandlerCompanion
+                override var tickers: List<String> = tickersCompanion
+                override var figies: List<String> = figiesCompanion
+                override var instruemntUids: List<String> = instrumentUidsCompanion
+            }.also {
+                beforeEachLastPriceHandlerCompanion = false
+                afterEachLastPriceHandlerCompanion = false
+                beforeEachOrderBookHandlerCompanion = false
+                afterEachOrderBookHandlerCompanion = false
+                beforeEachTradeHandlerCompanion = false
+                afterEachTradeHandlerCompanion = false
+                beforeEachTradingStatusHandlerCompanion = false
+                afterEachTradingStatusHandlerCompanion = false
+                beforeEachCandleHandlerCompanion = false
+                afterEachCandleHandlerCompanion = false
+                tickersCompanion = emptyList()
+                figiesCompanion = emptyList()
+                instrumentUidsCompanion = emptyList()
+            }
 
-fun <T : BaseMarketDataStreamProcessor> T.runAfterEachLastPriceHandler(): T {
-    this.afterEachLastPriceHandler = true
-    return this
-}
+        @JvmStatic
+        fun createCoroutineHandler(block: suspend (MarketDataResponse) -> Unit): CoroutineMarketDataStreamProcessorAdapter =
+            object : CoroutineMarketDataStreamProcessorAdapter {
+                override suspend fun process(marketDataResponse: MarketDataResponse): Unit = block(marketDataResponse)
+                override var beforeEachLastPriceHandler: Boolean = beforeEachLastPriceHandlerCompanion
+                override var afterEachLastPriceHandler: Boolean = afterEachLastPriceHandlerCompanion
+                override var beforeEachOrderBookHandler: Boolean = beforeEachOrderBookHandlerCompanion
+                override var afterEachOrderBookHandler: Boolean = afterEachOrderBookHandlerCompanion
+                override var beforeEachTradeHandler: Boolean = beforeEachTradeHandlerCompanion
+                override var afterEachTradeHandler: Boolean = afterEachTradeHandlerCompanion
+                override var beforeEachTradingStatusHandler: Boolean = beforeEachTradingStatusHandlerCompanion
+                override var afterEachTradingStatusHandler: Boolean = afterEachTradingStatusHandlerCompanion
+                override var beforeEachCandleHandler: Boolean = beforeEachCandleHandlerCompanion
+                override var afterEachCandleHandler: Boolean = afterEachCandleHandlerCompanion
+                override var tickers: List<String> = tickersCompanion
+                override var figies: List<String> = figiesCompanion
+                override var instruemntUids: List<String> = instrumentUidsCompanion
+            }.also {
+                beforeEachLastPriceHandlerCompanion = false
+                afterEachLastPriceHandlerCompanion = false
+                beforeEachOrderBookHandlerCompanion = false
+                afterEachOrderBookHandlerCompanion = false
+                beforeEachTradeHandlerCompanion = false
+                afterEachTradeHandlerCompanion = false
+                beforeEachTradingStatusHandlerCompanion = false
+                afterEachTradingStatusHandlerCompanion = false
+                beforeEachCandleHandlerCompanion = false
+                afterEachCandleHandlerCompanion = false
+                tickersCompanion = emptyList()
+                figiesCompanion = emptyList()
+                instrumentUidsCompanion = emptyList()
+            }
 
-fun <T : BaseMarketDataStreamProcessor> T.runBeforeEachOrderBookHandler(): T {
-    this.beforeEachOrderBookHandler = true
-    return this
-}
+        @JvmStatic
+        fun runBeforeEachCandleHandler(value: Boolean): Companion {
+            this.beforeEachLastPriceHandlerCompanion = value
+            return Companion
+        }
 
-fun <T : BaseMarketDataStreamProcessor> T.runAfterEachOrderBookHandler(): T {
-    this.afterEachOrderBookHandler = true
-    return this
-}
+        @JvmStatic
+        fun runAfterEachCandleHandler(value: Boolean): Companion {
+            this.afterEachLastPriceHandlerCompanion = value
+            return Companion
+        }
 
-fun <T : BaseMarketDataStreamProcessor> T.runBeforeEachTradeHandler(): T {
-    this.beforeEachTradeHandler = true
-    return this
-}
+        @JvmStatic
+        fun runBeforeEachLastPriceHandler(value: Boolean): Companion {
+            this.beforeEachLastPriceHandlerCompanion = value
+            return Companion
+        }
 
-fun <T : BaseMarketDataStreamProcessor> T.runAfterEachTradeHandler(): T {
-    this.afterEachTradeHandler = true
-    return this
-}
+        @JvmStatic
+        fun runAfterEachLastPriceHandler(value: Boolean): Companion {
+            this.afterEachLastPriceHandlerCompanion = value
+            return Companion
+        }
 
-fun <T : BaseMarketDataStreamProcessor> T.runBeforeEachCandleHandler(): T {
-    this.beforeEachCandleHandler = true
-    return this
-}
+        @JvmStatic
+        fun runBeforeEachOrderBookHandler(value: Boolean): Companion {
+            this.beforeEachOrderBookHandlerCompanion = value
+            return Companion
+        }
 
-fun <T : BaseMarketDataStreamProcessor> T.runAfterEachCandleHandler(): T {
-    this.afterEachCandleHandler = true
-    return this
-}
+        @JvmStatic
+        fun runAfterEachOrderBookHandler(value: Boolean): Companion {
+            this.afterEachOrderBookHandlerCompanion = value
+            return Companion
+        }
 
-fun <T : BaseMarketDataStreamProcessor> T.runAfterEachTradingStatusHandler(): T {
-    this.afterEachTradingStatusHandler = true
-    return this
-}
+        @JvmStatic
+        fun runBeforeEachTradeHandler(value: Boolean): Companion {
+            this.beforeEachTradeHandlerCompanion = value
+            return Companion
+        }
 
-fun <T : BaseMarketDataStreamProcessor> T.runBeforeEachTradingStatusHandler(): T {
-    this.beforeEachTradingStatusHandler = true
-    return this
+        @JvmStatic
+        fun runAfterEachTradeHandler(value: Boolean): Companion {
+            this.afterEachTradeHandlerCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
+        fun runBeforeEachTradingStatusHandler(value: Boolean): Companion {
+            this.beforeEachTradingStatusHandlerCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
+        fun runAfterEachTradingStatusHandler(value: Boolean): Companion {
+            this.afterEachTradingStatusHandlerCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
+        fun withTickers(tickers: List<String>): Companion {
+            this.tickersCompanion = tickers
+            return Companion
+        }
+
+        @JvmStatic
+        fun withFigies(figies: List<String>): Companion {
+            this.figiesCompanion = figies
+            return Companion
+        }
+
+        @JvmStatic
+        fun withInstrumentUids(instrumentUids: List<String>): Companion {
+            this.instrumentUidsCompanion = instrumentUids
+            return Companion
+        }
+    }
 }
