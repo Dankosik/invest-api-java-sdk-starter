@@ -30,6 +30,14 @@ interface CoroutineLastPriceStreamProcessorAdapter : BaseLastPriceStreamProcesso
     suspend fun process(lastPrice: LastPrice)
 }
 
+fun BaseLastPriceStreamProcessor.extractInstruments(sourceTickerMap: Map<String, String>): List<String> {
+    val map = tickers.mapNotNull { ticker ->
+        sourceTickerMap[ticker]
+    }
+    return (map + figies + instruemntUids)
+        .filter { it.isNotEmpty() }
+}
+
 class LastPriceStreamProcessorAdapterFactory {
 
     companion object {

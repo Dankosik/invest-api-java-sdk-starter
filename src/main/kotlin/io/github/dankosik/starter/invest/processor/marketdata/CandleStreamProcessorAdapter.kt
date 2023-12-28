@@ -1,11 +1,13 @@
 package io.github.dankosik.starter.invest.processor.marketdata
 
+import io.github.dankosik.starter.invest.configuration.InstrumentsAutoConfiguration
 import io.github.dankosik.starter.invest.exception.CommonException
 import io.github.dankosik.starter.invest.exception.ErrorCode
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.MarketDataStreamProcessorAdapterFactory
 import ru.tinkoff.piapi.contract.v1.Candle
+import ru.tinkoff.piapi.contract.v1.SubscriptionInterval
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 import java.util.function.Function
@@ -16,6 +18,8 @@ interface BaseCandleStreamProcessor {
     var tickers: List<String>
     var figies: List<String>
     var instruemntUids: List<String>
+    var waitClose: Boolean
+    var subscriptionInterval: SubscriptionInterval
 }
 
 interface BlockingCandleStreamProcessorAdapter : BaseCandleStreamProcessor {
@@ -30,6 +34,17 @@ interface CoroutineCandleStreamProcessorAdapter : BaseCandleStreamProcessor {
     suspend fun process(candle: Candle)
 }
 
+fun BaseCandleStreamProcessor.extractInstruments(sourceTickerMap: Map<String, String>): Pair<SubscriptionInterval, List<InstrumentsAutoConfiguration.InstrumentIdToWaitingClose>> {
+    val map = tickers.mapNotNull { ticker ->
+        sourceTickerMap[ticker]
+    }
+    val instrumentIdToWaitingCloses = (map + figies + instruemntUids)
+        .filter { it.isNotEmpty() }.distinct().map {
+            InstrumentsAutoConfiguration.InstrumentIdToWaitingClose(it, waitClose)
+        }
+    return subscriptionInterval to instrumentIdToWaitingCloses
+}
+
 class CandleStreamProcessorAdapterFactory {
 
     companion object {
@@ -38,6 +53,9 @@ class CandleStreamProcessorAdapterFactory {
         private var tickersCompanion: List<String> = emptyList()
         private var figiesCompanion: List<String> = emptyList()
         private var instrumentUidsCompanion: List<String> = emptyList()
+        private var waitCloseCompanion: Boolean = false
+        private var subscriptionIntervalCompanion: SubscriptionInterval =
+            SubscriptionInterval.SUBSCRIPTION_INTERVAL_UNSPECIFIED
 
         @JvmStatic
         fun createBlockingHandler(consumer: Consumer<Candle>): BlockingCandleStreamProcessorAdapter =
@@ -48,6 +66,8 @@ class CandleStreamProcessorAdapterFactory {
                 override var tickers: List<String> = tickersCompanion
                 override var figies: List<String> = figiesCompanion
                 override var instruemntUids: List<String> = instrumentUidsCompanion
+                override var waitClose: Boolean = waitCloseCompanion
+                override var subscriptionInterval: SubscriptionInterval = subscriptionIntervalCompanion
 
             }.also {
                 afterEachCandleHandlerCompanion = false
@@ -55,6 +75,8 @@ class CandleStreamProcessorAdapterFactory {
                 tickersCompanion = emptyList()
                 figiesCompanion = emptyList()
                 instrumentUidsCompanion = emptyList()
+                waitCloseCompanion = false
+                subscriptionIntervalCompanion = SubscriptionInterval.SUBSCRIPTION_INTERVAL_UNSPECIFIED
             }
 
         @JvmStatic
@@ -66,12 +88,16 @@ class CandleStreamProcessorAdapterFactory {
                 override var tickers: List<String> = tickersCompanion
                 override var figies: List<String> = figiesCompanion
                 override var instruemntUids: List<String> = instrumentUidsCompanion
+                override var waitClose: Boolean = waitCloseCompanion
+                override var subscriptionInterval: SubscriptionInterval = subscriptionIntervalCompanion
             }.also {
                 afterEachCandleHandlerCompanion = false
                 beforeEachCandleHandlerCompanion = false
                 tickersCompanion = emptyList()
                 figiesCompanion = emptyList()
                 instrumentUidsCompanion = emptyList()
+                waitCloseCompanion = false
+                subscriptionIntervalCompanion = SubscriptionInterval.SUBSCRIPTION_INTERVAL_UNSPECIFIED
             }
 
         @JvmStatic
@@ -83,12 +109,16 @@ class CandleStreamProcessorAdapterFactory {
                 override var tickers: List<String> = tickersCompanion
                 override var figies: List<String> = figiesCompanion
                 override var instruemntUids: List<String> = instrumentUidsCompanion
+                override var waitClose: Boolean = waitCloseCompanion
+                override var subscriptionInterval: SubscriptionInterval = subscriptionIntervalCompanion
             }.also {
                 afterEachCandleHandlerCompanion = false
                 beforeEachCandleHandlerCompanion = false
                 tickersCompanion = emptyList()
                 figiesCompanion = emptyList()
                 instrumentUidsCompanion = emptyList()
+                waitCloseCompanion = false
+                subscriptionIntervalCompanion = SubscriptionInterval.SUBSCRIPTION_INTERVAL_UNSPECIFIED
             }
 
         @JvmStatic
@@ -100,6 +130,18 @@ class CandleStreamProcessorAdapterFactory {
         @JvmStatic
         fun runAfterEachCandleHandler(value: Boolean): Companion {
             this.afterEachCandleHandlerCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
+        fun waitClose(value: Boolean): Companion {
+            this.waitCloseCompanion = value
+            return Companion
+        }
+
+        @JvmStatic
+        fun withSubscriptionInterval(subscriptionInterval: SubscriptionInterval): Companion {
+            this.subscriptionIntervalCompanion = subscriptionInterval
             return Companion
         }
 

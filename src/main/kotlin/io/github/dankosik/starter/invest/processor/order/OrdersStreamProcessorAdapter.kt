@@ -1,5 +1,6 @@
 package io.github.dankosik.starter.invest.processor.order
 
+import io.github.dankosik.starter.invest.processor.marketdata.BaseTradingStatusStreamProcessor
 import io.github.dankosik.starter.invest.processor.operation.PositionsStreamProcessorAdapterFactory
 import ru.tinkoff.piapi.contract.v1.TradesStreamResponse
 import java.util.concurrent.CompletableFuture
@@ -25,6 +26,14 @@ interface AsyncOrdersStreamProcessorAdapter : BaseOrdersStreamProcessor {
 
 interface CoroutineOrdersStreamProcessorAdapter : BaseOrdersStreamProcessor {
     suspend fun process(tradesStreamResponse: TradesStreamResponse)
+}
+
+fun BaseOrdersStreamProcessor.extractInstruments(sourceTickerMap: Map<String, String>): List<String> {
+    val map = tickers.mapNotNull { ticker ->
+        sourceTickerMap[ticker]
+    }
+    return (map + figies + instruemntUids)
+        .filter { it.isNotEmpty() }
 }
 
 class OrdersStreamProcessorAdapterFactory {

@@ -11,6 +11,17 @@ interface BasePositionsStreamProcessor {
     val accounts: List<String>
 }
 
+fun List<BasePositionsStreamProcessor>.toHandlersByAccount() =
+    associateBy(
+        keySelector = { it.accounts },
+        valueTransform = { it }
+    ).transformMap()
+
+private fun Map<List<String>, BasePositionsStreamProcessor>.transformMap(): Map<String, List<BasePositionsStreamProcessor>> =
+    flatMap { (keys, value) ->
+        keys.map { key -> key to value }
+    }.groupBy({ it.first }, { it.second })
+
 interface BlockingPositionsStreamProcessorAdapter : BasePositionsStreamProcessor {
     fun process(positionsStreamResponse: PositionsStreamResponse)
 }

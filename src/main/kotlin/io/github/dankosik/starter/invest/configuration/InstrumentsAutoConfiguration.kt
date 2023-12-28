@@ -1,6 +1,10 @@
 package io.github.dankosik.starter.invest.configuration
 
-import io.github.dankosik.starter.invest.annotation.marketdata.*
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTrade
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStatus
 import io.github.dankosik.starter.invest.annotation.operation.HandlePortfolio
 import io.github.dankosik.starter.invest.annotation.operation.HandlePosition
 import io.github.dankosik.starter.invest.annotation.order.HandleOrder
@@ -12,6 +16,21 @@ import io.github.dankosik.starter.invest.contract.marketdata.trade.getTradesHand
 import io.github.dankosik.starter.invest.contract.operation.portfolio.getPortfolioHandlers
 import io.github.dankosik.starter.invest.contract.operation.positions.getPositionHandlers
 import io.github.dankosik.starter.invest.contract.orders.getOrderHandlers
+import io.github.dankosik.starter.invest.exception.CommonException
+import io.github.dankosik.starter.invest.exception.ErrorCode
+import io.github.dankosik.starter.invest.extension.awaitSingle
+import io.github.dankosik.starter.invest.processor.marketdata.BaseCandleStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.BaseLastPriceStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.BaseOrderBookStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.BaseTradeStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.BaseTradingStatusStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.extractInstruments
+import io.github.dankosik.starter.invest.processor.operation.BasePortfolioStreamProcessor
+import io.github.dankosik.starter.invest.processor.operation.BasePositionsStreamProcessor
+import io.github.dankosik.starter.invest.processor.order.BaseOrdersStreamProcessor
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -19,14 +38,40 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import ru.tinkoff.piapi.contract.v1.InstrumentStatus
 import ru.tinkoff.piapi.contract.v1.SubscriptionInterval
+import ru.tinkoff.piapi.core.InstrumentsService
 
 @Configuration(proxyBeanMethods = false)
-@AutoConfigureAfter(name = ["tickerToUidMap"])
+@AutoConfigureAfter(StreamProcessorsAutoConfiguration::class)
 class InstrumentsAutoConfiguration(
     private val applicationContext: ApplicationContext,
-    private val tickerToUidMap: Map<String, String>
+    private val tickerToUidMap: Map<String, String>,
+    private val instrumentsServices: List<InstrumentsService>,
+    private val baseMarketDataStreamProcessors: List<BaseMarketDataStreamProcessor>,
+    private val baseCandleStreamProcessors: List<BaseCandleStreamProcessor>,
+    private val baseOrdersStreamProcessors: List<BaseOrdersStreamProcessor>,
 ) {
+
+    private val instrumentsService = instrumentsServices.first()
+
+    private val newTickerToUidMap = tickerToUidMap.toMutableMap()
+
+
+    init {
+        runBlocking {
+            (baseMarketDataStreamProcessors.map { it.tickers } +
+                    baseCandleStreamProcessors.map { it.tickers } +
+                    baseOrdersStreamProcessors.map { it.tickers })
+                .flatten().distinct().forEach { ticker ->
+                    launch {
+                        if (newTickerToUidMap[ticker] == null) {
+                            newTickerToUidMap[ticker] = getUidByTicker(ticker)
+                        }
+                    }
+                }
+        }
+    }
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -36,7 +81,13 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleOrderBook::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleOrderBook()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseOrderBookStreamProcessor::class.java).values.map {
+                    it.extractInstruments(
+                        newTickerToUidMap
+                    )
+                }
+                    .flatten().toSet()
 
     @Bean("instrumentsOrderBook")
     @ConditionalOnMissingBean(name = ["instrumentsOrderBook"])
@@ -47,7 +98,13 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleOrderBook::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleOrderBook()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseOrderBookStreamProcessor::class.java).values.map {
+                    it.extractInstruments(
+                        newTickerToUidMap
+                    )
+                }
+                    .flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -57,7 +114,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleTradingStatus::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTradingStatus()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map {
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
 
     @Bean("instrumentsTradingStatus")
@@ -69,7 +129,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleTradingStatus::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTradingStatus()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map {
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -79,7 +142,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleLastPrice::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleLastPrice()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map {
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
 
     @Bean("instrumentsLastPrice")
@@ -91,7 +157,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleLastPrice::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleLastPrice()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map {
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -99,6 +168,16 @@ class InstrumentsAutoConfiguration(
         val result = mutableMapOf<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>>()
         val candleBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
+        applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
+            it.extractInstruments(newTickerToUidMap)
+        }.forEach { extractInstrumentFromCandle ->
+            extractInstrumentFromCandle.second.forEach {
+                result[extractInstrumentFromCandle.first]?.add(it)
+                    ?: run {
+                        result[extractInstrumentFromCandle.first] = mutableListOf(it)
+                    }
+            }
+        }
         candleBookHandlers.forEach { bean ->
             val annotation = bean.javaClass.getAnnotation(HandleCandle::class.java)
             if (!annotation.sandboxOnly) {
@@ -120,6 +199,16 @@ class InstrumentsAutoConfiguration(
         val result = mutableMapOf<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>>()
         val candleBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
+        applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
+            it.extractInstruments(newTickerToUidMap)
+        }.forEach { extractInstrumentFromCandle ->
+            extractInstrumentFromCandle.second.forEach {
+                result[extractInstrumentFromCandle.first]?.add(it)
+                    ?: run {
+                        result[extractInstrumentFromCandle.first] = mutableListOf(it)
+                    }
+            }
+        }
         candleBookHandlers.forEach { bean ->
             val annotation = bean.javaClass.getAnnotation(HandleCandle::class.java)
             if (!annotation.sandboxOnly) {
@@ -142,7 +231,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleTrade::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTrades()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseTradeStreamProcessor::class.java).values.map {
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -152,7 +244,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandlePortfolio::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.account
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BasePortfolioStreamProcessor::class.java).values.map {
+                    it.accounts
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -162,7 +257,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandlePosition::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.account
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BasePositionsStreamProcessor::class.java).values.map {
+                    it.accounts
+                }.flatten().toSet()
 
     @Bean("instrumentsTrades")
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
@@ -173,7 +271,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleTrade::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTrades()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseTradeStreamProcessor::class.java).values.map {
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
     @Bean("accountsPortfolio")
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
@@ -184,7 +285,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandlePortfolio::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.account
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BasePortfolioStreamProcessor::class.java).values.map {
+                    it.accounts
+                }.flatten().toSet()
 
     @Bean("accountsPositions")
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
@@ -195,7 +299,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandlePosition::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.account
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BasePositionsStreamProcessor::class.java).values.map {
+                    it.accounts
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -205,7 +312,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleOrder::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.account
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseOrdersStreamProcessor::class.java).values.map {
+                    it.accounts
+                }.flatten().toSet()
 
     @Bean("accountsOrders")
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
@@ -216,7 +326,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleOrder::class.java)?.takeIf { annotation ->
                     !annotation.sandboxOnly
                 }?.account
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseOrdersStreamProcessor::class.java).values.map {
+                    it.accounts
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
@@ -226,7 +339,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleTrade::class.java)?.takeIf { annotation ->
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTrades()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseTradeStreamProcessor::class.java).values.map {
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
@@ -236,7 +352,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleTradingStatus::class.java)?.takeIf { annotation ->
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTradingStatus()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map {
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
 
     @Bean
@@ -247,7 +366,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleOrderBook::class.java)?.takeIf { annotation ->
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleOrderBook()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseOrderBookStreamProcessor::class.java).values.map {
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
 
     @Bean
@@ -258,7 +380,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleLastPrice::class.java)?.takeIf { annotation ->
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleLastPrice()
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map {
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
@@ -266,6 +391,16 @@ class InstrumentsAutoConfiguration(
         val result = mutableMapOf<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>>()
         val candleBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
+        applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
+            it.extractInstruments(newTickerToUidMap)
+        }.forEach { extractInstrumentFromCandle ->
+            extractInstrumentFromCandle.second.forEach {
+                result[extractInstrumentFromCandle.first]?.add(it)
+                    ?: run {
+                        result[extractInstrumentFromCandle.first] = mutableListOf(it)
+                    }
+            }
+        }
         candleBookHandlers.forEach { bean ->
             val annotation = bean.javaClass.getAnnotation(HandleCandle::class.java)
             if (annotation.sandboxOnly) {
@@ -287,7 +422,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandlePortfolio::class.java)?.takeIf { annotation ->
                     annotation.sandboxOnly
                 }?.account
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BasePortfolioStreamProcessor::class.java).values.map {
+                    it.accounts
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
@@ -297,7 +435,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandlePosition::class.java)?.takeIf { annotation ->
                     annotation.sandboxOnly
                 }?.account
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BasePositionsStreamProcessor::class.java).values.map {
+                    it.accounts
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
@@ -307,7 +448,10 @@ class InstrumentsAutoConfiguration(
                 it.javaClass.getAnnotation(HandleOrder::class.java)?.takeIf { annotation ->
                     annotation.sandboxOnly
                 }?.account
-            }.toSet()
+            }.toSet() +
+                applicationContext.getBeansOfType(BaseOrdersStreamProcessor::class.java).values.map {
+                    it.accounts
+                }.flatten().toSet()
 
 
     private fun HandleTrade.extractInstrumentFromHandleTrades(): String = when {
@@ -357,6 +501,21 @@ class InstrumentsAutoConfiguration(
         val instrumentId: String,
         val waitingClose: Boolean
     )
+
+    private suspend fun getUidByTicker(ticker: String): String =
+        instrumentsService.getFutures(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+            .find { it.ticker == ticker }?.uid
+            ?: instrumentsService.getShares(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+                .find { it.ticker == ticker }?.uid
+            ?: instrumentsService.getCurrencies(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+                .find { it.ticker == ticker }?.uid
+            ?: instrumentsService.getBonds(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+                .find { it.ticker == ticker }?.uid
+            ?: instrumentsService.getEtfs(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+                .find { it.ticker == ticker }?.uid
+            ?: instrumentsService.getOptions(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
+                .find { it.ticker == ticker }?.uid
+            ?: throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { "Instrument by ticker: $ticker is not found" } }
 
     private companion object : KLogging()
 }

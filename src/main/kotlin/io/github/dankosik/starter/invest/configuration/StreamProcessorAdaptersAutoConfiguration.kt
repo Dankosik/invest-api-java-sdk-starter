@@ -22,7 +22,7 @@ import io.github.dankosik.starter.invest.contract.marketdata.trade.BlockingTrade
 import io.github.dankosik.starter.invest.contract.marketdata.trade.CoroutineTradeHandler
 import io.github.dankosik.starter.invest.exception.CommonException
 import io.github.dankosik.starter.invest.exception.ErrorCode
-import io.github.dankosik.starter.invest.processor.marketdata.BaseCandleStreamProcessor
+import io.github.dankosik.starter.invest.extension.awaitSingle
 import io.github.dankosik.starter.invest.processor.marketdata.BaseLastPriceStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.BaseOrderBookStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.BaseTradeStreamProcessor
@@ -36,15 +36,21 @@ import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketD
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.CoroutineMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.toMarketDataProcessor
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import mu.KLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import ru.tinkoff.piapi.contract.v1.InstrumentStatus
+import ru.tinkoff.piapi.core.InstrumentsService
 
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureBefore(StreamProcessorsAutoConfiguration::class)
 class StreamProcessorAdaptersAutoConfiguration(
-    private val applicationContext: ApplicationContext
+    private val applicationContext: ApplicationContext,
 ) {
 
     @Bean
@@ -59,8 +65,7 @@ class StreamProcessorAdaptersAutoConfiguration(
                 createAllTradingStatusStreamProcessorsFromType() +
                 createAllCoroutineMarketDataStreamProcessorAdapters() +
                 createAllAsyncMarketDataStreamProcessorAdapters() +
-                createAllBlockingMarketDataStreamProcessorAdapters() +
-                createAllCandleStreamProcessorsFromType()
+                createAllBlockingMarketDataStreamProcessorAdapters()
 
     private fun createAllCoroutineMarketDataStreamProcessorAdapters(): List<BaseMarketDataStreamProcessor> =
         applicationContext.getBeansOfType(CoroutineMarketDataStreamProcessorAdapter::class.java).values.toList()
@@ -179,9 +184,6 @@ class StreamProcessorAdaptersAutoConfiguration(
     private fun createAllLastPriceStreamProcessorsFromType(): List<BaseMarketDataStreamProcessor> =
         applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map { it.toMarketDataProcessor() }
 
-    private fun createAllCandleStreamProcessorsFromType(): List<BaseMarketDataStreamProcessor> =
-        applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map { it.toMarketDataProcessor() }
-
     private fun createAllTradingStatusStreamProcessors() =
         applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values
             .filterIsInstance<BaseTradingStatusHandler>()
@@ -217,4 +219,6 @@ class StreamProcessorAdaptersAutoConfiguration(
 
     private fun createAllTradingStatusStreamProcessorsFromType(): List<BaseMarketDataStreamProcessor> =
         applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map { it.toMarketDataProcessor() }
+
+    private companion object : KLogging()
 }

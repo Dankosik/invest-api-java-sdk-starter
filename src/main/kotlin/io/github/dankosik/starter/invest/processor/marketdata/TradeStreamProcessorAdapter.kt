@@ -29,6 +29,14 @@ interface CoroutineTradeStreamProcessorAdapter : BaseTradeStreamProcessor {
     suspend fun process(trade: Trade)
 }
 
+fun BaseTradeStreamProcessor.extractInstruments(sourceTickerMap: Map<String, String>): List<String> {
+    val map = tickers.mapNotNull { ticker ->
+        sourceTickerMap[ticker]
+    }
+    return (map + figies + instruemntUids)
+        .filter { it.isNotEmpty() }
+}
+
 class TradeStreamProcessorAdapterFactory {
 
     companion object {

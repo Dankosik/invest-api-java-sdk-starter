@@ -11,6 +11,17 @@ interface BasePortfolioStreamProcessor {
     val accounts: List<String>
 }
 
+fun List<BasePortfolioStreamProcessor>.toHandlersByAccount() =
+    associateBy(
+        keySelector = { it.accounts },
+        valueTransform = { it }
+    ).transformMap()
+
+private fun Map<List<String>, BasePortfolioStreamProcessor>.transformMap(): Map<String, List<BasePortfolioStreamProcessor>> =
+    flatMap { (keys, value) ->
+        keys.map { key -> key to value }
+    }.groupBy({ it.first }, { it.second })
+
 interface BlockingPortfolioStreamProcessorAdapter : BasePortfolioStreamProcessor {
     fun process(portfolioStreamResponse: PortfolioStreamResponse)
 }

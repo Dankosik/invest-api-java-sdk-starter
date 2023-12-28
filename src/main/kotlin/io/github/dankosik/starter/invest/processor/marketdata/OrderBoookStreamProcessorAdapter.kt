@@ -30,6 +30,14 @@ interface CoroutineOrderBookStreamProcessorAdapter : BaseOrderBookStreamProcesso
     suspend fun process(orderBook: OrderBook)
 }
 
+fun BaseOrderBookStreamProcessor.extractInstruments(sourceTickerMap: Map<String, String>): List<String> {
+    val map = tickers.mapNotNull { ticker ->
+        sourceTickerMap[ticker]
+    }
+    return (map + figies + instruemntUids)
+        .filter { it.isNotEmpty() }
+}
+
 class OrderBookStreamProcessorAdapterFactory {
 
     companion object {

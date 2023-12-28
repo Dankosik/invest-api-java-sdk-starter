@@ -35,15 +35,51 @@ import io.github.dankosik.starter.invest.contract.orders.CoroutineOrderHandler
 import io.github.dankosik.starter.invest.exception.CommonException
 import io.github.dankosik.starter.invest.exception.ErrorCode
 import io.github.dankosik.starter.invest.extension.awaitSingle
+import io.github.dankosik.starter.invest.extension.extractAfterCandleHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractAfterCandleHandlersByTicker
+import io.github.dankosik.starter.invest.extension.extractAfterCandleHandlersByUid
+import io.github.dankosik.starter.invest.extension.extractAfterLastPriceHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractAfterLastPriceHandlersByTicker
+import io.github.dankosik.starter.invest.extension.extractAfterLastPriceHandlersByUid
+import io.github.dankosik.starter.invest.extension.extractAfterOrderBookHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractAfterOrderBookHandlersByTicker
+import io.github.dankosik.starter.invest.extension.extractAfterOrderBookHandlersByUid
 import io.github.dankosik.starter.invest.extension.extractAfterTradesHandlersByFigi
 import io.github.dankosik.starter.invest.extension.extractAfterTradesHandlersByTicker
 import io.github.dankosik.starter.invest.extension.extractAfterTradesHandlersByUid
+import io.github.dankosik.starter.invest.extension.extractAfterTradingStatusHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractAfterTradingStatusHandlersByTicker
+import io.github.dankosik.starter.invest.extension.extractAfterTradingStatusHandlersByUid
+import io.github.dankosik.starter.invest.extension.extractBeforeCandleByTicker
+import io.github.dankosik.starter.invest.extension.extractBeforeCandleHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractBeforeCandleHandlersByUid
+import io.github.dankosik.starter.invest.extension.extractBeforeLastPriceByTicker
+import io.github.dankosik.starter.invest.extension.extractBeforeLastPriceHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractBeforeLastPriceHandlersByUid
+import io.github.dankosik.starter.invest.extension.extractBeforeOrderBookByTicker
+import io.github.dankosik.starter.invest.extension.extractBeforeOrderBookHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractBeforeOrderBookHandlersByUid
 import io.github.dankosik.starter.invest.extension.extractBeforeTradesHandlersByFigi
 import io.github.dankosik.starter.invest.extension.extractBeforeTradesHandlersByTicker
 import io.github.dankosik.starter.invest.extension.extractBeforeTradesHandlersByUid
+import io.github.dankosik.starter.invest.extension.extractBeforeTradingStatusByTicker
+import io.github.dankosik.starter.invest.extension.extractBeforeTradingStatusHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractBeforeTradingStatusHandlersByUid
+import io.github.dankosik.starter.invest.extension.extractCommonAfterCandleHandlers
+import io.github.dankosik.starter.invest.extension.extractCommonAfterLastPriceHandlers
+import io.github.dankosik.starter.invest.extension.extractCommonAfterOrderBookHandlers
 import io.github.dankosik.starter.invest.extension.extractCommonAfterTradesHandlers
+import io.github.dankosik.starter.invest.extension.extractCommonAfterTradingStatusHandlers
+import io.github.dankosik.starter.invest.extension.extractCommonBeforeCandleHandlers
+import io.github.dankosik.starter.invest.extension.extractCommonBeforeLastPriceHandlers
+import io.github.dankosik.starter.invest.extension.extractCommonBeforeOrderBookHandlers
 import io.github.dankosik.starter.invest.extension.extractCommonBeforeTradesHandlers
+import io.github.dankosik.starter.invest.extension.extractCommonBeforeTradingStatusHandlers
 import io.github.dankosik.starter.invest.extension.extractCommonHandlers
+import io.github.dankosik.starter.invest.processor.marketdata.AsyncCandleStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.BaseCandleStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.BlockingCandleStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.marketdata.CoroutineCandleStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.AsyncMarketDataStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BlockingMarketDataStreamProcessorAdapter
@@ -56,6 +92,7 @@ import io.github.dankosik.starter.invest.processor.operation.BlockingPortfolioSt
 import io.github.dankosik.starter.invest.processor.operation.BlockingPositionsStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.operation.CoroutinePortfolioStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.operation.CoroutinePositionsStreamProcessorAdapter
+import io.github.dankosik.starter.invest.processor.operation.toHandlersByAccount
 import io.github.dankosik.starter.invest.processor.order.AsyncOrdersStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.order.BaseOrdersStreamProcessor
 import io.github.dankosik.starter.invest.processor.order.BlockingOrdersStreamProcessorAdapter
@@ -106,6 +143,8 @@ class StreamProcessorsAutoConfiguration(
     private val tickerToUidMap: Map<String, String>,
     @Qualifier("baseMarketDataStreamProcessor")
     streamProcessors: List<BaseMarketDataStreamProcessor>,
+    baseOrdersStreamProcessors: List<BaseOrdersStreamProcessor>,
+    baseCandleStreamProcessors: List<BaseCandleStreamProcessor>,
     private val instrumentsServices: List<InstrumentsService>,
 ) {
     private val instrumentsService = instrumentsServices.first()
@@ -120,6 +159,8 @@ class StreamProcessorsAutoConfiguration(
     val ordersHandlerFunctionMap = mutableMapOf<BaseOrderHandler, (OrderTrades) -> Unit>()
     val baseMarketDataStreamProcessorFunctionMap =
         mutableMapOf<BaseMarketDataStreamProcessor, (MarketDataResponse) -> Unit>()
+    val baseCandleStreamProcessorFunctionMap =
+        mutableMapOf<BaseCandleStreamProcessor, (Candle) -> Unit>()
     val baseCustomPortfolioStreamProcessorFunctionMap =
         mutableMapOf<BasePortfolioStreamProcessor, (PortfolioStreamResponse) -> Unit>()
     val basePositionsStreamProcessorFunctionMap =
@@ -132,6 +173,33 @@ class StreamProcessorsAutoConfiguration(
     init {
         runBlocking {
             streamProcessors.filter { it.tickers.isEmpty() }
+                .map { it.tickers }
+                .map { it.toTypedArray() }
+                .toTypedArray()
+                .flatten()
+                .forEach { ticker ->
+                    launch {
+                        if (newTickerToUidMap[ticker] == null) {
+                            val uId = getUidByTicker(ticker)
+                            newTickerToUidMap[ticker] = uId
+                        }
+                    }
+                }
+
+            baseOrdersStreamProcessors.filter { it.tickers.isEmpty() }
+                .map { it.tickers }
+                .map { it.toTypedArray() }
+                .toTypedArray()
+                .flatten()
+                .forEach { ticker ->
+                    launch {
+                        if (newTickerToUidMap[ticker] == null) {
+                            val uId = getUidByTicker(ticker)
+                            newTickerToUidMap[ticker] = uId
+                        }
+                    }
+                }
+            baseCandleStreamProcessors.filter { it.tickers.isEmpty() }
                 .map { it.tickers }
                 .map { it.toTypedArray() }
                 .toTypedArray()
@@ -245,14 +313,14 @@ class StreamProcessorsAutoConfiguration(
                     beforeHandlersByUid?.get(trade.instrumentUid)?.runProcessors(response)
                     beforeHandlersByFigi?.get(trade.figi)?.runProcessors(response)
                     val handlers = tradesHandlerRegistry.getHandlers(trade)
+                    if (!commonTradesHandlers.isNullOrEmpty()) {
+                        DEFAULT_SCOPE.launch {
+                            commonTradesHandlers.runProcessors(response)
+                        }
+                    }
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleTrade(trade)
                     } else {
-                        if (!commonTradesHandlers.isNullOrEmpty()) {
-                            DEFAULT_SCOPE.launch {
-                                commonTradesHandlers.runProcessors(response)
-                            }
-                        }
                         handlers?.forEach {
                             DEFAULT_SCOPE.launch {
                                 it.handleTrade(trade)
@@ -293,15 +361,29 @@ class StreamProcessorsAutoConfiguration(
         }
 
         else -> {
-            val beforeOrderBookHandlers =
-                streamProcessors.filter { it.beforeEachOrderBookHandler }.takeIf { it.isNotEmpty() }
-            val afterOrderBookHandlers =
-                streamProcessors.filter { it.afterEachOrderBookHandler }.takeIf { it.isNotEmpty() }
+            val commonHandlers = streamProcessors.extractCommonHandlers()
+            val commonBeforeOrderBookHandlers = streamProcessors.extractCommonBeforeOrderBookHandlers()
+            val commonAfterOrderBookHandlers = streamProcessors.extractCommonAfterOrderBookHandlers()
+
+            val beforeHandlersByTicker = streamProcessors.extractBeforeOrderBookByTicker(newTickerToUidMap)
+            val afterHandlersByTicker = streamProcessors.extractAfterOrderBookHandlersByTicker(newTickerToUidMap)
+            val beforeHandlersByFigi = streamProcessors.extractBeforeOrderBookHandlersByFigi()
+            val afterHandlersByFigi = streamProcessors.extractAfterOrderBookHandlersByFigi()
+            val beforeHandlersByUid = streamProcessors.extractBeforeOrderBookHandlersByUid()
+            val afterHandlersByUid = streamProcessors.extractAfterOrderBookHandlersByUid()
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasOrderbook()) {
-                    beforeOrderBookHandlers?.runProcessors(response)
+                    commonBeforeOrderBookHandlers?.runProcessors(response)
                     val orderbook = response.orderbook
+                    beforeHandlersByTicker?.get(orderbook.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByUid?.get(orderbook.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByFigi?.get(orderbook.figi)?.runProcessors(response)
                     val handlers = orderBookHandlerRegistry.getHandlers(orderbook)
+                    if (!commonHandlers.isNullOrEmpty()) {
+                        DEFAULT_SCOPE.launch {
+                            commonHandlers.runProcessors(response)
+                        }
+                    }
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleOrderBook(orderbook)
                     } else {
@@ -311,7 +393,10 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
-                    afterOrderBookHandlers?.runProcessors(response)
+                    commonAfterOrderBookHandlers?.runProcessors(response)
+                    afterHandlersByTicker?.get(orderbook.instrumentUid)?.runProcessors(response)
+                    afterHandlersByFigi?.get(orderbook.figi)?.runProcessors(response)
+                    afterHandlersByUid?.get(orderbook.instrumentUid)?.runProcessors(response)
                 }
             }
         }
@@ -342,15 +427,29 @@ class StreamProcessorsAutoConfiguration(
         }
 
         else -> {
-            val beforeLastPriceHandlers =
-                streamProcessors.filter { it.beforeEachLastPriceHandler }.takeIf { it.isNotEmpty() }
-            val afterLastPriceHandlers =
-                streamProcessors.filter { it.afterEachLastPriceHandler }.takeIf { it.isNotEmpty() }
+            val commonHandlers = streamProcessors.extractCommonHandlers()
+            val commonBeforeLastPriceHandlers = streamProcessors.extractCommonBeforeLastPriceHandlers()
+            val commonAfterLastPriceHandlers = streamProcessors.extractCommonAfterLastPriceHandlers()
+
+            val beforeHandlersByTicker = streamProcessors.extractBeforeLastPriceByTicker(newTickerToUidMap)
+            val afterHandlersByTicker = streamProcessors.extractAfterLastPriceHandlersByTicker(newTickerToUidMap)
+            val beforeHandlersByFigi = streamProcessors.extractBeforeLastPriceHandlersByFigi()
+            val afterHandlersByFigi = streamProcessors.extractAfterLastPriceHandlersByFigi()
+            val beforeHandlersByUid = streamProcessors.extractBeforeLastPriceHandlersByUid()
+            val afterHandlersByUid = streamProcessors.extractAfterLastPriceHandlersByUid()
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasLastPrice()) {
-                    beforeLastPriceHandlers?.runProcessors(response)
+                    commonBeforeLastPriceHandlers?.runProcessors(response)
                     val lastPrice = response.lastPrice
+                    beforeHandlersByTicker?.get(lastPrice.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByUid?.get(lastPrice.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByFigi?.get(lastPrice.figi)?.runProcessors(response)
                     val handlers = lastPriceHandlerRegistry.getHandlers(lastPrice)
+                    if (!commonHandlers.isNullOrEmpty()) {
+                        DEFAULT_SCOPE.launch {
+                            commonHandlers.runProcessors(response)
+                        }
+                    }
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleLastPrice(lastPrice)
                     } else {
@@ -360,7 +459,10 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
-                    afterLastPriceHandlers?.runProcessors(response)
+                    commonAfterLastPriceHandlers?.runProcessors(response)
+                    afterHandlersByTicker?.get(lastPrice.instrumentUid)?.runProcessors(response)
+                    afterHandlersByFigi?.get(lastPrice.figi)?.runProcessors(response)
+                    afterHandlersByUid?.get(lastPrice.instrumentUid)?.runProcessors(response)
                 }
 
             }
@@ -392,15 +494,29 @@ class StreamProcessorsAutoConfiguration(
         }
 
         else -> {
-            val beforeTradingStatusHandlers =
-                streamProcessors.filter { it.beforeEachTradingStatusHandler }.takeIf { it.isNotEmpty() }
-            val afterTradingStatusHandlers =
-                streamProcessors.filter { it.afterEachTradingStatusHandler }.takeIf { it.isNotEmpty() }
+            val commonHandlers = streamProcessors.extractCommonHandlers()
+            val commonBeforeTradingStatusHandlers = streamProcessors.extractCommonBeforeTradingStatusHandlers()
+            val commonAfterTradingStatusHandlers = streamProcessors.extractCommonAfterTradingStatusHandlers()
+
+            val beforeHandlersByTicker = streamProcessors.extractBeforeTradingStatusByTicker(newTickerToUidMap)
+            val afterHandlersByTicker = streamProcessors.extractAfterTradingStatusHandlersByTicker(newTickerToUidMap)
+            val beforeHandlersByFigi = streamProcessors.extractBeforeTradingStatusHandlersByFigi()
+            val afterHandlersByFigi = streamProcessors.extractAfterTradingStatusHandlersByFigi()
+            val beforeHandlersByUid = streamProcessors.extractBeforeTradingStatusHandlersByUid()
+            val afterHandlersByUid = streamProcessors.extractAfterTradingStatusHandlersByUid()
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasTradingStatus()) {
-                    beforeTradingStatusHandlers?.runProcessors(response)
+                    commonBeforeTradingStatusHandlers?.runProcessors(response)
                     val tradingStatus = response.tradingStatus
+                    beforeHandlersByTicker?.get(tradingStatus.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByUid?.get(tradingStatus.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByFigi?.get(tradingStatus.figi)?.runProcessors(response)
                     val handlers = tradingStatusHandlerRegistry.getHandlers(tradingStatus)
+                    if (!commonHandlers.isNullOrEmpty()) {
+                        DEFAULT_SCOPE.launch {
+                            commonHandlers.runProcessors(response)
+                        }
+                    }
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleTradingStatus(tradingStatus)
                     } else {
@@ -410,7 +526,10 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
-                    afterTradingStatusHandlers?.runProcessors(response)
+                    commonAfterTradingStatusHandlers?.runProcessors(response)
+                    afterHandlersByTicker?.get(tradingStatus.instrumentUid)?.runProcessors(response)
+                    afterHandlersByFigi?.get(tradingStatus.figi)?.runProcessors(response)
+                    afterHandlersByUid?.get(tradingStatus.instrumentUid)?.runProcessors(response)
                 }
             }
         }
@@ -420,13 +539,19 @@ class StreamProcessorsAutoConfiguration(
     internal fun candleStreamProcessor(
         candleHandlerRegistry: CandleHandlerRegistry,
         @Qualifier("baseMarketDataStreamProcessor")
-        streamProcessors: List<BaseMarketDataStreamProcessor>
+        streamProcessors: List<BaseMarketDataStreamProcessor>,
+        baseCandleStreamProcessors: List<BaseCandleStreamProcessor>,
     ): StreamProcessor<MarketDataResponse> = when {
         streamProcessors.isEmpty() && candleHandlerRegistry.commonHandlersBySubscription.isEmpty() -> {
+            candleHandlerRegistry.addIntervalToHandlerMap(baseCandleStreamProcessors, newTickerToUidMap)
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasCandle()) {
                     val candle = response.candle
                     val handlers = candleHandlerRegistry.getHandlers(candle)
+                    val handlersFromFactory = candleHandlerRegistry.getHandlersFromFactory(candle)
+                    handlersFromFactory?.filter { it.beforeEachCandleHandler }?.runProcessors(candle)
+                    handlersFromFactory?.filter { !it.beforeEachCandleHandler && !it.afterEachCandleHandler }
+                        ?.runProcessors(candle)
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleCandle(candle)
                     } else {
@@ -436,14 +561,20 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
+                    handlersFromFactory?.filter { it.afterEachCandleHandler }?.runProcessors(candle)
                 }
             }
         }
 
         streamProcessors.isEmpty() && candleHandlerRegistry.commonHandlersBySubscription.isNotEmpty() -> {
+            candleHandlerRegistry.addIntervalToHandlerMap(baseCandleStreamProcessors, newTickerToUidMap)
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasCandle()) {
                     val candle = response.candle
+                    val handlersFromFactory = candleHandlerRegistry.getHandlersFromFactory(candle)
+                    handlersFromFactory?.filter { it.beforeEachCandleHandler }?.runProcessors(candle)
+                    handlersFromFactory?.filter { !it.beforeEachCandleHandler && !it.afterEachCandleHandler }
+                        ?.runProcessors(candle)
                     DEFAULT_SCOPE.launch {
                         val handlers = candleHandlerRegistry.getHandlers(candle)
                         if (handlers != null && handlers.size == 1) {
@@ -461,19 +592,39 @@ class StreamProcessorsAutoConfiguration(
                             it.handleCandle(candle)
                         }
                     }
+                    handlersFromFactory?.filter { it.afterEachCandleHandler }?.runProcessors(candle)
                 }
             }
         }
 
         streamProcessors.isNotEmpty() && candleHandlerRegistry.commonHandlersBySubscription.isNotEmpty() -> {
-            val beforeCandleHandlers =
-                streamProcessors.filter { it.beforeEachCandleHandler }.takeIf { it.isNotEmpty() }
-            val afterCandleHandlers =
-                streamProcessors.filter { it.afterEachCandleHandler }.takeIf { it.isNotEmpty() }
+            candleHandlerRegistry.addIntervalToHandlerMap(baseCandleStreamProcessors, newTickerToUidMap)
+            val commonHandlers = streamProcessors.extractCommonHandlers()
+            val commonBeforeTradingStatusHandlers = streamProcessors.extractCommonBeforeCandleHandlers()
+            val commonAfterTradingStatusHandlers = streamProcessors.extractCommonAfterCandleHandlers()
+
+            val beforeHandlersByTicker = streamProcessors.extractBeforeCandleByTicker(newTickerToUidMap)
+            val afterHandlersByTicker = streamProcessors.extractAfterCandleHandlersByTicker(newTickerToUidMap)
+            val beforeHandlersByFigi = streamProcessors.extractBeforeCandleHandlersByFigi()
+            val afterHandlersByFigi = streamProcessors.extractAfterCandleHandlersByFigi()
+            val beforeHandlersByUid = streamProcessors.extractBeforeCandleHandlersByUid()
+            val afterHandlersByUid = streamProcessors.extractAfterCandleHandlersByUid()
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasCandle()) {
-                    beforeCandleHandlers?.runProcessors(response)
+                    commonBeforeTradingStatusHandlers?.runProcessors(response)
                     val candle = response.candle
+                    val handlersFromFactory = candleHandlerRegistry.getHandlersFromFactory(candle)
+                    handlersFromFactory?.filter { it.beforeEachCandleHandler }?.runProcessors(candle)
+                    beforeHandlersByTicker?.get(candle.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByUid?.get(candle.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByFigi?.get(candle.figi)?.runProcessors(response)
+                    handlersFromFactory?.filter { !it.beforeEachCandleHandler && !it.afterEachCandleHandler }
+                        ?.runProcessors(candle)
+                    if (!commonHandlers.isNullOrEmpty()) {
+                        DEFAULT_SCOPE.launch {
+                            commonHandlers.runProcessors(response)
+                        }
+                    }
                     DEFAULT_SCOPE.launch {
                         val handlers = candleHandlerRegistry.getHandlers(candle)
                         if (handlers != null && handlers.size == 1) {
@@ -491,21 +642,49 @@ class StreamProcessorsAutoConfiguration(
                             it.handleCandle(candle)
                         }
                     }
-                    afterCandleHandlers?.runProcessors(response)
+                    handlersFromFactory?.filter { it.afterEachCandleHandler }?.runProcessors(candle)
+                    commonAfterTradingStatusHandlers?.runProcessors(response)
+                    afterHandlersByTicker?.get(candle.instrumentUid)?.runProcessors(response)
+                    afterHandlersByFigi?.get(candle.figi)?.runProcessors(response)
+                    afterHandlersByUid?.get(candle.instrumentUid)?.runProcessors(response)
                 }
             }
         }
 
         else -> {
-            val beforeCandleHandlers =
-                streamProcessors.filter { it.beforeEachCandleHandler }.takeIf { it.isNotEmpty() }
-            val afterCandleHandlers =
-                streamProcessors.filter { it.afterEachCandleHandler }.takeIf { it.isNotEmpty() }
+            candleHandlerRegistry.addIntervalToHandlerMap(baseCandleStreamProcessors, newTickerToUidMap)
+            val commonHandlers = streamProcessors.extractCommonHandlers()
+            val commonBeforeTradingStatusHandlers = streamProcessors.extractCommonBeforeCandleHandlers()
+            val commonAfterTradingStatusHandlers = streamProcessors.extractCommonAfterCandleHandlers()
+
+            val beforeHandlersByTicker = streamProcessors.extractBeforeCandleByTicker(newTickerToUidMap)
+            val afterHandlersByTicker = streamProcessors.extractAfterCandleHandlersByTicker(newTickerToUidMap)
+            val beforeHandlersByFigi = streamProcessors.extractBeforeCandleHandlersByFigi()
+            val afterHandlersByFigi = streamProcessors.extractAfterCandleHandlersByFigi()
+            val beforeHandlersByUid = streamProcessors.extractBeforeCandleHandlersByUid()
+            val afterHandlersByUid = streamProcessors.extractAfterCandleHandlersByUid()
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasCandle()) {
-                    beforeCandleHandlers?.runProcessors(response)
+                    commonBeforeTradingStatusHandlers?.runProcessors(response)
                     val candle = response.candle
+                    val handlersFromFactory = candleHandlerRegistry.getHandlersFromFactory(candle)
+                    handlersFromFactory?.filter { it.beforeEachCandleHandler }?.runProcessors(candle)
+                    beforeHandlersByTicker?.get(candle.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByUid?.get(candle.instrumentUid)?.runProcessors(response)
+                    beforeHandlersByFigi?.get(candle.figi)?.runProcessors(response)
+                    handlersFromFactory?.filter { !it.beforeEachCandleHandler && !it.afterEachCandleHandler }
+                        ?.runProcessors(candle)
+                    if (!commonHandlers.isNullOrEmpty()) {
+                        DEFAULT_SCOPE.launch {
+                            commonHandlers.runProcessors(response)
+                        }
+                    }
                     val handlers = candleHandlerRegistry.getHandlers(candle)
+                    if (!commonHandlers.isNullOrEmpty()) {
+                        DEFAULT_SCOPE.launch {
+                            commonHandlers.runProcessors(response)
+                        }
+                    }
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleCandle(candle)
                     } else {
@@ -515,7 +694,12 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
-                    afterCandleHandlers?.runProcessors(response)
+                    candleHandlerRegistry.getHandlersFromFactory(candle)?.runProcessors(candle)
+                    commonAfterTradingStatusHandlers?.runProcessors(response)
+                    handlersFromFactory?.filter { it.beforeEachCandleHandler }?.runProcessors(candle)
+                    afterHandlersByTicker?.get(candle.instrumentUid)?.runProcessors(response)
+                    afterHandlersByFigi?.get(candle.figi)?.runProcessors(response)
+                    afterHandlersByUid?.get(candle.instrumentUid)?.runProcessors(response)
                 }
             }
         }
@@ -574,14 +758,21 @@ class StreamProcessorsAutoConfiguration(
         streamProcessors.isNotEmpty() && portfolioHandlerRegistry.commonHandlersByAccount.isNotEmpty() -> {
             val beforePortfolioHandlers =
                 streamProcessors.filter { it.beforeEachPortfolioHandler }.takeIf { it.isNotEmpty() }
+                    ?.toHandlersByAccount()
             val afterPortfolioHandlers =
                 streamProcessors.filter { it.afterEachPortfolioHandler }.takeIf { it.isNotEmpty() }
+                    ?.toHandlersByAccount()
+
+            val commonPortfolioHandlers =
+                streamProcessors.filter { !it.beforeEachPortfolioHandler && !it.afterEachPortfolioHandler }
+                    .takeIf { it.isNotEmpty() }?.toHandlersByAccount()
             StreamProcessor<PortfolioStreamResponse> { response ->
                 if (response.hasPortfolio()) {
-                    beforePortfolioHandlers?.runProcessors(response)
                     val portfolio = response.portfolio
+                    beforePortfolioHandlers?.get(portfolio.accountId)?.runProcessors(response)
                     DEFAULT_SCOPE.launch {
                         val handlers = portfolioHandlerRegistry.getHandlersByAccountId(portfolio.accountId)
+                        commonPortfolioHandlers?.get(portfolio.accountId)?.runProcessors(response)
                         if (handlers != null && handlers.size == 1) {
                             handlers.first().handlePortfolio(portfolio)
                         } else {
@@ -599,7 +790,7 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
-                    afterPortfolioHandlers?.runProcessors(response)
+                    afterPortfolioHandlers?.get(portfolio.accountId)?.runProcessors(response)
                 }
             }
         }
@@ -607,13 +798,20 @@ class StreamProcessorsAutoConfiguration(
         else -> {
             val beforePortfolioHandlers =
                 streamProcessors.filter { it.beforeEachPortfolioHandler }.takeIf { it.isNotEmpty() }
+                    ?.toHandlersByAccount()
             val afterPortfolioHandlers =
                 streamProcessors.filter { it.afterEachPortfolioHandler }.takeIf { it.isNotEmpty() }
+                    ?.toHandlersByAccount()
+
+            val commonPortfolioHandlers =
+                streamProcessors.filter { !it.beforeEachPortfolioHandler && !it.afterEachPortfolioHandler }
+                    .takeIf { it.isNotEmpty() }?.toHandlersByAccount()
             StreamProcessor<PortfolioStreamResponse> { response ->
                 if (response.hasPortfolio()) {
-                    beforePortfolioHandlers?.runProcessors(response)
                     val portfolio = response.portfolio
+                    beforePortfolioHandlers?.get(portfolio.accountId)?.runProcessors(response)
                     val handlers = portfolioHandlerRegistry.getHandlersByAccountId(portfolio.accountId)
+                    commonPortfolioHandlers?.get(portfolio.accountId)?.runProcessors(response)
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handlePortfolio(portfolio)
                     } else {
@@ -623,7 +821,7 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
-                    afterPortfolioHandlers?.runProcessors(response)
+                    afterPortfolioHandlers?.get(portfolio.accountId)?.runProcessors(response)
                 }
             }
         }
@@ -680,16 +878,23 @@ class StreamProcessorsAutoConfiguration(
         }
 
         streamProcessors.isNotEmpty() && positionsHandlerRegistry.commonHandlersByAccount.isNotEmpty() -> {
-            val beforePositionHandlers =
+            val beforePositionsHandlers =
                 streamProcessors.filter { it.beforeEachPositionHandler }.takeIf { it.isNotEmpty() }
-            val afterPositionHandlers =
+                    ?.toHandlersByAccount()
+            val afterPositionsHandlers =
                 streamProcessors.filter { it.afterEachPositionHandler }.takeIf { it.isNotEmpty() }
+                    ?.toHandlersByAccount()
+
+            val commonPositionsHandlers =
+                streamProcessors.filter { !it.beforeEachPositionHandler && !it.afterEachPositionHandler }
+                    .takeIf { it.isNotEmpty() }?.toHandlersByAccount()
             StreamProcessor<PositionsStreamResponse> { response ->
                 if (response.hasPosition()) {
-                    beforePositionHandlers?.runProcessors(response)
                     val positionData = response.position
+                    beforePositionsHandlers?.get(positionData.accountId)?.runProcessors(response)
                     DEFAULT_SCOPE.launch {
                         val handlers = positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)
+                        commonPositionsHandlers?.get(positionData.accountId)?.runProcessors(response)
                         if (handlers != null && handlers.size == 1) {
                             handlers.first().handlePositions(positionData)
                         } else {
@@ -707,21 +912,28 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
-                    afterPositionHandlers?.runProcessors(response)
+                    afterPositionsHandlers?.get(positionData.accountId)?.runProcessors(response)
                 }
             }
         }
 
         else -> {
-            val beforePositionHandlers =
+            val beforePositionsHandlers =
                 streamProcessors.filter { it.beforeEachPositionHandler }.takeIf { it.isNotEmpty() }
-            val afterPositionHandlers =
+                    ?.toHandlersByAccount()
+            val afterPositionsHandlers =
                 streamProcessors.filter { it.afterEachPositionHandler }.takeIf { it.isNotEmpty() }
+                    ?.toHandlersByAccount()
+
+            val commonPositionsHandlers =
+                streamProcessors.filter { !it.beforeEachPositionHandler && !it.afterEachPositionHandler }
+                    .takeIf { it.isNotEmpty() }?.toHandlersByAccount()
             StreamProcessor<PositionsStreamResponse> { response ->
                 if (response.hasPosition()) {
-                    beforePositionHandlers?.runProcessors(response)
                     val positionData = response.position
+                    beforePositionsHandlers?.get(positionData.accountId)?.runProcessors(response)
                     val handlers = positionsHandlerRegistry.getHandlersByAccountId(positionData.accountId)
+                    commonPositionsHandlers?.get(positionData.accountId)?.runProcessors(response)
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handlePositions(positionData)
                     } else {
@@ -731,7 +943,7 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
-                    afterPositionHandlers?.runProcessors(response)
+                    afterPositionsHandlers?.get(positionData.accountId)?.runProcessors(response)
                 }
             }
         }
@@ -788,16 +1000,16 @@ class StreamProcessorsAutoConfiguration(
         }
 
         streamProcessors.isNotEmpty() && ordersHandlerRegistry.commonHandlersByAccount.isEmpty() -> {
-            val beforeOrdersHandlers =
-                streamProcessors.filter { it.beforeEachOrdersHandler }.takeIf { it.isNotEmpty() }
-            val afterOrdersHandlers =
-                streamProcessors.filter { it.afterEachOrdersHandler }.takeIf { it.isNotEmpty() }
+            ordersHandlerRegistry.addIntervalToHandlerMap(streamProcessors, newTickerToUidMap)
             StreamProcessor<TradesStreamResponse> { response ->
                 if (response.hasOrderTrades()) {
-                    beforeOrdersHandlers?.runProcessors(response)
                     val orderTrades = response.orderTrades
+                    val handlersFromFactory = ordersHandlerRegistry.getHandlersFromFactory(orderTrades)
+                    handlersFromFactory?.filter { it.beforeEachOrdersHandler }?.runProcessors(response)
                     DEFAULT_SCOPE.launch {
                         val handlers = ordersHandlerRegistry.getHandlers(orderTrades)
+                        handlersFromFactory?.filter { !it.beforeEachOrdersHandler && !it.afterEachOrdersHandler }
+                            ?.runProcessors(response)
                         if (handlers != null && handlers.size == 1) {
                             handlers.first().handleOrders(orderTrades)
                         } else {
@@ -815,22 +1027,22 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
-                    afterOrdersHandlers?.runProcessors(response)
+                    handlersFromFactory?.filter { it.afterEachOrdersHandler }?.runProcessors(response)
                 }
             }
         }
 
         else -> {
-            val beforeOrdersHandlers =
-                streamProcessors.filter { it.beforeEachOrdersHandler }.takeIf { it.isNotEmpty() }
-            val afterOrdersHandlers =
-                streamProcessors.filter { it.afterEachOrdersHandler }.takeIf { it.isNotEmpty() }
+            ordersHandlerRegistry.addIntervalToHandlerMap(streamProcessors, newTickerToUidMap)
             StreamProcessor<TradesStreamResponse> { response ->
                 if (response.hasOrderTrades()) {
-                    beforeOrdersHandlers?.runProcessors(response)
                     val orderTrades = response.orderTrades
+                    val handlersFromFactory = ordersHandlerRegistry.getHandlersFromFactory(orderTrades)
+                    handlersFromFactory?.filter { it.beforeEachOrdersHandler }?.runProcessors(response)
                     DEFAULT_SCOPE.launch {
                         val handlers = ordersHandlerRegistry.getHandlers(orderTrades)
+                        handlersFromFactory?.filter { !it.beforeEachOrdersHandler && !it.afterEachOrdersHandler }
+                            ?.runProcessors(response)
                         if (handlers != null && handlers.size == 1) {
                             handlers.first().handleOrders(orderTrades)
                         } else {
@@ -846,7 +1058,7 @@ class StreamProcessorsAutoConfiguration(
                             launch { it.handleOrders(orderTrades) }
                         }
                     }
-                    afterOrdersHandlers?.runProcessors(response)
+                    handlersFromFactory?.filter { it.afterEachOrdersHandler }?.runProcessors(response)
                 }
             }
         }
@@ -981,6 +1193,23 @@ class StreamProcessorsAutoConfiguration(
         }
     }
 
+    private fun BaseCandleStreamProcessor.createFunctionForProcessor(): (Candle) -> Unit =
+        { candle ->
+            when (val candleStreamProcessor = this) {
+                is BlockingCandleStreamProcessorAdapter -> executor?.submit {
+                    candleStreamProcessor.process(candle)
+                } ?: candleStreamProcessor.process(candle)
+
+                is CoroutineCandleStreamProcessorAdapter -> {
+                    DEFAULT_SCOPE.launch {
+                        candleStreamProcessor.process(candle)
+                    }
+                }
+
+                is AsyncCandleStreamProcessorAdapter -> candleStreamProcessor.process(candle)
+            }
+        }
+
     private fun BaseMarketDataStreamProcessor.createFunctionForProcessor(): (MarketDataResponse) -> Unit =
         { marketDataResponse ->
             when (val marketDataStreamProcessor = this) {
@@ -1061,6 +1290,16 @@ class StreamProcessorsAutoConfiguration(
                 streamProcessor.createFunctionForProcessor().also { it.invoke(response) }
         }
     }
+
+    private fun List<BaseCandleStreamProcessor>.runProcessors(
+        candle: Candle,
+    ) = forEach { streamProcessor ->
+        baseCandleStreamProcessorFunctionMap[streamProcessor]?.invoke(candle) ?: run {
+            baseCandleStreamProcessorFunctionMap[streamProcessor] =
+                streamProcessor.createFunctionForProcessor().also { it.invoke(candle) }
+        }
+    }
+
 
     private fun List<BasePortfolioStreamProcessor>.runProcessors(
         response: PortfolioStreamResponse,

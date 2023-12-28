@@ -4,6 +4,7 @@ import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllCandles
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
 import io.github.dankosik.starter.invest.contract.marketdata.candle.BaseCandleHandler
 import io.github.dankosik.starter.invest.contract.marketdata.candle.getCandleHandlers
+import io.github.dankosik.starter.invest.processor.marketdata.BaseCandleStreamProcessor
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.Candle
 import ru.tinkoff.piapi.contract.v1.SubscriptionInterval
@@ -16,6 +17,10 @@ internal class CandleHandlerRegistry(
     private val handlersByInstrumentUid =
         HashMap<SubscriptionInterval, MutableMap<String, MutableList<BaseCandleHandler>>>()
     val commonHandlersBySubscription = HashMap<SubscriptionInterval, MutableList<BaseCandleHandler>>()
+    val commonAdaptersMapByFigi =
+        HashMap<SubscriptionInterval, MutableMap<String, MutableList<BaseCandleStreamProcessor>>>()
+    val commonAdaptersMapByInstrumentUid =
+        HashMap<SubscriptionInterval, MutableMap<String, MutableList<BaseCandleStreamProcessor>>>()
 
     init {
         applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
@@ -32,6 +37,10 @@ internal class CandleHandlerRegistry(
         getHandlersByUidAndInterval(candle.instrumentUid, candle.interval)
             ?: getHandlersByFigiAndInterval(candle.figi, candle.interval)
 
+    fun getHandlersFromFactory(candle: Candle): MutableList<BaseCandleStreamProcessor>? =
+        getHandlersByUidAndIntervalFromFactory(candle.instrumentUid, candle.interval)
+            ?: getHandlersByFigiAndIntervalFromFactory(candle.figi, candle.interval)
+
     fun getCommonHandlers(candle: Candle): MutableList<BaseCandleHandler>? =
         commonHandlersBySubscription[candle.interval]
 
@@ -40,6 +49,12 @@ internal class CandleHandlerRegistry(
 
     private fun getHandlersByFigiAndInterval(figi: String?, subscriptionInterval: SubscriptionInterval) =
         handlersByFigi[subscriptionInterval]?.get(figi)
+
+    private fun getHandlersByUidAndIntervalFromFactory(uId: String?, subscriptionInterval: SubscriptionInterval) =
+        commonAdaptersMapByInstrumentUid[subscriptionInterval]?.get(uId)
+
+    private fun getHandlersByFigiAndIntervalFromFactory(figi: String?, subscriptionInterval: SubscriptionInterval) =
+        commonAdaptersMapByFigi[subscriptionInterval]?.get(figi)
 
     private fun BaseCandleHandler.addIntervalToHandlerMap() {
         val annotation = this::class.java.getAnnotation(HandleCandle::class.java)
@@ -77,6 +92,51 @@ internal class CandleHandlerRegistry(
                         handlersByInstrumentUid[subscriptionInterval]!![uId]!!.add(this)
                     } else {
                         handlersByInstrumentUid[subscriptionInterval]!![uId] = mutableListOf(this)
+                    }
+                }
+            }
+        }
+    }
+
+    fun addIntervalToHandlerMap(streamProcessor: List<BaseCandleStreamProcessor>, sourceTickerToInstrumentMap: Map<String, String>) {
+        streamProcessor.forEach {
+           it.figies.takeIf { list -> list.isEmpty() }?.forEach { figi ->
+                if (figi.isNotBlank()) {
+                    if (commonAdaptersMapByFigi[it.subscriptionInterval] == null) {
+                        commonAdaptersMapByFigi[it.subscriptionInterval] = mutableMapOf(figi to mutableListOf(it))
+                    } else {
+                        if (commonAdaptersMapByFigi[it.subscriptionInterval]!![figi] != null) {
+                            commonAdaptersMapByFigi[it.subscriptionInterval]!![figi]!!.add(it)
+                        } else {
+                            commonAdaptersMapByFigi[it.subscriptionInterval]!![figi] = mutableListOf(it)
+                        }
+                    }
+                }
+            }
+            it.instruemntUids.takeIf { list -> list.isEmpty() }?.forEach { instrumentUid ->
+                if (instrumentUid.isNotBlank()) {
+                    if (commonAdaptersMapByInstrumentUid[it.subscriptionInterval] == null) {
+                        commonAdaptersMapByInstrumentUid[it.subscriptionInterval] = mutableMapOf(instrumentUid to mutableListOf(it))
+                    } else {
+                        if (commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![instrumentUid] != null) {
+                            commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![instrumentUid]!!.add(it)
+                        } else {
+                            commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![instrumentUid] = mutableListOf(it)
+                        }
+                    }
+                }
+            }
+            it.tickers.takeIf { list -> list.isEmpty() }?.forEach { ticker ->
+                if (ticker.isNotBlank()) {
+                    val uId = sourceTickerToInstrumentMap[ticker]!!
+                    if (commonAdaptersMapByInstrumentUid[it.subscriptionInterval] == null) {
+                        commonAdaptersMapByInstrumentUid[it.subscriptionInterval] = mutableMapOf(uId to mutableListOf(it))
+                    } else {
+                        if (commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![uId] != null) {
+                            commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![uId]!!.add(it)
+                        } else {
+                            commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![uId] = mutableListOf(it)
+                        }
                     }
                 }
             }

@@ -4,6 +4,7 @@ import io.github.dankosik.starter.invest.annotation.order.HandleAllOrders
 import io.github.dankosik.starter.invest.annotation.order.HandleOrder
 import io.github.dankosik.starter.invest.contract.orders.BaseOrderHandler
 import io.github.dankosik.starter.invest.contract.orders.getOrderHandlers
+import io.github.dankosik.starter.invest.processor.order.BaseOrdersStreamProcessor
 import org.springframework.context.ApplicationContext
 import ru.tinkoff.piapi.contract.v1.OrderTrades
 
@@ -13,6 +14,10 @@ internal class OrdersHandlerRegistry(
 ) {
     private val handlersByFigi = HashMap<String, MutableMap<String, MutableList<BaseOrderHandler>>>()
     private val handlersByInstrumentUid = HashMap<String, MutableMap<String, MutableList<BaseOrderHandler>>>()
+    private val handlersByFigiFromFactory =
+        HashMap<String, MutableMap<String, MutableList<BaseOrdersStreamProcessor>>>()
+    private val handlersByInstrumentUidFromFactory =
+        HashMap<String, MutableMap<String, MutableList<BaseOrdersStreamProcessor>>>()
 
     val commonHandlersByAccount = HashMap<String, MutableList<BaseOrderHandler>>()
 
@@ -31,6 +36,10 @@ internal class OrdersHandlerRegistry(
         getHandlersByUidAndAccountId(orderTrades.instrumentUid, orderTrades.accountId)
             ?: getHandlersByFigiAndAccountId(orderTrades.figi, orderTrades.accountId)
 
+    fun getHandlersFromFactory(orderTrades: OrderTrades): MutableList<BaseOrdersStreamProcessor>? =
+        getHandlersByUidAndAccountIdFromFactory(orderTrades.instrumentUid, orderTrades.accountId)
+            ?: getHandlersByFigiAndAccountIdFromFactory(orderTrades.figi, orderTrades.accountId)
+
     fun getCommonHandlersByAccountId(orderTrades: OrderTrades): MutableList<BaseOrderHandler>? =
         commonHandlersByAccount[orderTrades.accountId]
 
@@ -39,6 +48,67 @@ internal class OrdersHandlerRegistry(
 
     private fun getHandlersByFigiAndAccountId(figi: String?, accountId: String) =
         handlersByFigi[accountId]?.get(figi)
+
+    private fun getHandlersByUidAndAccountIdFromFactory(uId: String?, accountId: String) =
+        handlersByInstrumentUidFromFactory[accountId]?.get(uId)
+
+    private fun getHandlersByFigiAndAccountIdFromFactory(figi: String?, accountId: String) =
+        handlersByFigiFromFactory[accountId]?.get(figi)
+
+    fun addIntervalToHandlerMap(
+        streamProcessor: List<BaseOrdersStreamProcessor>,
+        sourceTickerToInstrumentMap: Map<String, String>
+    ) {
+        streamProcessor.forEach {
+            it.figies.takeIf { list -> list.isEmpty() }?.forEach { figi ->
+                it.accounts.forEach { account ->
+                    if (figi.isNotBlank()) {
+                        if (handlersByFigiFromFactory[account] == null) {
+                            handlersByFigiFromFactory[account] = mutableMapOf(figi to mutableListOf(it))
+                        } else {
+                            if (handlersByFigiFromFactory[account]!![figi] != null) {
+                                handlersByFigiFromFactory[account]!![figi]!!.add(it)
+                            } else {
+                                handlersByFigiFromFactory[account]!![figi] = mutableListOf(it)
+                            }
+                        }
+                    }
+                }
+            }
+            it.instruemntUids.takeIf { list -> list.isEmpty() }?.forEach { instrumentUid ->
+                it.accounts.forEach { account ->
+                    if (instrumentUid.isNotBlank()) {
+                        if (handlersByInstrumentUidFromFactory[account] == null) {
+                            handlersByInstrumentUidFromFactory[account] =
+                                mutableMapOf(instrumentUid to mutableListOf(it))
+                        } else {
+                            if (handlersByInstrumentUidFromFactory[account]!![instrumentUid] != null) {
+                                handlersByInstrumentUidFromFactory[account]!![instrumentUid]!!.add(it)
+                            } else {
+                                handlersByInstrumentUidFromFactory[account]!![instrumentUid] = mutableListOf(it)
+                            }
+                        }
+                    }
+                }
+            }
+            it.tickers.takeIf { list -> list.isEmpty() }?.forEach { ticker ->
+                it.accounts.forEach { account ->
+                    if (ticker.isNotBlank()) {
+                        val uId = sourceTickerToInstrumentMap[ticker]!!
+                        if (handlersByInstrumentUidFromFactory[account] == null) {
+                            handlersByInstrumentUidFromFactory[account] = mutableMapOf(uId to mutableListOf(it))
+                        } else {
+                            if (handlersByInstrumentUidFromFactory[account]!![uId] != null) {
+                                handlersByInstrumentUidFromFactory[account]!![uId]!!.add(it)
+                            } else {
+                                handlersByInstrumentUidFromFactory[account]!![uId] = mutableListOf(it)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private fun BaseOrderHandler.addAccountIdToHandlerMap() {
         val annotation = this::class.java.getAnnotation(HandleOrder::class.java)
