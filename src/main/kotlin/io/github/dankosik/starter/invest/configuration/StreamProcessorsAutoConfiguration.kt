@@ -172,7 +172,7 @@ class StreamProcessorsAutoConfiguration(
 
     init {
         runBlocking {
-            streamProcessors.filter { it.tickers.isEmpty() }
+            streamProcessors.filter { it.tickers.isNotEmpty() }
                 .map { it.tickers }
                 .map { it.toTypedArray() }
                 .toTypedArray()
@@ -186,7 +186,7 @@ class StreamProcessorsAutoConfiguration(
                     }
                 }
 
-            baseOrdersStreamProcessors.filter { it.tickers.isEmpty() }
+            baseOrdersStreamProcessors.filter { it.tickers.isNotEmpty() }
                 .map { it.tickers }
                 .map { it.toTypedArray() }
                 .toTypedArray()
@@ -199,7 +199,7 @@ class StreamProcessorsAutoConfiguration(
                         }
                     }
                 }
-            baseCandleStreamProcessors.filter { it.tickers.isEmpty() }
+            baseCandleStreamProcessors.filter { it.tickers.isNotEmpty() }
                 .map { it.tickers }
                 .map { it.toTypedArray() }
                 .toTypedArray()
