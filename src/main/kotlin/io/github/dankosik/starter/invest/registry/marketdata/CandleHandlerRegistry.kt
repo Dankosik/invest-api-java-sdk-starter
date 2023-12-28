@@ -16,6 +16,8 @@ internal class CandleHandlerRegistry(
     private val handlersByFigi = HashMap<SubscriptionInterval, MutableMap<String, MutableList<BaseCandleHandler>>>()
     private val handlersByInstrumentUid =
         HashMap<SubscriptionInterval, MutableMap<String, MutableList<BaseCandleHandler>>>()
+    val commonHandlersBySubscriptionBefore = HashMap<SubscriptionInterval, MutableList<BaseCandleHandler>>()
+    val commonHandlersBySubscriptionAfter = HashMap<SubscriptionInterval, MutableList<BaseCandleHandler>>()
     val commonHandlersBySubscription = HashMap<SubscriptionInterval, MutableList<BaseCandleHandler>>()
     val commonAdaptersMapByFigi =
         HashMap<SubscriptionInterval, MutableMap<String, MutableList<BaseCandleStreamProcessor>>>()
@@ -41,6 +43,10 @@ internal class CandleHandlerRegistry(
         getHandlersByUidAndIntervalFromFactory(candle.instrumentUid, candle.interval)
             ?: getHandlersByFigiAndIntervalFromFactory(candle.figi, candle.interval)
 
+    fun getCommonHandlersAfter(candle: Candle): MutableList<BaseCandleHandler>? =
+        commonHandlersBySubscriptionAfter[candle.interval]
+    fun getCommonHandlersBefore(candle: Candle): MutableList<BaseCandleHandler>? =
+        commonHandlersBySubscriptionBefore[candle.interval]
     fun getCommonHandlers(candle: Candle): MutableList<BaseCandleHandler>? =
         commonHandlersBySubscription[candle.interval]
 
@@ -98,9 +104,12 @@ internal class CandleHandlerRegistry(
         }
     }
 
-    fun addIntervalToHandlerMap(streamProcessor: List<BaseCandleStreamProcessor>, sourceTickerToInstrumentMap: Map<String, String>) {
+    fun addIntervalToHandlerMap(
+        streamProcessor: List<BaseCandleStreamProcessor>,
+        sourceTickerToInstrumentMap: Map<String, String>
+    ) {
         streamProcessor.forEach {
-           it.figies.takeIf { list -> list.isEmpty() }?.forEach { figi ->
+            it.figies.takeIf { list -> list.isEmpty() }?.forEach { figi ->
                 if (figi.isNotBlank()) {
                     if (commonAdaptersMapByFigi[it.subscriptionInterval] == null) {
                         commonAdaptersMapByFigi[it.subscriptionInterval] = mutableMapOf(figi to mutableListOf(it))
@@ -116,12 +125,14 @@ internal class CandleHandlerRegistry(
             it.instruemntUids.takeIf { list -> list.isEmpty() }?.forEach { instrumentUid ->
                 if (instrumentUid.isNotBlank()) {
                     if (commonAdaptersMapByInstrumentUid[it.subscriptionInterval] == null) {
-                        commonAdaptersMapByInstrumentUid[it.subscriptionInterval] = mutableMapOf(instrumentUid to mutableListOf(it))
+                        commonAdaptersMapByInstrumentUid[it.subscriptionInterval] =
+                            mutableMapOf(instrumentUid to mutableListOf(it))
                     } else {
                         if (commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![instrumentUid] != null) {
                             commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![instrumentUid]!!.add(it)
                         } else {
-                            commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![instrumentUid] = mutableListOf(it)
+                            commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![instrumentUid] =
+                                mutableListOf(it)
                         }
                     }
                 }
@@ -130,7 +141,8 @@ internal class CandleHandlerRegistry(
                 if (ticker.isNotBlank()) {
                     val uId = sourceTickerToInstrumentMap[ticker]!!
                     if (commonAdaptersMapByInstrumentUid[it.subscriptionInterval] == null) {
-                        commonAdaptersMapByInstrumentUid[it.subscriptionInterval] = mutableMapOf(uId to mutableListOf(it))
+                        commonAdaptersMapByInstrumentUid[it.subscriptionInterval] =
+                            mutableMapOf(uId to mutableListOf(it))
                     } else {
                         if (commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![uId] != null) {
                             commonAdaptersMapByInstrumentUid[it.subscriptionInterval]!![uId]!!.add(it)
@@ -186,10 +198,24 @@ internal class CandleHandlerRegistry(
         val annotation = this::class.java.getAnnotation(HandleAllCandles::class.java)
         if (annotation.instrumentsUids.isEmpty() && annotation.tickers.isEmpty() && annotation.figies.isEmpty()) {
             val subscriptionInterval = annotation.subscriptionInterval
-            if (commonHandlersBySubscription[subscriptionInterval] == null) {
-                commonHandlersBySubscription[subscriptionInterval] = mutableListOf(this)
+            if (annotation.afterEachCandleHandler && !annotation.beforeEachCandleHandler) {
+                if (commonHandlersBySubscriptionAfter[subscriptionInterval] == null) {
+                    commonHandlersBySubscriptionAfter[subscriptionInterval] = mutableListOf(this)
+                } else {
+                    commonHandlersBySubscriptionAfter[subscriptionInterval]?.add(this)
+                }
+            } else if (!annotation.afterEachCandleHandler && annotation.beforeEachCandleHandler) {
+                if (commonHandlersBySubscriptionBefore[subscriptionInterval] == null) {
+                    commonHandlersBySubscriptionBefore[subscriptionInterval] = mutableListOf(this)
+                } else {
+                    commonHandlersBySubscriptionBefore[subscriptionInterval]?.add(this)
+                }
             } else {
-                commonHandlersBySubscription[subscriptionInterval]?.add(this)
+                if (commonHandlersBySubscription[subscriptionInterval] == null) {
+                    commonHandlersBySubscription[subscriptionInterval] = mutableListOf(this)
+                } else {
+                    commonHandlersBySubscription[subscriptionInterval]?.add(this)
+                }
             }
         } else {
             addInstrumentIdToAllHandlerMap()

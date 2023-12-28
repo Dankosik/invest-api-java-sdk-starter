@@ -1,12 +1,20 @@
 package io.github.dankosik.starter.invest.configuration
 
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllCandles
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllLastPrices
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllOrderBooks
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllTrades
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllTradingStatuses
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleTrade
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStatus
+import io.github.dankosik.starter.invest.annotation.operation.HandleAllPortfolios
+import io.github.dankosik.starter.invest.annotation.operation.HandleAllPositions
 import io.github.dankosik.starter.invest.annotation.operation.HandlePortfolio
 import io.github.dankosik.starter.invest.annotation.operation.HandlePosition
+import io.github.dankosik.starter.invest.annotation.order.HandleAllOrders
 import io.github.dankosik.starter.invest.annotation.order.HandleOrder
 import io.github.dankosik.starter.invest.contract.marketdata.candle.getCandleHandlers
 import io.github.dankosik.starter.invest.contract.marketdata.lastprice.getLastPriceHandlers
@@ -82,12 +90,15 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleOrderBook()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllOrderBooks::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllOrderBooks::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseOrderBookStreamProcessor::class.java).values.map {
-                    it.extractInstruments(
-                        newTickerToUidMap
-                    )
-                }
-                    .flatten().toSet()
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
     @Bean("instrumentsOrderBook")
     @ConditionalOnMissingBean(name = ["instrumentsOrderBook"])
@@ -99,12 +110,15 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleOrderBook()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllOrderBooks::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllOrderBooks::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseOrderBookStreamProcessor::class.java).values.map {
-                    it.extractInstruments(
-                        newTickerToUidMap
-                    )
-                }
-                    .flatten().toSet()
+                    it.extractInstruments(newTickerToUidMap)
+                }.flatten().toSet()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -115,6 +129,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTradingStatus()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllTradingStatuses::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
                 }.flatten().toSet()
@@ -130,6 +150,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTradingStatus()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllTradingStatuses::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
                 }.flatten().toSet()
@@ -143,6 +169,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleLastPrice()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllLastPrices::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
                 }.flatten().toSet()
@@ -158,6 +190,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleLastPrice()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllLastPrices::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
                 }.flatten().toSet()
@@ -166,8 +204,20 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
     fun instrumentsCandle(): MutableMap<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>> {
         val result = mutableMapOf<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>>()
-        val candleBookHandlers =
-            applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
+        val candleAllBookHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllCandles::class.java).values.getCandleHandlers()
+        candleAllBookHandlers.forEach { bean ->
+            val annotation = bean.javaClass.getAnnotation(HandleAllCandles::class.java)
+            if (!annotation.sandboxOnly) {
+                val extractInstrumentFromCandle = annotation.extractInstruments()
+                extractInstrumentFromCandle.second.forEach {
+                    result[extractInstrumentFromCandle.first]?.add(it)
+                        ?: run {
+                            result[extractInstrumentFromCandle.first] = mutableListOf(it)
+                        }
+                }
+            }
+        }
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
             it.extractInstruments(newTickerToUidMap)
         }.forEach { extractInstrumentFromCandle ->
@@ -178,6 +228,8 @@ class InstrumentsAutoConfiguration(
                     }
             }
         }
+        val candleBookHandlers =
+            applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
         candleBookHandlers.forEach { bean ->
             val annotation = bean.javaClass.getAnnotation(HandleCandle::class.java)
             if (!annotation.sandboxOnly) {
@@ -197,6 +249,20 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
     fun instrumentsCandleReadonly(): MutableMap<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>> {
         val result = mutableMapOf<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>>()
+        val candleAllBookHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllCandles::class.java).values.getCandleHandlers()
+        candleAllBookHandlers.forEach { bean ->
+            val annotation = bean.javaClass.getAnnotation(HandleAllCandles::class.java)
+            if (!annotation.sandboxOnly) {
+                val extractInstrumentFromCandle = annotation.extractInstruments()
+                extractInstrumentFromCandle.second.forEach {
+                    result[extractInstrumentFromCandle.first]?.add(it)
+                        ?: run {
+                            result[extractInstrumentFromCandle.first] = mutableListOf(it)
+                        }
+                }
+            }
+        }
         val candleBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
@@ -232,6 +298,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTrades()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllTrades::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradeStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
                 }.flatten().toSet()
@@ -245,6 +317,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllPortfolios::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.accounts
+                    }.toTypedArray().flatten() +
                 applicationContext.getBeansOfType(BasePortfolioStreamProcessor::class.java).values.map {
                     it.accounts
                 }.flatten().toSet()
@@ -258,6 +336,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllPositions::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.accounts
+                    }.toTypedArray().flatten() +
                 applicationContext.getBeansOfType(BasePositionsStreamProcessor::class.java).values.map {
                     it.accounts
                 }.flatten().toSet()
@@ -272,6 +356,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTrades()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllTrades::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradeStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
                 }.flatten().toSet()
@@ -286,6 +376,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllPortfolios::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.accounts
+                    }.toTypedArray().flatten() +
                 applicationContext.getBeansOfType(BasePortfolioStreamProcessor::class.java).values.map {
                     it.accounts
                 }.flatten().toSet()
@@ -300,6 +396,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllPositions::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.accounts
+                    }.toTypedArray().flatten() +
                 applicationContext.getBeansOfType(BasePositionsStreamProcessor::class.java).values.map {
                     it.accounts
                 }.flatten().toSet()
@@ -313,6 +415,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllOrders::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.accounts
+                    }.toTypedArray().flatten() +
                 applicationContext.getBeansOfType(BaseOrdersStreamProcessor::class.java).values.map {
                     it.accounts
                 }.flatten().toSet()
@@ -327,6 +435,12 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllOrders::class.java)?.takeIf { annotation ->
+                            !annotation.sandboxOnly
+                        }?.accounts
+                    }.toTypedArray().flatten() +
                 applicationContext.getBeansOfType(BaseOrdersStreamProcessor::class.java).values.map {
                     it.accounts
                 }.flatten().toSet()
@@ -340,6 +454,12 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTrades()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllTrades::class.java)?.takeIf { annotation ->
+                            annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradeStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
                 }.flatten().toSet()
@@ -353,6 +473,12 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTradingStatus()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllTradingStatuses::class.java)?.takeIf { annotation ->
+                            annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
                 }.flatten().toSet()
@@ -367,6 +493,12 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleOrderBook()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllOrderBooks::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllOrderBooks::class.java)?.takeIf { annotation ->
+                            annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseOrderBookStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
                 }.flatten().toSet()
@@ -381,6 +513,12 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleLastPrice()
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllLastPrices::class.java)?.takeIf { annotation ->
+                            annotation.sandboxOnly
+                        }?.extractInstruments()
+                    }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
                 }.flatten().toSet()
@@ -389,6 +527,20 @@ class InstrumentsAutoConfiguration(
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
     fun instrumentsCandleSandbox(): MutableMap<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>> {
         val result = mutableMapOf<SubscriptionInterval, MutableList<InstrumentIdToWaitingClose>>()
+        val candleAllBookHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllCandles::class.java).values.getCandleHandlers()
+        candleAllBookHandlers.forEach { bean ->
+            val annotation = bean.javaClass.getAnnotation(HandleAllCandles::class.java)
+            if (annotation.sandboxOnly) {
+                val extractInstrumentFromCandle = annotation.extractInstruments()
+                extractInstrumentFromCandle.second.forEach {
+                    result[extractInstrumentFromCandle.first]?.add(it)
+                        ?: run {
+                            result[extractInstrumentFromCandle.first] = mutableListOf(it)
+                        }
+                }
+            }
+        }
         val candleBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
@@ -423,6 +575,12 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.account
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllPortfolios::class.java)?.takeIf { annotation ->
+                            annotation.sandboxOnly
+                        }?.accounts
+                    }.toTypedArray().flatten() +
                 applicationContext.getBeansOfType(BasePortfolioStreamProcessor::class.java).values.map {
                     it.accounts
                 }.flatten().toSet()
@@ -436,6 +594,12 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.account
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllPositions::class.java)?.takeIf { annotation ->
+                            annotation.sandboxOnly
+                        }?.accounts
+                    }.toTypedArray().flatten() +
                 applicationContext.getBeansOfType(BasePositionsStreamProcessor::class.java).values.map {
                     it.accounts
                 }.flatten().toSet()
@@ -449,6 +613,12 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.account
             }.toSet() +
+                applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderBookHandlers()
+                    .mapNotNull {
+                        it.javaClass.getAnnotation(HandleAllOrders::class.java)?.takeIf { annotation ->
+                            annotation.sandboxOnly
+                        }?.accounts
+                    }.toTypedArray().flatten() +
                 applicationContext.getBeansOfType(BaseOrdersStreamProcessor::class.java).values.map {
                     it.accounts
                 }.flatten().toSet()
@@ -490,11 +660,54 @@ class InstrumentsAutoConfiguration(
             figi.isNotBlank() -> subscriptionInterval to InstrumentIdToWaitingClose(figi, waitClose)
             instrumentUid.isNotBlank() -> subscriptionInterval to InstrumentIdToWaitingClose(instrumentUid, waitClose)
             ticker.isNotBlank() -> {
-                subscriptionInterval to InstrumentIdToWaitingClose(tickerToUidMap[ticker]!!, waitClose)
+                subscriptionInterval to InstrumentIdToWaitingClose(newTickerToUidMap[ticker]!!, waitClose)
             }
 
             else -> throw IllegalStateException("At least one of the arguments 'ticker', 'figi' or 'instrumentId' must be provided")
         }
+    }
+
+    private fun HandleAllOrderBooks.extractInstruments(): List<String> {
+        val map = tickers.mapNotNull { ticker ->
+            newTickerToUidMap[ticker]
+        }
+        return (map + figies + instrumentsUids)
+            .filter { it.isNotEmpty() }
+    }
+
+    private fun HandleAllCandles.extractInstruments(): Pair<SubscriptionInterval, List<InstrumentIdToWaitingClose>> {
+        val map = tickers.mapNotNull { ticker ->
+            newTickerToUidMap[ticker]
+        }
+        val instrumentIdToWaitingCloses = (map + figies + instrumentsUids)
+            .filter { it.isNotEmpty() }.distinct().map {
+                InstrumentIdToWaitingClose(it, waitClose)
+            }
+        return subscriptionInterval to instrumentIdToWaitingCloses
+    }
+
+    private fun HandleAllTrades.extractInstruments(): List<String> {
+        val map = tickers.mapNotNull { ticker ->
+            newTickerToUidMap[ticker]
+        }
+        return (map + figies + instrumentsUids)
+            .filter { it.isNotEmpty() }
+    }
+
+    private fun HandleAllTradingStatuses.extractInstruments(): List<String> {
+        val map = tickers.mapNotNull { ticker ->
+            newTickerToUidMap[ticker]
+        }
+        return (map + figies + instrumentsUids)
+            .filter { it.isNotEmpty() }
+    }
+
+    private fun HandleAllLastPrices.extractInstruments(): List<String> {
+        val map = tickers.mapNotNull { ticker ->
+            newTickerToUidMap[ticker]
+        }
+        return (map + figies + instrumentsUids)
+            .filter { it.isNotEmpty() }
     }
 
     data class InstrumentIdToWaitingClose(

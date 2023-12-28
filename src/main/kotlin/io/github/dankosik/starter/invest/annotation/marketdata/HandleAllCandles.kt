@@ -14,6 +14,7 @@ annotation class HandleAllCandles(
     val instrumentsUids: Array<String> = [],
     val beforeEachCandleHandler: Boolean = false,
     val afterEachCandleHandler: Boolean = false,
+    val waitClose: Boolean = false,
     val subscriptionInterval: SubscriptionInterval = SubscriptionInterval.SUBSCRIPTION_INTERVAL_UNSPECIFIED,
 )
 

@@ -542,7 +542,7 @@ class StreamProcessorsAutoConfiguration(
         streamProcessors: List<BaseMarketDataStreamProcessor>,
         baseCandleStreamProcessors: List<BaseCandleStreamProcessor>,
     ): StreamProcessor<MarketDataResponse> = when {
-        streamProcessors.isEmpty() && candleHandlerRegistry.commonHandlersBySubscription.isEmpty() -> {
+        streamProcessors.isEmpty() && candleHandlerRegistry.commonHandlersBySubscriptionAfter.isEmpty() -> {
             candleHandlerRegistry.addIntervalToHandlerMap(baseCandleStreamProcessors, newTickerToUidMap)
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasCandle()) {
@@ -566,7 +566,7 @@ class StreamProcessorsAutoConfiguration(
             }
         }
 
-        streamProcessors.isEmpty() && candleHandlerRegistry.commonHandlersBySubscription.isNotEmpty() -> {
+        streamProcessors.isEmpty() && candleHandlerRegistry.commonHandlersBySubscriptionAfter.isNotEmpty() -> {
             candleHandlerRegistry.addIntervalToHandlerMap(baseCandleStreamProcessors, newTickerToUidMap)
             StreamProcessor<MarketDataResponse> { response ->
                 if (response.hasCandle()) {
@@ -576,7 +576,17 @@ class StreamProcessorsAutoConfiguration(
                     handlersFromFactory?.filter { !it.beforeEachCandleHandler && !it.afterEachCandleHandler }
                         ?.runProcessors(candle)
                     DEFAULT_SCOPE.launch {
+                        candleHandlerRegistry.getCommonHandlersBefore(candle)?.forEach {
+                            it.handleCandle(candle)
+                        }
+                    }
+                    DEFAULT_SCOPE.launch {
                         val handlers = candleHandlerRegistry.getHandlers(candle)
+                        candleHandlerRegistry.getCommonHandlers(candle)?.forEach {
+                            launch {
+                                it.handleCandle(candle)
+                            }
+                        }
                         if (handlers != null && handlers.size == 1) {
                             handlers.first().handleCandle(candle)
                         } else {
@@ -588,7 +598,7 @@ class StreamProcessorsAutoConfiguration(
                         }
                     }
                     DEFAULT_SCOPE.launch {
-                        candleHandlerRegistry.getCommonHandlers(candle)?.forEach {
+                        candleHandlerRegistry.getCommonHandlersAfter(candle)?.forEach {
                             it.handleCandle(candle)
                         }
                     }
@@ -597,7 +607,7 @@ class StreamProcessorsAutoConfiguration(
             }
         }
 
-        streamProcessors.isNotEmpty() && candleHandlerRegistry.commonHandlersBySubscription.isNotEmpty() -> {
+        streamProcessors.isNotEmpty() && candleHandlerRegistry.commonHandlersBySubscriptionAfter.isNotEmpty() -> {
             candleHandlerRegistry.addIntervalToHandlerMap(baseCandleStreamProcessors, newTickerToUidMap)
             val commonHandlers = streamProcessors.extractCommonHandlers()
             val commonBeforeTradingStatusHandlers = streamProcessors.extractCommonBeforeCandleHandlers()
@@ -638,7 +648,7 @@ class StreamProcessorsAutoConfiguration(
                         }
                     }
                     DEFAULT_SCOPE.launch {
-                        candleHandlerRegistry.getCommonHandlers(candle)?.forEach {
+                        candleHandlerRegistry.getCommonHandlersAfter(candle)?.forEach {
                             it.handleCandle(candle)
                         }
                     }
