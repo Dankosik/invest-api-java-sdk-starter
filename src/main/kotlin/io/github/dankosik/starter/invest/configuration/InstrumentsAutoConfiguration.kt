@@ -129,7 +129,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTradingStatus()
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getTradingStatusHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllTradingStatuses::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -150,7 +150,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTradingStatus()
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getTradingStatusHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllTradingStatuses::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -169,7 +169,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleLastPrice()
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getLastPriceHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllLastPrices::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -190,7 +190,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleLastPrice()
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getLastPriceHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllLastPrices::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -298,7 +298,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTrades()
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getTradesHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllTrades::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -317,7 +317,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values.getPortfolioHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllPortfolios::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -336,7 +336,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getPositionHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllPositions::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -356,7 +356,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTrades()
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getTradesHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllTrades::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -376,7 +376,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values.getPortfolioHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllPortfolios::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -396,7 +396,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getPositionHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllPositions::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -415,7 +415,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllOrders::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -435,7 +435,7 @@ class InstrumentsAutoConfiguration(
                     !annotation.sandboxOnly
                 }?.account
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllOrders::class.java)?.takeIf { annotation ->
                             !annotation.sandboxOnly
@@ -454,7 +454,7 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTrades()
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getTradesHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllTrades::class.java)?.takeIf { annotation ->
                             annotation.sandboxOnly
@@ -473,7 +473,7 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleTradingStatus()
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getTradingStatusHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllTradingStatuses::class.java)?.takeIf { annotation ->
                             annotation.sandboxOnly
@@ -513,7 +513,7 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.extractInstrumentFromHandleLastPrice()
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getLastPriceHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllLastPrices::class.java)?.takeIf { annotation ->
                             annotation.sandboxOnly
@@ -575,7 +575,7 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.account
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllPortfolios::class.java).values.getPortfolioHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllPortfolios::class.java)?.takeIf { annotation ->
                             annotation.sandboxOnly
@@ -594,7 +594,7 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.account
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getPositionHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllPositions::class.java)?.takeIf { annotation ->
                             annotation.sandboxOnly
@@ -613,7 +613,7 @@ class InstrumentsAutoConfiguration(
                     annotation.sandboxOnly
                 }?.account
             }.toSet() +
-                applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderBookHandlers()
+                applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderHandlers()
                     .mapNotNull {
                         it.javaClass.getAnnotation(HandleAllOrders::class.java)?.takeIf { annotation ->
                             annotation.sandboxOnly
