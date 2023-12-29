@@ -29,33 +29,60 @@ fun BaseMarketDataStreamProcessor.extractInstruments(sourceTickerMap: Map<String
         .filter { it.isNotEmpty() }
 }
 
-fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromTickers(sourceTickerToInstrumentMap: Map<String, String>) =
-    associateBy(
-        keySelector = { it.tickers },
-        valueTransform = { it }
-    ).transformMap(sourceTickerToInstrumentMap)
+fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromTickers(sourceTickerToInstrumentMap: Map<String, String>): Map<String, List<BaseMarketDataStreamProcessor>> {
+    val result = mutableMapOf<List<String>, MutableList<BaseMarketDataStreamProcessor>>()
 
-fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromFigies() =
-    associateBy(
-        keySelector = { it.figies },
-        valueTransform = { it }
-    ).transformMap()
+    forEach {
+        result[it.tickers]?.add(it) ?: run {
+            result[it.tickers] = mutableListOf(it)
+        }
+    }
 
-fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromInstrumentUids() =
-    associateBy(
-        keySelector = { it.instruemntUids },
-        valueTransform = { it }
-    ).transformMap()
+    return result.transformMap(sourceTickerToInstrumentMap)
+}
 
-private fun Map<List<String>, BaseMarketDataStreamProcessor>.transformMap(sourceTickerToInstrumentMap: Map<String, String>): Map<String, List<BaseMarketDataStreamProcessor>> =
-    flatMap { (keys, value) ->
+fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromFigies(): Map<String, List<BaseMarketDataStreamProcessor>> {
+    val result = mutableMapOf<List<String>, MutableList<BaseMarketDataStreamProcessor>>()
+
+    forEach {
+        result[it.figies]?.add(it) ?: run {
+            result[it.figies] = mutableListOf(it)
+        }
+    }
+
+    return result.transformMap()
+}
+
+fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromInstrumentUids(): Map<String, List<BaseMarketDataStreamProcessor>> {
+    val result = mutableMapOf<List<String>, MutableList<BaseMarketDataStreamProcessor>>()
+
+    forEach {
+        result[it.instruemntUids]?.add(it) ?: run {
+            result[it.instruemntUids] = mutableListOf(it)
+        }
+    }
+
+    return result.transformMap()
+}
+
+
+private fun Map<List<String>, MutableList<BaseMarketDataStreamProcessor>>.transformMap(sourceTickerToInstrumentMap: Map<String, String>): Map<String, List<BaseMarketDataStreamProcessor>> {
+    val flatMap = flatMap { (keys, value) ->
         keys.map { key -> sourceTickerToInstrumentMap[key]!! to value }
+    }
+    return flatMap.groupBy({ it.first }, { it.second }).flatMap { (key, value) ->
+        value.flatten().map { key to it }
     }.groupBy({ it.first }, { it.second })
+}
 
-private fun Map<List<String>, BaseMarketDataStreamProcessor>.transformMap(): Map<String, List<BaseMarketDataStreamProcessor>> =
-    flatMap { (keys, value) ->
+private fun Map<List<String>, MutableList<BaseMarketDataStreamProcessor>>.transformMap(): Map<String, List<BaseMarketDataStreamProcessor>> {
+    val flatMap = flatMap { (keys, value) ->
         keys.map { key -> key to value }
+    }
+    return flatMap.groupBy({ it.first }, { it.second }).flatMap { (key, value) ->
+        value.flatten().map { key to it }
     }.groupBy({ it.first }, { it.second })
+}
 
 interface BlockingMarketDataStreamProcessorAdapter : BaseMarketDataStreamProcessor {
     fun process(marketDataResponse: MarketDataResponse)
