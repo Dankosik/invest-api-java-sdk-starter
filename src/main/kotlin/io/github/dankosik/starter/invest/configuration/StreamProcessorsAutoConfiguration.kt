@@ -325,9 +325,9 @@ class StreamProcessorsAutoConfiguration(
                             commonTradesHandlers.runProcessors(response)
                         }
                     }
-                    commonTradesHandlersByTicker?.get(trade.instrumentUid)
-                    commonTradesHandlersByUid?.get(trade.instrumentUid)
-                    commonTradesHandlersByFigi?.get(trade.figi)
+                    commonTradesHandlersByTicker?.get(trade.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByUid?.get(trade.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByFigi?.get(trade.figi)?.runProcessors(response)
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleTrade(trade)
                     } else {
@@ -392,9 +392,9 @@ class StreamProcessorsAutoConfiguration(
                     beforeHandlersByUid?.get(orderbook.instrumentUid)?.runProcessors(response)
                     beforeHandlersByFigi?.get(orderbook.figi)?.runProcessors(response)
                     val handlers = orderBookHandlerRegistry.getHandlers(orderbook)
-                    commonTradesHandlersByTicker?.get(orderbook.instrumentUid)
-                    commonTradesHandlersByUid?.get(orderbook.instrumentUid)
-                    commonTradesHandlersByFigi?.get(orderbook.figi)
+                    commonTradesHandlersByTicker?.get(orderbook.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByUid?.get(orderbook.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByFigi?.get(orderbook.figi)?.runProcessors(response)
                     if (!commonHandlers.isNullOrEmpty()) {
                         DEFAULT_SCOPE.launch {
                             commonHandlers.runProcessors(response)
@@ -464,9 +464,9 @@ class StreamProcessorsAutoConfiguration(
                     beforeHandlersByUid?.get(lastPrice.instrumentUid)?.runProcessors(response)
                     beforeHandlersByFigi?.get(lastPrice.figi)?.runProcessors(response)
                     val handlers = lastPriceHandlerRegistry.getHandlers(lastPrice)
-                    commonTradesHandlersByTicker?.get(lastPrice.instrumentUid)
-                    commonTradesHandlersByUid?.get(lastPrice.instrumentUid)
-                    commonTradesHandlersByFigi?.get(lastPrice.figi)
+                    commonTradesHandlersByTicker?.get(lastPrice.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByUid?.get(lastPrice.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByFigi?.get(lastPrice.figi)?.runProcessors(response)
                     if (!commonHandlers.isNullOrEmpty()) {
                         DEFAULT_SCOPE.launch {
                             commonHandlers.runProcessors(response)
@@ -537,9 +537,9 @@ class StreamProcessorsAutoConfiguration(
                     beforeHandlersByUid?.get(tradingStatus.instrumentUid)?.runProcessors(response)
                     beforeHandlersByFigi?.get(tradingStatus.figi)?.runProcessors(response)
                     val handlers = tradingStatusHandlerRegistry.getHandlers(tradingStatus)
-                    commonTradesHandlersByTicker?.get(tradingStatus.instrumentUid)
-                    commonTradesHandlersByUid?.get(tradingStatus.instrumentUid)
-                    commonTradesHandlersByFigi?.get(tradingStatus.figi)
+                    commonTradesHandlersByTicker?.get(tradingStatus.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByUid?.get(tradingStatus.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByFigi?.get(tradingStatus.figi)?.runProcessors(response)
                     if (!commonHandlers.isNullOrEmpty()) {
                         DEFAULT_SCOPE.launch {
                             commonHandlers.runProcessors(response)
@@ -666,9 +666,9 @@ class StreamProcessorsAutoConfiguration(
                             commonHandlers.runProcessors(response)
                         }
                     }
-                    commonTradesHandlersByTicker?.get(candle.instrumentUid)
-                    commonTradesHandlersByUid?.get(candle.instrumentUid)
-                    commonTradesHandlersByFigi?.get(candle.figi)
+                    commonTradesHandlersByTicker?.get(candle.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByUid?.get(candle.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByFigi?.get(candle.figi)?.runProcessors(response)
                     DEFAULT_SCOPE.launch {
                         val handlers = candleHandlerRegistry.getHandlers(candle)
                         if (handlers != null && handlers.size == 1) {
@@ -727,6 +727,9 @@ class StreamProcessorsAutoConfiguration(
                         }
                     }
                     val handlers = candleHandlerRegistry.getHandlers(candle)
+                    commonTradesHandlersByTicker?.get(candle.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByUid?.get(candle.instrumentUid)?.runProcessors(response)
+                    commonTradesHandlersByFigi?.get(candle.figi)?.runProcessors(response)
                     if (!commonHandlers.isNullOrEmpty()) {
                         DEFAULT_SCOPE.launch {
                             commonHandlers.runProcessors(response)
