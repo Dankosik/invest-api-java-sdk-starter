@@ -60,7 +60,7 @@ internal class OrdersHandlerRegistry(
         sourceTickerToInstrumentMap: Map<String, String>
     ) {
         streamProcessor.forEach {
-            it.figies.takeIf { list -> list.isEmpty() }?.forEach { figi ->
+            it.figies.takeIf { list -> list.isNotEmpty() }?.forEach { figi ->
                 it.accounts.forEach { account ->
                     if (figi.isNotBlank()) {
                         if (handlersByFigiFromFactory[account] == null) {
@@ -75,7 +75,7 @@ internal class OrdersHandlerRegistry(
                     }
                 }
             }
-            it.instruemntUids.takeIf { list -> list.isEmpty() }?.forEach { instrumentUid ->
+            it.instruemntUids.takeIf { list -> list.isNotEmpty() }?.forEach { instrumentUid ->
                 it.accounts.forEach { account ->
                     if (instrumentUid.isNotBlank()) {
                         if (handlersByInstrumentUidFromFactory[account] == null) {
@@ -91,7 +91,7 @@ internal class OrdersHandlerRegistry(
                     }
                 }
             }
-            it.tickers.takeIf { list -> list.isEmpty() }?.forEach { ticker ->
+            it.tickers.takeIf { list -> list.isNotEmpty() }?.forEach { ticker ->
                 it.accounts.forEach { account ->
                     if (ticker.isNotBlank()) {
                         val uId = sourceTickerToInstrumentMap[ticker]!!

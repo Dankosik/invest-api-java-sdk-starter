@@ -109,7 +109,7 @@ internal class CandleHandlerRegistry(
         sourceTickerToInstrumentMap: Map<String, String>
     ) {
         streamProcessor.forEach {
-            it.figies.takeIf { list -> list.isEmpty() }?.forEach { figi ->
+            it.figies.takeIf { list -> list.isNotEmpty() }?.forEach { figi ->
                 if (figi.isNotBlank()) {
                     if (commonAdaptersMapByFigi[it.subscriptionInterval] == null) {
                         commonAdaptersMapByFigi[it.subscriptionInterval] = mutableMapOf(figi to mutableListOf(it))
@@ -122,7 +122,7 @@ internal class CandleHandlerRegistry(
                     }
                 }
             }
-            it.instruemntUids.takeIf { list -> list.isEmpty() }?.forEach { instrumentUid ->
+            it.instruemntUids.takeIf { list -> list.isNotEmpty() }?.forEach { instrumentUid ->
                 if (instrumentUid.isNotBlank()) {
                     if (commonAdaptersMapByInstrumentUid[it.subscriptionInterval] == null) {
                         commonAdaptersMapByInstrumentUid[it.subscriptionInterval] =
@@ -137,7 +137,7 @@ internal class CandleHandlerRegistry(
                     }
                 }
             }
-            it.tickers.takeIf { list -> list.isEmpty() }?.forEach { ticker ->
+            it.tickers.takeIf { list -> list.isNotEmpty() }?.forEach { ticker ->
                 if (ticker.isNotBlank()) {
                     val uId = sourceTickerToInstrumentMap[ticker]!!
                     if (commonAdaptersMapByInstrumentUid[it.subscriptionInterval] == null) {

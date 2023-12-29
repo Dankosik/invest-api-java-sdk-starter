@@ -231,12 +231,10 @@ class InstrumentsAutoConfiguration(
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
             it.extractInstruments(newTickerToUidMap)
         }.forEach { extractInstrumentFromCandle ->
-            extractInstrumentFromCandle.second.forEach {
-                result[extractInstrumentFromCandle.first]?.add(it)
-                    ?: run {
-                        result[extractInstrumentFromCandle.first] = mutableListOf(it)
-                    }
-            }
+            result[extractInstrumentFromCandle.first]?.addAll(extractInstrumentFromCandle.second)
+                ?: run {
+                    result[extractInstrumentFromCandle.first] = extractInstrumentFromCandle.second.toMutableList()
+                }
         }
         val candleBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
@@ -287,12 +285,10 @@ class InstrumentsAutoConfiguration(
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
             it.extractInstruments(newTickerToUidMap)
         }.forEach { extractInstrumentFromCandle ->
-            extractInstrumentFromCandle.second.forEach {
-                result[extractInstrumentFromCandle.first]?.add(it)
-                    ?: run {
-                        result[extractInstrumentFromCandle.first] = mutableListOf(it)
-                    }
-            }
+            result[extractInstrumentFromCandle.first]?.addAll(extractInstrumentFromCandle.second)
+                ?: run {
+                    result[extractInstrumentFromCandle.first] = extractInstrumentFromCandle.second.toMutableList()
+                }
         }
         candleBookHandlers.forEach { bean ->
             val annotation = bean.javaClass.getAnnotation(HandleCandle::class.java)
@@ -574,12 +570,10 @@ class InstrumentsAutoConfiguration(
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
             it.extractInstruments(newTickerToUidMap)
         }.forEach { extractInstrumentFromCandle ->
-            extractInstrumentFromCandle.second.forEach {
-                result[extractInstrumentFromCandle.first]?.add(it)
-                    ?: run {
-                        result[extractInstrumentFromCandle.first] = mutableListOf(it)
-                    }
-            }
+            result[extractInstrumentFromCandle.first]?.addAll(extractInstrumentFromCandle.second)
+                ?: run {
+                    result[extractInstrumentFromCandle.first] = extractInstrumentFromCandle.second.toMutableList()
+                }
         }
         candleBookHandlers.forEach { bean ->
             val annotation = bean.javaClass.getAnnotation(HandleCandle::class.java)
