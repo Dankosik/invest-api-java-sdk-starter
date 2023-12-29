@@ -220,12 +220,14 @@ class InstrumentsAutoConfiguration(
             }
         }
         val list = instrumentIdToWaitingClosesFromFactories()
-        SubscriptionInterval.entries.forEach { subscriptionInterval ->
-            result[subscriptionInterval]?.addAll(list)
-                ?: run {
-                    result[subscriptionInterval] = list
-                }
-        }
+        SubscriptionInterval.entries
+            .filter { it != SubscriptionInterval.SUBSCRIPTION_INTERVAL_UNSPECIFIED && it != SubscriptionInterval.UNRECOGNIZED }
+            .forEach { subscriptionInterval ->
+                result[subscriptionInterval]?.addAll(list)
+                    ?: run {
+                        result[subscriptionInterval] = list
+                    }
+            }
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
             it.extractInstruments(newTickerToUidMap)
         }.forEach { extractInstrumentFromCandle ->
@@ -272,12 +274,14 @@ class InstrumentsAutoConfiguration(
             }
         }
         val list = instrumentIdToWaitingClosesFromFactories()
-        SubscriptionInterval.entries.forEach { subscriptionInterval ->
-            result[subscriptionInterval]?.addAll(list)
-                ?: run {
-                    result[subscriptionInterval] = list
-                }
-        }
+        SubscriptionInterval.entries
+            .filter { it != SubscriptionInterval.SUBSCRIPTION_INTERVAL_UNSPECIFIED && it != SubscriptionInterval.UNRECOGNIZED }
+            .forEach { subscriptionInterval ->
+                result[subscriptionInterval]?.addAll(list)
+                    ?: run {
+                        result[subscriptionInterval] = list
+                    }
+            }
         val candleBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
@@ -557,12 +561,14 @@ class InstrumentsAutoConfiguration(
             }
         }
         val list = instrumentIdToWaitingClosesFromFactories()
-        SubscriptionInterval.entries.forEach { subscriptionInterval ->
-            result[subscriptionInterval]?.addAll(list)
-                ?: run {
-                    result[subscriptionInterval] = list
-                }
-        }
+        SubscriptionInterval.entries
+            .filter { it != SubscriptionInterval.SUBSCRIPTION_INTERVAL_UNSPECIFIED && it != SubscriptionInterval.UNRECOGNIZED }
+            .forEach { subscriptionInterval ->
+                result[subscriptionInterval]?.addAll(list)
+                    ?: run {
+                        result[subscriptionInterval] = list
+                    }
+            }
         val candleBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
