@@ -721,11 +721,6 @@ class StreamProcessorsAutoConfiguration(
                     beforeHandlersByFigi?.get(candle.figi)?.runProcessors(response)
                     handlersFromFactory?.filter { !it.beforeEachCandleHandler && !it.afterEachCandleHandler }
                         ?.runProcessors(candle)
-                    if (!commonHandlers.isNullOrEmpty()) {
-                        DEFAULT_SCOPE.launch {
-                            commonHandlers.runProcessors(response)
-                        }
-                    }
                     val handlers = candleHandlerRegistry.getHandlers(candle)
                     commonTradesHandlersByTicker?.get(candle.instrumentUid)?.runProcessors(response)
                     commonTradesHandlersByUid?.get(candle.instrumentUid)?.runProcessors(response)
@@ -744,9 +739,8 @@ class StreamProcessorsAutoConfiguration(
                             }
                         }
                     }
-                    candleHandlerRegistry.getHandlersFromFactory(candle)?.runProcessors(candle)
                     commonAfterTradingStatusHandlers?.runProcessors(response)
-                    handlersFromFactory?.filter { it.beforeEachCandleHandler }?.runProcessors(candle)
+                    handlersFromFactory?.filter { it.afterEachCandleHandler }?.runProcessors(candle)
                     afterHandlersByTicker?.get(candle.instrumentUid)?.runProcessors(response)
                     afterHandlersByFigi?.get(candle.figi)?.runProcessors(response)
                     afterHandlersByUid?.get(candle.instrumentUid)?.runProcessors(response)
