@@ -76,6 +76,9 @@ import io.github.dankosik.starter.invest.extension.extractCommonBeforeOrderBookH
 import io.github.dankosik.starter.invest.extension.extractCommonBeforeTradesHandlers
 import io.github.dankosik.starter.invest.extension.extractCommonBeforeTradingStatusHandlers
 import io.github.dankosik.starter.invest.extension.extractCommonHandlers
+import io.github.dankosik.starter.invest.extension.extractCommonHandlersByFigi
+import io.github.dankosik.starter.invest.extension.extractCommonHandlersByTicker
+import io.github.dankosik.starter.invest.extension.extractCommonHandlersByUid
 import io.github.dankosik.starter.invest.processor.marketdata.AsyncCandleStreamProcessorAdapter
 import io.github.dankosik.starter.invest.processor.marketdata.BaseCandleStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.BlockingCandleStreamProcessorAdapter
@@ -295,14 +298,18 @@ class StreamProcessorsAutoConfiguration(
 
         else -> {
             val commonTradesHandlers = streamProcessors.extractCommonHandlers()
+            val commonTradesHandlersByTicker = streamProcessors.extractCommonHandlersByTicker(newTickerToUidMap)
+            val commonTradesHandlersByFigi = streamProcessors.extractCommonHandlersByFigi()
+            val commonTradesHandlersByUid = streamProcessors.extractCommonHandlersByUid()
             val commonBeforeTradesHandlers = streamProcessors.extractCommonBeforeTradesHandlers()
             val commonAfterTradesHandlers = streamProcessors.extractCommonAfterTradesHandlers()
 
             val beforeHandlersByTicker = streamProcessors.extractBeforeTradesHandlersByTicker(newTickerToUidMap)
-            val afterHandlersByTicker = streamProcessors.extractAfterTradesHandlersByTicker(newTickerToUidMap)
-            val beforeHandlersByFigi = streamProcessors.extractBeforeTradesHandlersByFigi()
-            val afterHandlersByFigi = streamProcessors.extractAfterTradesHandlersByFigi()
             val beforeHandlersByUid = streamProcessors.extractBeforeTradesHandlersByUid()
+            val beforeHandlersByFigi = streamProcessors.extractBeforeTradesHandlersByFigi()
+
+            val afterHandlersByTicker = streamProcessors.extractAfterTradesHandlersByTicker(newTickerToUidMap)
+            val afterHandlersByFigi = streamProcessors.extractAfterTradesHandlersByFigi()
             val afterHandlersByUid = streamProcessors.extractAfterTradesHandlersByUid()
 
             StreamProcessor<MarketDataResponse> { response ->
@@ -318,6 +325,9 @@ class StreamProcessorsAutoConfiguration(
                             commonTradesHandlers.runProcessors(response)
                         }
                     }
+                    commonTradesHandlersByTicker?.get(trade.instrumentUid)
+                    commonTradesHandlersByUid?.get(trade.instrumentUid)
+                    commonTradesHandlersByFigi?.get(trade.figi)
                     if (handlers != null && handlers.size == 1) {
                         handlers.first().handleTrade(trade)
                     } else {
@@ -362,6 +372,9 @@ class StreamProcessorsAutoConfiguration(
 
         else -> {
             val commonHandlers = streamProcessors.extractCommonHandlers()
+            val commonTradesHandlersByTicker = streamProcessors.extractCommonHandlersByTicker(newTickerToUidMap)
+            val commonTradesHandlersByFigi = streamProcessors.extractCommonHandlersByFigi()
+            val commonTradesHandlersByUid = streamProcessors.extractCommonHandlersByUid()
             val commonBeforeOrderBookHandlers = streamProcessors.extractCommonBeforeOrderBookHandlers()
             val commonAfterOrderBookHandlers = streamProcessors.extractCommonAfterOrderBookHandlers()
 
@@ -379,6 +392,9 @@ class StreamProcessorsAutoConfiguration(
                     beforeHandlersByUid?.get(orderbook.instrumentUid)?.runProcessors(response)
                     beforeHandlersByFigi?.get(orderbook.figi)?.runProcessors(response)
                     val handlers = orderBookHandlerRegistry.getHandlers(orderbook)
+                    commonTradesHandlersByTicker?.get(orderbook.instrumentUid)
+                    commonTradesHandlersByUid?.get(orderbook.instrumentUid)
+                    commonTradesHandlersByFigi?.get(orderbook.figi)
                     if (!commonHandlers.isNullOrEmpty()) {
                         DEFAULT_SCOPE.launch {
                             commonHandlers.runProcessors(response)
@@ -430,6 +446,9 @@ class StreamProcessorsAutoConfiguration(
             val commonHandlers = streamProcessors.extractCommonHandlers()
             val commonBeforeLastPriceHandlers = streamProcessors.extractCommonBeforeLastPriceHandlers()
             val commonAfterLastPriceHandlers = streamProcessors.extractCommonAfterLastPriceHandlers()
+            val commonTradesHandlersByTicker = streamProcessors.extractCommonHandlersByTicker(newTickerToUidMap)
+            val commonTradesHandlersByFigi = streamProcessors.extractCommonHandlersByFigi()
+            val commonTradesHandlersByUid = streamProcessors.extractCommonHandlersByUid()
 
             val beforeHandlersByTicker = streamProcessors.extractBeforeLastPriceByTicker(newTickerToUidMap)
             val afterHandlersByTicker = streamProcessors.extractAfterLastPriceHandlersByTicker(newTickerToUidMap)
@@ -445,6 +464,9 @@ class StreamProcessorsAutoConfiguration(
                     beforeHandlersByUid?.get(lastPrice.instrumentUid)?.runProcessors(response)
                     beforeHandlersByFigi?.get(lastPrice.figi)?.runProcessors(response)
                     val handlers = lastPriceHandlerRegistry.getHandlers(lastPrice)
+                    commonTradesHandlersByTicker?.get(lastPrice.instrumentUid)
+                    commonTradesHandlersByUid?.get(lastPrice.instrumentUid)
+                    commonTradesHandlersByFigi?.get(lastPrice.figi)
                     if (!commonHandlers.isNullOrEmpty()) {
                         DEFAULT_SCOPE.launch {
                             commonHandlers.runProcessors(response)
@@ -497,6 +519,9 @@ class StreamProcessorsAutoConfiguration(
             val commonHandlers = streamProcessors.extractCommonHandlers()
             val commonBeforeTradingStatusHandlers = streamProcessors.extractCommonBeforeTradingStatusHandlers()
             val commonAfterTradingStatusHandlers = streamProcessors.extractCommonAfterTradingStatusHandlers()
+            val commonTradesHandlersByTicker = streamProcessors.extractCommonHandlersByTicker(newTickerToUidMap)
+            val commonTradesHandlersByFigi = streamProcessors.extractCommonHandlersByFigi()
+            val commonTradesHandlersByUid = streamProcessors.extractCommonHandlersByUid()
 
             val beforeHandlersByTicker = streamProcessors.extractBeforeTradingStatusByTicker(newTickerToUidMap)
             val afterHandlersByTicker = streamProcessors.extractAfterTradingStatusHandlersByTicker(newTickerToUidMap)
@@ -512,6 +537,9 @@ class StreamProcessorsAutoConfiguration(
                     beforeHandlersByUid?.get(tradingStatus.instrumentUid)?.runProcessors(response)
                     beforeHandlersByFigi?.get(tradingStatus.figi)?.runProcessors(response)
                     val handlers = tradingStatusHandlerRegistry.getHandlers(tradingStatus)
+                    commonTradesHandlersByTicker?.get(tradingStatus.instrumentUid)
+                    commonTradesHandlersByUid?.get(tradingStatus.instrumentUid)
+                    commonTradesHandlersByFigi?.get(tradingStatus.figi)
                     if (!commonHandlers.isNullOrEmpty()) {
                         DEFAULT_SCOPE.launch {
                             commonHandlers.runProcessors(response)
@@ -612,6 +640,9 @@ class StreamProcessorsAutoConfiguration(
             val commonHandlers = streamProcessors.extractCommonHandlers()
             val commonBeforeTradingStatusHandlers = streamProcessors.extractCommonBeforeCandleHandlers()
             val commonAfterTradingStatusHandlers = streamProcessors.extractCommonAfterCandleHandlers()
+            val commonTradesHandlersByTicker = streamProcessors.extractCommonHandlersByTicker(newTickerToUidMap)
+            val commonTradesHandlersByFigi = streamProcessors.extractCommonHandlersByFigi()
+            val commonTradesHandlersByUid = streamProcessors.extractCommonHandlersByUid()
 
             val beforeHandlersByTicker = streamProcessors.extractBeforeCandleByTicker(newTickerToUidMap)
             val afterHandlersByTicker = streamProcessors.extractAfterCandleHandlersByTicker(newTickerToUidMap)
@@ -635,6 +666,9 @@ class StreamProcessorsAutoConfiguration(
                             commonHandlers.runProcessors(response)
                         }
                     }
+                    commonTradesHandlersByTicker?.get(candle.instrumentUid)
+                    commonTradesHandlersByUid?.get(candle.instrumentUid)
+                    commonTradesHandlersByFigi?.get(candle.figi)
                     DEFAULT_SCOPE.launch {
                         val handlers = candleHandlerRegistry.getHandlers(candle)
                         if (handlers != null && handlers.size == 1) {
@@ -666,6 +700,9 @@ class StreamProcessorsAutoConfiguration(
             val commonHandlers = streamProcessors.extractCommonHandlers()
             val commonBeforeTradingStatusHandlers = streamProcessors.extractCommonBeforeCandleHandlers()
             val commonAfterTradingStatusHandlers = streamProcessors.extractCommonAfterCandleHandlers()
+            val commonTradesHandlersByTicker = streamProcessors.extractCommonHandlersByTicker(newTickerToUidMap)
+            val commonTradesHandlersByFigi = streamProcessors.extractCommonHandlersByFigi()
+            val commonTradesHandlersByUid = streamProcessors.extractCommonHandlersByUid()
 
             val beforeHandlersByTicker = streamProcessors.extractBeforeCandleByTicker(newTickerToUidMap)
             val afterHandlersByTicker = streamProcessors.extractAfterCandleHandlersByTicker(newTickerToUidMap)

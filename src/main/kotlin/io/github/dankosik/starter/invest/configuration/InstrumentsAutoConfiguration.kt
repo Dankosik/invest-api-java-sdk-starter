@@ -33,6 +33,7 @@ import io.github.dankosik.starter.invest.processor.marketdata.BaseOrderBookStrea
 import io.github.dankosik.starter.invest.processor.marketdata.BaseTradeStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.BaseTradingStatusStreamProcessor
 import io.github.dankosik.starter.invest.processor.marketdata.common.BaseMarketDataStreamProcessor
+import io.github.dankosik.starter.invest.processor.marketdata.common.extractInstruments
 import io.github.dankosik.starter.invest.processor.marketdata.extractInstruments
 import io.github.dankosik.starter.invest.processor.operation.BasePortfolioStreamProcessor
 import io.github.dankosik.starter.invest.processor.operation.BasePositionsStreamProcessor
@@ -98,7 +99,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseOrderBookStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
     @Bean("instrumentsOrderBook")
     @ConditionalOnMissingBean(name = ["instrumentsOrderBook"])
@@ -118,7 +119,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseOrderBookStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -137,7 +138,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
 
     @Bean("instrumentsTradingStatus")
@@ -158,7 +159,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -177,7 +178,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
 
     @Bean("instrumentsLastPrice")
@@ -198,7 +199,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -217,6 +218,13 @@ class InstrumentsAutoConfiguration(
                         }
                 }
             }
+        }
+        val list = instrumentIdToWaitingClosesFromFactories()
+        SubscriptionInterval.entries.forEach { subscriptionInterval ->
+            result[subscriptionInterval]?.addAll(list)
+                ?: run {
+                    result[subscriptionInterval] = list
+                }
         }
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
             it.extractInstruments(newTickerToUidMap)
@@ -263,6 +271,13 @@ class InstrumentsAutoConfiguration(
                 }
             }
         }
+        val list = instrumentIdToWaitingClosesFromFactories()
+        SubscriptionInterval.entries.forEach { subscriptionInterval ->
+            result[subscriptionInterval]?.addAll(list)
+                ?: run {
+                    result[subscriptionInterval] = list
+                }
+        }
         val candleBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
         applicationContext.getBeansOfType(BaseCandleStreamProcessor::class.java).values.map {
@@ -306,7 +321,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradeStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
     @Bean
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.fullAccess"])
@@ -364,7 +379,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradeStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
     @Bean("accountsPortfolio")
     @ConditionalOnProperty(value = ["tinkoff.starter.apiToken.readonly"])
@@ -462,7 +477,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradeStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
@@ -481,7 +496,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseTradingStatusStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
 
     @Bean
@@ -501,7 +516,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseOrderBookStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
 
     @Bean
@@ -521,7 +536,7 @@ class InstrumentsAutoConfiguration(
                     }.flatten().toSet() +
                 applicationContext.getBeansOfType(BaseLastPriceStreamProcessor::class.java).values.map {
                     it.extractInstruments(newTickerToUidMap)
-                }.flatten().toSet()
+                }.flatten().toSet() + extractCommonHandlersFromFactory()
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
@@ -540,6 +555,13 @@ class InstrumentsAutoConfiguration(
                         }
                 }
             }
+        }
+        val list = instrumentIdToWaitingClosesFromFactories()
+        SubscriptionInterval.entries.forEach { subscriptionInterval ->
+            result[subscriptionInterval]?.addAll(list)
+                ?: run {
+                    result[subscriptionInterval] = list
+                }
         }
         val candleBookHandlers =
             applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
@@ -565,6 +587,22 @@ class InstrumentsAutoConfiguration(
         }
         return result
     }
+
+    private fun instrumentIdToWaitingClosesFromFactories() =
+        applicationContext.getBeansOfType(BaseMarketDataStreamProcessor::class.java).values
+            .asSequence()
+            .filter {
+                !it.beforeEachTradeHandler && !it.afterEachTradeHandler
+                        && !it.beforeEachTradingStatusHandler && !it.afterEachTradingStatusHandler
+                        && !it.beforeEachCandleHandler && !it.afterEachCandleHandler
+                        && !it.beforeEachOrderBookHandler && !it.afterEachOrderBookHandler
+                        && !it.beforeEachLastPriceHandler && !it.afterEachLastPriceHandler
+            }
+            .map { it.extractInstruments(newTickerToUidMap) }
+            .flatten()
+            .distinct()
+            .map { InstrumentIdToWaitingClose(it, true) }
+            .toMutableList()
 
     @Bean
     @ConditionalOnProperty(name = ["tinkoff.starter.apiToken.sandbox"])
@@ -623,6 +661,18 @@ class InstrumentsAutoConfiguration(
                     it.accounts
                 }.flatten().toSet()
 
+
+    private fun extractCommonHandlersFromFactory() =
+        applicationContext.getBeansOfType(BaseMarketDataStreamProcessor::class.java).values
+            .filter {
+                !it.beforeEachTradeHandler && !it.afterEachTradeHandler
+                        && !it.beforeEachTradingStatusHandler && !it.afterEachTradingStatusHandler
+                        && !it.beforeEachCandleHandler && !it.afterEachCandleHandler
+                        && !it.beforeEachOrderBookHandler && !it.afterEachOrderBookHandler
+                        && !it.beforeEachLastPriceHandler && !it.afterEachLastPriceHandler
+            }.map { it.extractInstruments(newTickerToUidMap) }
+            .flatten()
+            .toSet()
 
     private fun HandleTrade.extractInstrumentFromHandleTrades(): String = when {
         figi.isNotBlank() -> figi

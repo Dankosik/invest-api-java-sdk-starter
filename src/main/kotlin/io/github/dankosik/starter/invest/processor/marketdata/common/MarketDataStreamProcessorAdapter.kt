@@ -21,6 +21,14 @@ interface BaseMarketDataStreamProcessor {
     var instruemntUids: List<String>
 }
 
+fun BaseMarketDataStreamProcessor.extractInstruments(sourceTickerMap: Map<String, String>): List<String> {
+    val map = tickers.mapNotNull { ticker ->
+        sourceTickerMap[ticker]
+    }
+    return (map + figies + instruemntUids)
+        .filter { it.isNotEmpty() }
+}
+
 fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromTickers(sourceTickerToInstrumentMap: Map<String, String>) =
     associateBy(
         keySelector = { it.tickers },
