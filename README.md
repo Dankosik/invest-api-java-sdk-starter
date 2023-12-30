@@ -76,7 +76,10 @@ class DollarCandleHandler : CoroutineCandleHandler {
 
 Тоже самое можно сделать с помощью `@Bean` следующим способом:
 ```java
-@Bean
+@Configuration
+class Config {
+    
+    @Bean
     public BlockingCandleStreamProcessorAdapter coroutineCandleStreamProcessorAdapter() {
         return CandleStreamProcessorAdapterFactory
                 .withSubscriptionInterval(SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE)
@@ -84,6 +87,7 @@ class DollarCandleHandler : CoroutineCandleHandler {
                 .withTickers(List.of("SiH4"))
                 .createBlockingHandler(System.out::println);
     }
+}
 ```
 Вместо тикера можно использовать `figi` или `instrumentUid`
 
