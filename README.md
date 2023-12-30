@@ -17,7 +17,7 @@ tinkoff:
         "ваш токен"
 ```
 Вместо `fullAccess` можно использовать `readonly` или `sandbox`. Все ваши запросы к api будут использовать определенный вами токен.
-## Возможности:
+## Возможности
 
 Три способа обработать минутные свечи по Фьючерсу на доллар:
 ```java
@@ -46,6 +46,20 @@ class BlockingDollarCandleHandler implements BlockingCandleHandler {
     }
 }
 ```
+Или для списка инструментов:
+```java
+@HandleAllCandles(
+        subscriptionInterval = SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE,
+        tickers = {"SiH4", "SBER"}
+)
+class CommonCandleHandler implements AsyncCandleHandler {
+
+    @Override
+    public CompletableFuture<Void> handleAsync(Candle candle) {
+        return CompletableFuture.runAsync(() -> System.out.println("CommonCandleHandler: " + candle));
+    }
+}
+```
 Для `kotlin`:
 ```kotlin
 @HandleCandle(
@@ -58,6 +72,18 @@ class DollarCandleHandler : CoroutineCandleHandler {
         println("DollarCandleHandler $candle")
     }
 }
+```
+
+Тоже самое можно сделать с помощью `@Bean` следующим способом:
+```java
+@Bean
+    public BlockingCandleStreamProcessorAdapter coroutineCandleStreamProcessorAdapter() {
+        return CandleStreamProcessorAdapterFactory
+                .withSubscriptionInterval(SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE)
+                .waitClose(true)
+                .withTickers(List.of("SiH4"))
+                .createBlockingHandler(System.out::println);
+    }
 ```
 Вместо тикера можно использовать `figi` или `instrumentUid`
 
@@ -99,26 +125,15 @@ class DollarCandleHandler(
 
 ## Добавить зависимость в свой проект
 
-Для `build.gradle.kts`
+<details>
+  <summary>build.gradle.kts</summary>
+
 ```groovy
-implementation("io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta40")
-```
-Для `build.gradle`
-```groovy
-implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta40'
-```
-Для `maven`
-```xml
-<dependency>
-    <groupId>io.github.dankosik</groupId>
-    <artifactId>invest-api-java-sdk-starter</artifactId>
-    <version>0.6.1-beta40</version>
-    <classifier>plain</classifier>
-</dependency>
+implementation("io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta51")
 ```
 
 Также необходимо добавить зависимость <br>
-#### Для `gradle:`
+
 ```groovy
 implementation("org.springframework.boot:spring-boot-starter-web")
 ```
@@ -126,13 +141,45 @@ implementation("org.springframework.boot:spring-boot-starter-web")
 ```groovy
 implementation("org.springframework.boot:spring-boot-starter-webflux")
 ```
-#### Для `maven:`
+</details>
+
+<details>
+  <summary>build.gradle</summary>
+
+```groovy
+implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta51'
+```
+
+Также необходимо добавить зависимость <br>
+
+```groovy
+implementation 'org.springframework.boot:spring-boot-starter-web'
+```
+Или
+```groovy
+implementation 'org.springframework.boot:spring-boot-starter-webflux'
+```
+</details>
+
+<details>
+  <summary>Для Maven</summary>
+
+```xml
+<dependency>
+    <groupId>io.github.dankosik</groupId>
+    <artifactId>invest-api-java-sdk-starter</artifactId>
+    <version>0.6.1-beta51</version>
+    <classifier>plain</classifier>
+</dependency>
+```
+Также необходимо добавить зависимость
 ```xml
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-web</artifactId>
 </dependency>
 ```
+
 или
 ```xml
 <dependency>
@@ -140,6 +187,8 @@ implementation("org.springframework.boot:spring-boot-starter-webflux")
     <artifactId>spring-boot-starter-webflux</artifactId>
 </dependency>
 ```
+</details>
+
 ## О версиях
 Версии будут совпадать как в самой [sdk](https://github.com/RussianInvestments/invest-api-java-sdk/tags)
 
