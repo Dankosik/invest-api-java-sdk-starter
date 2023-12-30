@@ -80,7 +80,7 @@ class DollarCandleHandler : CoroutineCandleHandler {
 class Config {
     
     @Bean
-    public BlockingCandleStreamProcessorAdapter coroutineCandleStreamProcessorAdapter() {
+    public BlockingCandleStreamProcessorAdapter candleStreamProcessorAdapter() {
         return CandleStreamProcessorAdapterFactory
                 .withSubscriptionInterval(SubscriptionInterval.SUBSCRIPTION_INTERVAL_ONE_MINUTE)
                 .waitClose(true)
