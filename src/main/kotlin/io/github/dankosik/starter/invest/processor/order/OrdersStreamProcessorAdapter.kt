@@ -136,9 +136,9 @@ class OrdersStreamProcessorAdapterFactory {
         }
 
         @JvmStatic
-        fun withAccounts(accounts: List<String>): PositionsStreamProcessorAdapterFactory.Companion {
+        fun withAccounts(accounts: List<String>): Companion {
             this.accountsCompanion = accounts
-            return PositionsStreamProcessorAdapterFactory
+            return Companion
         }
     }
 }

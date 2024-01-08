@@ -65,7 +65,6 @@ fun List<BaseMarketDataStreamProcessor>.toHandlersMapFromInstrumentUids(): Map<S
     return result.transformMap()
 }
 
-
 private fun Map<List<String>, MutableList<BaseMarketDataStreamProcessor>>.transformMap(sourceTickerToInstrumentMap: Map<String, String>): Map<String, List<BaseMarketDataStreamProcessor>> {
     val flatMap = flatMap { (keys, value) ->
         keys.map { key -> sourceTickerToInstrumentMap[key]!! to value }
