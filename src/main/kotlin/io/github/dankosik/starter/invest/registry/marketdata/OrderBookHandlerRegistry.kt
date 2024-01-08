@@ -1,54 +1,90 @@
 package io.github.dankosik.starter.invest.registry.marketdata
 
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllOrderBooks
 import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
-import io.github.dankosik.starter.invest.contract.orderbook.AsyncOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.BaseOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.BlockingOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.CoroutineOrderBookHandler
-import mu.KLogging
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.BaseOrderBookHandler
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.getOrderBookHandlers
 import org.springframework.context.ApplicationContext
-import org.springframework.stereotype.Component
+import ru.tinkoff.piapi.contract.v1.OrderBook
 
-@Component
-class OrderBookHandlerRegistry(
+internal class OrderBookHandlerRegistry(
     private val applicationContext: ApplicationContext,
     private val tickerToUidMap: Map<String, String>,
 ) {
-    private var handlersByInstrumentUid: MutableMap<String, BaseOrderBookHandler> = mutableMapOf()
-    private var handlersByFigi: MutableMap<String, BaseOrderBookHandler> = mutableMapOf()
+    private var handlersByInstrumentUid: MutableMap<String, MutableList<BaseOrderBookHandler>> = mutableMapOf()
+    private var handlersByFigi: MutableMap<String, MutableList<BaseOrderBookHandler>> = mutableMapOf()
 
     init {
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandleOrderBook::class.java).values
-        val coroutineTradesHandlers = annotatedBeans.filterIsInstance<CoroutineOrderBookHandler>()
-        val blockingTradesHandlers = annotatedBeans.filterIsInstance<BlockingOrderBookHandler>()
-        val tradesHandlers = annotatedBeans.filterIsInstance<AsyncOrderBookHandler>()
-        blockingTradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
-        coroutineTradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
-        tradesHandlers.forEach { it.addInstrumentIdToHandlerMap() }
+        applicationContext.getBeansWithAnnotation(HandleOrderBook::class.java).values.getOrderBookHandlers()
+            .forEach {
+                it.addInstrumentIdToHandlerMap()
+            }
+
+        applicationContext.getBeansWithAnnotation(HandleAllOrderBooks::class.java).values.getOrderBookHandlers()
+            .forEach {
+                it.addInstrumentIdToAllHandlerMap()
+            }
     }
 
-    fun getHandlerByFigi(figi: String?): BaseOrderBookHandler? = handlersByFigi[figi]
-    fun getHandlerByUid(uId: String?): BaseOrderBookHandler? = handlersByInstrumentUid[uId]
+    fun getHandlers(orderBook: OrderBook): MutableList<BaseOrderBookHandler>? =
+        getHandlersByUid(orderBook.instrumentUid) ?: getHandlersByFigi(orderBook.figi)
 
+    private fun getHandlersByFigi(figi: String?) = handlersByFigi[figi]
 
-    private fun BaseOrderBookHandler.addInstrumentIdToHandlerMap(
-    ) {
+    private fun getHandlersByUid(uId: String?) = handlersByInstrumentUid[uId]
+
+    private fun BaseOrderBookHandler.addInstrumentIdToHandlerMap() {
         val annotation = this::class.java.getAnnotation(HandleOrderBook::class.java)
         val figi = annotation.figi
         val instrumentUid = annotation.instrumentUid
         if (figi.isNotBlank()) {
-            handlersByFigi[figi] = this
+            if (handlersByFigi[figi] == null) {
+                handlersByFigi[figi] = mutableListOf(this)
+            } else {
+                handlersByFigi[figi]!!.add(this)
+            }
         } else if (instrumentUid.isNotBlank()) {
-            handlersByInstrumentUid[instrumentUid] = this
+            if (handlersByInstrumentUid[instrumentUid] == null) {
+                handlersByInstrumentUid[instrumentUid] = mutableListOf(this)
+            } else {
+                handlersByInstrumentUid[instrumentUid]!!.add(this)
+            }
         } else {
             val ticker = annotation.ticker
             if (ticker.isNotBlank()) {
                 val uId = tickerToUidMap[ticker]!!
-                handlersByInstrumentUid[uId] = this
+                if (handlersByInstrumentUid[uId] == null) {
+                    handlersByInstrumentUid[uId] = mutableListOf(this)
+                } else {
+                    handlersByInstrumentUid[uId]!!.add(this)
+                }
             }
         }
     }
 
-
-    private companion object : KLogging()
+    private fun BaseOrderBookHandler.addInstrumentIdToAllHandlerMap() {
+        val annotation = this::class.java.getAnnotation(HandleAllOrderBooks::class.java)
+        annotation.figies.takeIf { it.isNotEmpty() }?.forEach { figi ->
+            if (handlersByFigi[figi] == null) {
+                handlersByFigi[figi] = mutableListOf(this)
+            } else {
+                handlersByFigi[figi]!!.add(this)
+            }
+        }
+        annotation.instrumentsUids.takeIf { it.isNotEmpty() }?.forEach { instrumentUid ->
+            if (handlersByInstrumentUid[instrumentUid] == null) {
+                handlersByInstrumentUid[instrumentUid] = mutableListOf(this)
+            } else {
+                handlersByInstrumentUid[instrumentUid]!!.add(this)
+            }
+        }
+        annotation.tickers.takeIf { it.isNotEmpty() }?.forEach { ticker ->
+            val instrumentUid = tickerToUidMap[ticker]!!
+            if (handlersByInstrumentUid[instrumentUid] == null) {
+                handlersByInstrumentUid[instrumentUid] = mutableListOf(this)
+            } else {
+                handlersByInstrumentUid[instrumentUid]!!.add(this)
+            }
+        }
+    }
 }

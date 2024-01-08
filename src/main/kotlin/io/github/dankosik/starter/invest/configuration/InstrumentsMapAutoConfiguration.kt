@@ -1,40 +1,50 @@
 package io.github.dankosik.starter.invest.configuration
 
-import io.github.dankosik.starter.invest.annotation.marketdata.*
-import io.github.dankosik.starter.invest.annotation.order.*
-import io.github.dankosik.starter.invest.contract.candle.AsyncCandleHandler
-import io.github.dankosik.starter.invest.contract.candle.BlockingCandleHandler
-import io.github.dankosik.starter.invest.contract.candle.CoroutineCandleHandler
-import io.github.dankosik.starter.invest.contract.lastprice.AsyncLastPriceHandler
-import io.github.dankosik.starter.invest.contract.lastprice.BlockingLastPriceHandler
-import io.github.dankosik.starter.invest.contract.lastprice.CoroutineLastPriceHandler
-import io.github.dankosik.starter.invest.contract.orderbook.AsyncOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.BlockingOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orderbook.CoroutineOrderBookHandler
-import io.github.dankosik.starter.invest.contract.orders.AsyncOrdersHandler
-import io.github.dankosik.starter.invest.contract.orders.BlockingOrdersHandler
-import io.github.dankosik.starter.invest.contract.orders.CoroutineOrdersHandler
-import io.github.dankosik.starter.invest.contract.status.AsyncTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.status.BlockingTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.status.CoroutineTradingStatusHandler
-import io.github.dankosik.starter.invest.contract.trade.AsyncTradesHandler
-import io.github.dankosik.starter.invest.contract.trade.BlockingTradesHandler
-import io.github.dankosik.starter.invest.contract.trade.CoroutineTradesHandler
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllCandles
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllLastPrices
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllOrderBooks
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllTrades
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleAllTradingStatuses
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleCandle
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleLastPrice
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleOrderBook
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTrade
+import io.github.dankosik.starter.invest.annotation.marketdata.HandleTradingStatus
+import io.github.dankosik.starter.invest.annotation.marketdata.extractFigiToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.marketdata.extractTickerToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.marketdata.extractTickersFromAll
+import io.github.dankosik.starter.invest.annotation.marketdata.extractTickersWithoutInstrumentType
+import io.github.dankosik.starter.invest.annotation.marketdata.extractUidToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.order.HandleAllOrders
+import io.github.dankosik.starter.invest.annotation.order.HandleOrder
+import io.github.dankosik.starter.invest.annotation.order.extractFigiToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.order.extractTickerToInstrumentTypeMap
+import io.github.dankosik.starter.invest.annotation.order.extractTickersFromAll
+import io.github.dankosik.starter.invest.annotation.order.extractTickersWithoutInstrumentType
+import io.github.dankosik.starter.invest.annotation.order.extractUidToInstrumentTypeMap
+import io.github.dankosik.starter.invest.contract.marketdata.candle.getCandleHandlers
+import io.github.dankosik.starter.invest.contract.marketdata.lastprice.getLastPriceHandlers
+import io.github.dankosik.starter.invest.contract.marketdata.orderbook.getOrderBookHandlers
+import io.github.dankosik.starter.invest.contract.marketdata.status.getTradingStatusHandlers
+import io.github.dankosik.starter.invest.contract.marketdata.trade.getTradesHandlers
+import io.github.dankosik.starter.invest.contract.orders.getOrderHandlers
+import io.github.dankosik.starter.invest.exception.CommonException
+import io.github.dankosik.starter.invest.exception.ErrorCode
 import io.github.dankosik.starter.invest.extension.awaitSingle
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
-import org.springframework.boot.autoconfigure.AutoConfiguration
-import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import ru.tinkoff.piapi.contract.v1.InstrumentStatus
 import ru.tinkoff.piapi.contract.v1.InstrumentType
 import ru.tinkoff.piapi.core.InstrumentsService
 
-@AutoConfiguration
-@AutoConfigureAfter(value = [InstrumentsService::class])
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnBean(value = [InstrumentsService::class])
 class InstrumentsMapAutoConfiguration(
     private val applicationContext: ApplicationContext,
     private val instrumentsServices: List<InstrumentsService>,
@@ -45,32 +55,31 @@ class InstrumentsMapAutoConfiguration(
 
     @Bean
     fun tickerToUidMap(): Map<String, String> = runBlocking {
-        val beansWithHandleOrderBook = applicationContext.getBeansWithAnnotation(HandleOrderBook::class.java).values
-        val beansWithHandleTrades = applicationContext.getBeansWithAnnotation(HandleTrades::class.java).values
-        val beansWithHandleLastPrice = applicationContext.getBeansWithAnnotation(HandleLastPrice::class.java).values
-        val beansWithHandleCandle = applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values
-        val beansWithHandleTradingStatus =
-            applicationContext.getBeansWithAnnotation(HandleTradingStatus::class.java).values
-        val beansWithHandleOrders = applicationContext.getBeansWithAnnotation(HandleOrders::class.java).values
+        val lastPriceAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllLastPrices::class.java).values.getLastPriceHandlers()
+        val orderBookAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllOrderBooks::class.java).values.getOrderBookHandlers()
+        val tradesAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllTrades::class.java).values.getTradesHandlers()
+        val tradingStatusAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllTradingStatuses::class.java).values.getTradingStatusHandlers()
+        val candleAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllCandles::class.java).values.getCandleHandlers()
+        val ordersAllHandlers =
+            applicationContext.getBeansWithAnnotation(HandleAllOrders::class.java).values.getOrderHandlers()
 
-        val orderBookHandlers = beansWithHandleOrderBook.filterIsInstance<CoroutineOrderBookHandler>() +
-                beansWithHandleOrderBook.filterIsInstance<AsyncOrderBookHandler>() +
-                beansWithHandleOrderBook.filterIsInstance<BlockingOrderBookHandler>()
-        val tradesHandlers = beansWithHandleTrades.filterIsInstance<CoroutineTradesHandler>() +
-                beansWithHandleTrades.filterIsInstance<BlockingTradesHandler>() +
-                beansWithHandleTrades.filterIsInstance<AsyncTradesHandler>()
-        val lastPriceHandlers = beansWithHandleLastPrice.filterIsInstance<CoroutineLastPriceHandler>() +
-                beansWithHandleLastPrice.filterIsInstance<BlockingLastPriceHandler>() +
-                beansWithHandleLastPrice.filterIsInstance<AsyncLastPriceHandler>()
-        val candleHandlers = beansWithHandleCandle.filterIsInstance<CoroutineCandleHandler>() +
-                beansWithHandleCandle.filterIsInstance<BlockingCandleHandler>() +
-                beansWithHandleCandle.filterIsInstance<AsyncCandleHandler>()
-        val tradingStatusHandlers = beansWithHandleTradingStatus.filterIsInstance<CoroutineTradingStatusHandler>() +
-                beansWithHandleTradingStatus.filterIsInstance<BlockingTradingStatusHandler>() +
-                beansWithHandleTradingStatus.filterIsInstance<AsyncTradingStatusHandler>()
-        val ordersHandlers = beansWithHandleOrders.filterIsInstance<CoroutineOrdersHandler>() +
-                beansWithHandleOrders.filterIsInstance<BlockingOrdersHandler>() +
-                beansWithHandleOrders.filterIsInstance<AsyncOrdersHandler>()
+        val orderBookHandlers =
+            applicationContext.getBeansWithAnnotation(HandleOrderBook::class.java).values.getOrderBookHandlers()
+        val tradesHandlers =
+            applicationContext.getBeansWithAnnotation(HandleTrade::class.java).values.getTradesHandlers()
+        val lastPriceHandlers =
+            applicationContext.getBeansWithAnnotation(HandleLastPrice::class.java).values.getLastPriceHandlers()
+        val candleHandlers =
+            applicationContext.getBeansWithAnnotation(HandleCandle::class.java).values.getCandleHandlers()
+        val tradingStatusHandlers =
+            applicationContext.getBeansWithAnnotation(HandleTradingStatus::class.java).values.getTradingStatusHandlers()
+        val ordersHandlers =
+            applicationContext.getBeansWithAnnotation(HandleOrder::class.java).values.getOrderHandlers()
         val tradeHandlersWithInstrumentType = tradesHandlers.extractTickerToInstrumentTypeMap()
         val orderBookHandlersWithInstrumentType = orderBookHandlers.extractTickerToInstrumentTypeMap()
         val lastPriceHandlersWithInstrumentType = lastPriceHandlers.extractTickerToInstrumentTypeMap()
@@ -122,12 +131,20 @@ class InstrumentsMapAutoConfiguration(
                 }
             }.awaitAll()
 
-        val tickerWithoutInstrumentType = (orderBookHandlers.extractTickersWithoutInstrumentType() +
-                tradesHandlers.extractTickersWithoutInstrumentType() +
-                lastPriceHandlers.extractTickersWithoutInstrumentType() +
-                candleHandlers.extractTickersWithoutInstrumentType() +
-                tradingStatusHandlers.extractTickersWithoutInstrumentType() +
-                ordersHandlers.extractTickersWithoutInstrumentType()).toSet()
+        val tickerWithoutInstrumentType = (
+                lastPriceAllHandlers.extractTickersFromAll() +
+                        orderBookAllHandlers.extractTickersFromAll() +
+                        ordersAllHandlers.extractTickersFromAll() +
+                        tradesAllHandlers.extractTickersFromAll() +
+                        tradingStatusAllHandlers.extractTickersFromAll() +
+                        candleAllHandlers.extractTickersFromAll() +
+                        tradesHandlers.extractTickersWithoutInstrumentType() +
+                        orderBookHandlers.extractTickersWithoutInstrumentType() +
+                        lastPriceHandlers.extractTickersWithoutInstrumentType() +
+                        candleHandlers.extractTickersWithoutInstrumentType() +
+                        tradingStatusHandlers.extractTickersWithoutInstrumentType() +
+                        ordersHandlers.extractTickersWithoutInstrumentType()
+                ).toSet()
         val tickerWithInstrumentType = tradeHandlersWithInstrumentType.keys + orderBookHandlersWithInstrumentType.keys +
                 lastPriceHandlersWithInstrumentType.keys + candleHandlersWithInstrumentType.keys +
                 tradingStatusHandlersWithInstrumentType.keys + ordersHandlersWithInstrumentType.keys
@@ -141,7 +158,7 @@ class InstrumentsMapAutoConfiguration(
                     tickerToUidMap[ticker] = uId
                 }
             }.awaitAll().toSet()
-        tickerToUidMap.also { logger.info { "Tickers getting from requests ${it.keys}" } }
+        tickerToUidMap
     }
 
     private suspend fun getUidByTicker(ticker: String): String =
@@ -157,49 +174,51 @@ class InstrumentsMapAutoConfiguration(
                 .find { it.ticker == ticker }?.uid
             ?: instrumentsService.getOptions(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                 .find { it.ticker == ticker }?.uid
-            ?: throw IllegalArgumentException("Instrument by ticker: $ticker is not found")
+            ?: throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { "Instrument by ticker: $ticker is not found" } }
 
-    private suspend fun getUidByTicker(ticker: String, instrumentType: InstrumentType): String =
-        when (instrumentType) {
+    private suspend fun getUidByTicker(ticker: String, instrumentType: InstrumentType): String {
+        val commonNotFoundMessage = "Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found"
+        return when (instrumentType) {
             InstrumentType.INSTRUMENT_TYPE_FUTURES -> {
                 instrumentsService.getFutures(InstrumentStatus.INSTRUMENT_STATUS_BASE)
                     .awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
             InstrumentType.INSTRUMENT_TYPE_SHARE -> {
                 instrumentsService.getShares(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
             InstrumentType.INSTRUMENT_TYPE_BOND -> {
                 instrumentsService.getBonds(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
             InstrumentType.INSTRUMENT_TYPE_OPTION -> {
                 instrumentsService.getOptions(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
             InstrumentType.INSTRUMENT_TYPE_CURRENCY -> {
                 instrumentsService.getCurrencies(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
             InstrumentType.INSTRUMENT_TYPE_ETF -> {
                 instrumentsService.getEtfs(InstrumentStatus.INSTRUMENT_STATUS_BASE).awaitSingle()
                     .find { it.ticker == ticker }?.uid
-                    ?: throw throw IllegalArgumentException("Instrument by ticker: $ticker and InstrumentType: $instrumentType is not found")
+                    ?: throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
             }
 
-            else -> throw IllegalArgumentException("InstrumentType: $instrumentType not supported")
+            else -> throw throw CommonException(ErrorCode.INSTRUMENT_NOT_FOUND).also { logger.error { commonNotFoundMessage } }
         }
+    }
 
     private fun Map<String, InstrumentType>.replaceKeysAndValues(): Map<InstrumentType, List<String>> {
         val transformedMap = mutableMapOf<InstrumentType, MutableList<String>>()
@@ -213,10 +232,10 @@ class InstrumentsMapAutoConfiguration(
         warnMessage: String? = null,
         instrumentIdentifier: String
     ) {
-        val tickersCount = values.flatten().groupingBy { it }.eachCount()
+        val tickersCount: Map<String, Int> = values.flatten().groupingBy { it }.eachCount()
         tickersCount.forEach { (instrument, countOfTypes) ->
             require(countOfTypes == 1) {
-                "$instrumentIdentifier: $instrument any InstrumentType found, check your handlers. InstrumentType should be the same"
+                "$instrumentIdentifier: $instrument different InstrumentType found, check your handlers. InstrumentType should be the same"
             }.also { warnMessage?.let { logger.warn { it } } }
         }
     }

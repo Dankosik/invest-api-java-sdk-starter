@@ -1,36 +1,49 @@
 package io.github.dankosik.starter.invest.registry.operation
 
-import io.github.dankosik.starter.invest.annotation.operation.HandlePositions
-import io.github.dankosik.starter.invest.contract.positions.AsyncPositionsHandler
-import io.github.dankosik.starter.invest.contract.positions.BasePositionsHandler
-import io.github.dankosik.starter.invest.contract.positions.BlockingPositionsHandler
-import io.github.dankosik.starter.invest.contract.positions.CoroutinePositionsHandler
-import mu.KLogging
+import io.github.dankosik.starter.invest.annotation.operation.HandleAllPositions
+import io.github.dankosik.starter.invest.annotation.operation.HandlePosition
+import io.github.dankosik.starter.invest.contract.operation.positions.BasePositionHandler
+import io.github.dankosik.starter.invest.contract.operation.positions.getPositionHandlers
 import org.springframework.context.ApplicationContext
-import org.springframework.stereotype.Component
 
-@Component
-class PositionsHandlerRegistry(
+internal class PositionsHandlerRegistry(
     private val applicationContext: ApplicationContext,
 ) {
-    private val handlersByAccount = HashMap<String, BasePositionsHandler>()
+    private val handlersByAccount = HashMap<String, MutableList<BasePositionHandler>>()
+    val commonHandlersByAccount = HashMap<String, MutableList<BasePositionHandler>>()
 
     init {
-        val annotatedBeans = applicationContext.getBeansWithAnnotation(HandlePositions::class.java).values
-        val coroutineHandlers = annotatedBeans.filterIsInstance<CoroutinePositionsHandler>()
-        val blockingHandlers = annotatedBeans.filterIsInstance<BlockingPositionsHandler>()
-        val asyncHandlers = annotatedBeans.filterIsInstance<AsyncPositionsHandler>()
-        blockingHandlers.forEach { it.addAccountIdToHandlerMap() }
-        coroutineHandlers.forEach { it.addAccountIdToHandlerMap() }
-        asyncHandlers.forEach { it.addAccountIdToHandlerMap() }
+        applicationContext.getBeansWithAnnotation(HandlePosition::class.java).values.getPositionHandlers()
+            .forEach {
+                it.addAccountIdToHandlerMap()
+            }
+        applicationContext.getBeansWithAnnotation(HandleAllPositions::class.java).values.getPositionHandlers()
+            .forEach {
+                it.addAccountIdToAllHandlerMap()
+            }
     }
 
-    fun getHandlerByAccountId(accountId: String?): BasePositionsHandler? = handlersByAccount[accountId]
+    fun getHandlersByAccountId(accountId: String?): MutableList<BasePositionHandler>? =
+        handlersByAccount[accountId]
 
-    private fun BasePositionsHandler.addAccountIdToHandlerMap() {
-        val annotation = this::class.java.getAnnotation(HandlePositions::class.java)
-        handlersByAccount[annotation.account] = this
+    fun getCommonHandlersByAccountId(accountId: String?): MutableList<BasePositionHandler>? =
+        commonHandlersByAccount[accountId]
+
+    private fun BasePositionHandler.addAccountIdToHandlerMap() {
+        val account = this::class.java.getAnnotation(HandlePosition::class.java).account
+        if (handlersByAccount[account] == null) {
+            handlersByAccount[account] = mutableListOf(this)
+        } else {
+            handlersByAccount[account]!!.add(this)
+        }
     }
 
-    private companion object : KLogging()
+    private fun BasePositionHandler.addAccountIdToAllHandlerMap() =
+        this::class.java.getAnnotation(HandleAllPositions::class.java).accounts.forEach { account ->
+            if (commonHandlersByAccount[account] == null) {
+                commonHandlersByAccount[account] = mutableListOf(this)
+            } else {
+                commonHandlersByAccount[account]?.add(this)
+            }
+        }
 }
