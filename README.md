@@ -133,7 +133,7 @@ class DollarCandleHandler(
   <summary>build.gradle.kts</summary>
 
 ```groovy
-implementation("io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta51")
+implementation("io.github.dankosik:invest-api-java-sdk-starter:1.6.0-RC1")
 ```
 
 Также необходимо добавить зависимость <br>
@@ -151,7 +151,7 @@ implementation("org.springframework.boot:spring-boot-starter-webflux")
   <summary>build.gradle</summary>
 
 ```groovy
-implementation 'io.github.dankosik:invest-api-java-sdk-starter:0.6.1-beta51'
+implementation 'io.github.dankosik:invest-api-java-sdk-starter:1.6.0-RC1'
 ```
 
 Также необходимо добавить зависимость <br>
@@ -172,7 +172,7 @@ implementation 'org.springframework.boot:spring-boot-starter-webflux'
 <dependency>
     <groupId>io.github.dankosik</groupId>
     <artifactId>invest-api-java-sdk-starter</artifactId>
-    <version>0.6.1-beta51</version>
+    <version>1.6.0-RC1</version>
     <classifier>plain</classifier>
 </dependency>
 ```
@@ -205,9 +205,6 @@ implementation("io.github.dankosik:invest-api-java-sdk-starter:1.6.0")
 Стартер поддерживает минимальную версию skd - 1.6
 
 При появлении новых версий skd будет подниматься мажорная версия стартера, но старые будут оставаться на поддержке
-
-
-P.S. На момент беты версия стартера начинается с 0, при релизе будет повышена до 1
 
 ## Сообщество API Тинькофф Инвестиций
 
