@@ -17,6 +17,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.GPT_TUNNEL_API_KEY }}
           LANGUAGE: Russian
-          OPENAI_API_ENDPOINT: https://gptunnel.ru/v1
-          MODEL: gpt-3.5
+          OPENAI_API_ENDPOINT: https://autotests.ai/adapter
           PROMPT: "You are an experienced Kotlin/Java developer and your job is to review pull requests. Please review the following code for any misunderstandings or violations. Don't spend time commenting on what is already working perfectly. I'm looking for constructive criticism and suggestions for improving the code, only useful and thorough notes."
